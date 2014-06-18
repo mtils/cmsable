@@ -22,6 +22,10 @@ class ControllerDescriptor{
 
     protected $_canBeRoot;
 
+    protected $_modifierClass = 'Cmsable\Routing\DescriptorModifier';
+
+    protected $_treeScope = 1;
+
     public function __construct($id){
         $this->id = $id;
     }
@@ -116,8 +120,26 @@ class ControllerDescriptor{
         return $this;
     }
 
-    public function create($id){
+    public static function create($id){
         $class = get_called_class();
         return new $class($id);
+    }
+
+    public function getTreeScope(){
+        return $this->_treeScope;
+    }
+
+    public function setTreeScope($scopeId){
+        $this->_treeScope = $scopeId;
+        return $this;
+    }
+
+    public function getModifierClass(){
+        return $this->_modifierClass;
+    }
+
+    public function setModifierClass($className){
+        $this->_modifierClass = $className;
+        return $this;
     }
 }

@@ -65,16 +65,15 @@ class CmsServiceProvider extends ServiceProvider{
             $treeModel =  new AdjacencyListSiteTreeModel($pageClass,2);
             $adminTreeModel = new AdjacencyListSiteTreeModel($pageClass,1);
 
-            $app['config']->get('cmsable::pagetypes.loaded');
-
             $descLoader = new ControllerDescriptorLoaderManual($this->app['events']);
+
+            if($descriptors = $app['config']->get('cmsable::pagetypes')){
+                $descLoader->setDescriptors($descriptors);
+            }
 
             $cms = new RouterConnector($descLoader);
             $cms->addCmsRoute('/', $treeModel, 'default');
             $cms->addCmsRoute('/admin', $adminTreeModel, 'admin');
-
-            
-
             $cms->register($this->app['router']);
 
             return $cms;

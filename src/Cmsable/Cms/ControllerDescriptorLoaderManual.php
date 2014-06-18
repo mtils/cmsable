@@ -37,18 +37,30 @@ class ControllerDescriptorLoaderManual implements ControllerDescriptorLoaderInte
         return $this;
     }
 
-    public function all(){
+    public function setDescriptors(array $descriptors){
+        foreach($descriptors as $descriptor){
+            $this->add($descriptor);
+        }
+    }
+
+    public function all($treeScope=1){
         if(!$this->descriptorsLoaded && $this->eventDispatcher){
             $this->eventDispatcher->fire('cmsable.controllerDescriptorLoad',
                                          array($this));
             $this->descriptorsLoaded = TRUE;
         }
-        return $this->descriptors;
+        $descriptors = array();
+        foreach($this->descriptors as $id=>$descriptor){
+            if( $descriptor->getTreeScope() == $treeScope || !$descriptor->getTreeScope()){
+                $descriptors[] = $descriptor;
+            }
+        }
+        return $descriptors;
     }
 
-    public function byCategory(){
+    public function byCategory($treeScope=1){
         $categorized = array();
-        foreach($this->all() as $info){
+        foreach($this->all($treeScope) as $info){
             if(!isset($categorized[$info->category()])){
                 $categorized[$info->category()] = array();
             }
