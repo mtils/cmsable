@@ -6,7 +6,7 @@ use Cmsable\Cms\ControllerDescriptorLoaderManual;
 use Cmsable\Html\Menu;
 use Cmsable\Html\MenuFilter;
 use Cmsable\Html\SiteTreeUrlGenerator;
-use Cmsable\Routing\SiteTreeRouter;
+use Cmsable\Routing\RouterConnector;
 use Cmsable\Validators\CmsValidator;
 use ConfigurableClass\LaravelConfigModel;
 use DB;
@@ -18,16 +18,16 @@ class CmsServiceProvider extends ServiceProvider{
 
     public function register(){
 
-        $this->app->singleton('adminSiteTree', function(){
-            return new AdjacencyListSiteTreeModel('\Cmsable\Model\Page',1);
-        });
+        $this->package('ems/cmsable','cmsable', realpath(__DIR__.'/../../../src'));
 
         $this->app->singleton('pageTypes', function(){
             return new ControllerDescriptorLoaderManual($this->app['events']);
         });
 
+        $this->registerRouterConnector();
+
         $this->app->singleton('adminMenu', function(){
-            return new Menu($this->app->make('adminSiteTree'),
+            return new Menu($this->app['cms']->getTreeModel('admin'),
                             new MenuFilter());
         });
 
@@ -37,28 +37,9 @@ class CmsServiceProvider extends ServiceProvider{
             return $model;
         });
 
-        $this->app->singleton('siteTree', function(){
-            return new AdjacencyListSiteTreeModel('\Cmsable\Model\Page',2);
-        });
-
         $this->app->singleton('menu', function(){
-            return new Menu($this->app->make('siteTree'),
+            return new Menu($this->app['cms']->getTreeModel('default'),
                             new MenuFilter());
-        });
-
-        $this->app['router'] = $this->app->share(function($app)
-        {
-            $router = new SiteTreeRouter($app['events'], $app);
-
-            // If the current application environment is "testing", we will disable the
-            // routing filters, since they can be tested independently of the routes
-            // and just get in the way of our typical controller testing concerns.
-            if ($app['env'] == 'testing')
-            {
-                $router->disableFilters();
-            }
-
-            return $router;
         });
 
         $this->app['url'] = $this->app->share(function($app)
@@ -74,11 +55,37 @@ class CmsServiceProvider extends ServiceProvider{
         });
     }
 
+    protected function registerRouterConnector(){
+
+        $this->app->singleton('cms', function($app){
+
+            $pageClass = $app['config']->get('cmsable::page_model');
+
+            // Create SiteTreeModels
+            $treeModel =  new AdjacencyListSiteTreeModel($pageClass,2);
+            $adminTreeModel = new AdjacencyListSiteTreeModel($pageClass,1);
+
+            $app['config']->get('cmsable::pagetypes.loaded');
+
+            $descLoader = new ControllerDescriptorLoaderManual($this->app['events']);
+
+            $cms = new RouterConnector($descLoader);
+            $cms->addCmsRoute('/', $treeModel, 'default');
+            $cms->addCmsRoute('/admin', $adminTreeModel, 'admin');
+
+            
+
+            $cms->register($this->app['router']);
+
+            return $cms;
+        });
+    }
+
     public function boot(){
         $this->app->validator->resolver(function($translator, $data, $rules, $messages){
             $validator = new CmsValidator($translator, $data, $rules, $messages);
-            $validator->addSiteTreeLoader($this->app['siteTree']);
-            $validator->addSiteTreeLoader($this->app['adminSiteTree']);
+            $validator->addSiteTreeLoader($this->app['cms']->getTreeModel('default'));
+            $validator->addSiteTreeLoader($this->app['cms']->getTreeModel('admin'));
             $validator->setRouter($this->app['router']);
             return $validator;
         });

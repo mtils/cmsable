@@ -1,7 +1,7 @@
 <?php namespace Cmsable\Validators;
 
 use Cmsable\Model\SiteTreeModelInterface;
-use Cmsable\Cms\SiteTreeNodeInterface;
+use Cmsable\Model\SiteTreeNodeInterface;
 use Illuminate\Validation\Validator;
 use Illuminate\Routing\Router;
 use DomainException;

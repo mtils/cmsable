@@ -2,9 +2,9 @@
 
 use Illuminate\Support\Facades\Facade;
 
-class SiteTree extends Facade{
+class CMS extends Facade{
 
     protected static function getFacadeAccessor(){
-        return 'siteTree';
+        return 'cms';
     }
 }

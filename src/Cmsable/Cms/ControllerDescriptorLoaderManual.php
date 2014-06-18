@@ -1,6 +1,7 @@
 <?php namespace Cmsable\Cms;
 
 use \DomainException;
+use \OutOfBoundsException;
 
 class ControllerDescriptorLoaderManual implements ControllerDescriptorLoaderInterface{
 
@@ -24,8 +25,15 @@ class ControllerDescriptorLoaderManual implements ControllerDescriptorLoaderInte
         return $this;
     }
 
+    public function get($id){
+        if(isset($this->descriptors[$id])){
+            return $this->descriptors[$id];
+        }
+        throw new OutOfBoundsException("No PageType found with id '$id'");
+    }
+
     public function add(ControllerDescriptor $info){
-        $this->descriptors[$info->controllerClassName()] = $info;
+        $this->descriptors[$info->getId()] = $info;
         return $this;
     }
 
@@ -48,11 +56,4 @@ class ControllerDescriptorLoaderManual implements ControllerDescriptorLoaderInte
         }
         return $categorized;
     }
-
-    public function find($controllerClassName){
-        if(isset($this->descriptors[$controllerClassName])){
-            return $this->descriptors[$controllerClassName];
-        }
-    }
-  
 }

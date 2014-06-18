@@ -2,6 +2,8 @@
 
 class ControllerDescriptor{
 
+    protected $id;
+
     protected $_controllerClassName;
 
     protected $_singularName;
@@ -19,6 +21,19 @@ class ControllerDescriptor{
     protected $_category;
 
     protected $_canBeRoot;
+
+    public function __construct($id){
+        $this->id = $id;
+    }
+
+    public function getId(){
+        return $this->id;
+    }
+
+    public function setId($id){
+        $this->id = $id;
+        return $this;
+    }
 
     public function controllerClassName(){
         return $this->_controllerClassName;
@@ -99,5 +114,10 @@ class ControllerDescriptor{
     public function setCanBeRoot($canBe){
         $this->_canBeRoot = $canBe;
         return $this;
+    }
+
+    public function create($id){
+        $class = get_called_class();
+        return new $class($id);
     }
 }

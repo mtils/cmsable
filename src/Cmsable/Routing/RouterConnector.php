@@ -1,10 +1,12 @@
 <?php namespace Cmsable\Routing;
 
 use Illuminate\Routing\Router;
+use Cmsable\Model\SiteTreeModelInterface;
+use Cmsable\Cms\ControllerDescriptorLoaderInterface;
 use Input;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Route;
 
-class SiteTreeRouter extends Router{
+class RouterConnector{
 
     protected $cmsRoutes = array();
 
@@ -12,21 +14,59 @@ class SiteTreeRouter extends Router{
 
     protected $_isSiteTreeRoute = NULL;
 
-    public function cms($uri='/', $siteTreeClass='SiteTree'){
+    protected $router;
+
+    protected $descriptorLoader;
+
+    public function __construct(ControllerDescriptorLoaderInterface $loader){
+        $this->descriptorLoader = $loader;
+    }
+
+    public function addCmsRoute($uri, SiteTreeModelInterface $siteTreeModel, $name=NULL){
+
+        $siteTreeModel->setPathPrefix($uri);
 
         $verbs = array('GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE');
-        $route = new SiteTreeRoute($verbs, $uri, function(){
-            return NULL; // Wird wieder ueberschrieben
+        $route = new SiteTreeRoute($verbs, $uri, function(){});
+        $route->setTreeLoader($siteTreeModel);
+
+        if(!$name){
+            $name = $uri;
+        }
+
+        $this->cmsRoutes[$name] = $route;
+    }
+
+    public function controllerDescriptors(){
+        return $this->descriptorLoader;
+    }
+
+    public function pageTypes(){
+        return $this->controllerDescriptors();
+    }
+
+    public function getTreeModel($routeName){
+        return $this->cmsRoutes[$routeName]->treeLoader();
+    }
+
+    public function getCmsRoutes(){
+        return array_values($this->cmsRoutes);
+    }
+
+    public function register(Router $router){
+
+        $cms = $this;
+        $this->router = $router;
+
+        $router->before(function($request) use($router, $cms){
+            foreach($cms->getCmsRoutes() as $route){
+                $router->getRoutes()->add($route);
+            }
         });
-        $loader = \App::make(lcfirst($siteTreeClass));
-        $loader->setPathPrefix($uri);
-        $route->setTreeLoader($loader);
-        $this->cmsRoutes[] = $route;
-        $this->routes->add($route);
     }
 
     public function findRouteForSiteTreeObject($page){
-        foreach($this->cmsRoutes as $route){
+        foreach($this->cmsRoutes as $name=>$route){
             if($route->treeLoader()->pageById($page->id)){
                 return $route;
             }
@@ -35,7 +75,7 @@ class SiteTreeRouter extends Router{
 
     public function findBestMatchingCmsRoute($path){
 
-        $route = $this->getCurrentRoute();
+        $route = $this->router->getCurrentRoute();
         if($route instanceof SiteTreeRoute){
             return $route;
         }
@@ -43,7 +83,7 @@ class SiteTreeRouter extends Router{
         $foundRoute = NULL;
         $mostMatchingChars = 0;
 
-        foreach($this->cmsRoutes as $route){
+        foreach($this->cmsRoutes as $name=>$route){
 
             $routeUri = $route->uri();
             $routeUriLength = mb_strlen($routeUri);
@@ -57,14 +97,14 @@ class SiteTreeRouter extends Router{
         }
 
         if(!$foundRoute){
-            $foundRoute = $this->cmsRoutes[0];
+            $foundRoute = $this->cmsRoutes['default'];
         }
         return $foundRoute;
     }
 
     public function inSiteTree(){
         if($this->_isSiteTreeRoute === NULL){
-            if($currentRoute = $this->getCurrentRoute()){
+            if($currentRoute = $this->router->getCurrentRoute()){
                 $this->_isSiteTreeRoute = ($currentRoute instanceof SiteTreeRoute);
             }
         }
@@ -79,9 +119,6 @@ class SiteTreeRouter extends Router{
                     $this->_currentPage = $route->fallbackPage();
                 }
             }
-//             else{
-//                 $this->_currentPage = $this->
-//             }
         }
         return $this->_currentPage;
     }

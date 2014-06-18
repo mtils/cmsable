@@ -3,6 +3,7 @@
 use Illuminate\Routing\UrlGenerator;
 use Route;
 use Cmsable\Cms\RedirectorInterface;
+use CMS;
 
 class SiteTreeUrlGenerator extends UrlGenerator{
 
@@ -21,11 +22,11 @@ class SiteTreeUrlGenerator extends UrlGenerator{
             if($path instanceof RedirectorInterface){
 //                 return $path->getLink($path)
             }
-            if($route = Route::findRouteForSiteTreeObject($path)){
+            if($route = CMS::findRouteForSiteTreeObject($path)){
                 $path = ltrim($route->treeLoader()->pathById($path->id),'/');
             }
         }
-        elseif(is_string($path) && Route::inSiteTree()){
+        elseif(is_string($path) && CMS::inSiteTree()){
             if($extra && !isset($extra[0])){
                 $extra = array_values($extra);
                 $extraPath = implode('/',$extra);
@@ -47,7 +48,7 @@ class SiteTreeUrlGenerator extends UrlGenerator{
     public function action($action, $parameters = array(), $absolute = true)
     {
         if(!mb_strpos($action,'@')){
-            if($page = Route::currentPage()){
+            if($page = CMS::currentPage()){
                 if(!$parameters){
                     return $this->to($page) . '/' . ltrim($action,'/');
                 }

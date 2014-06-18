@@ -64,6 +64,18 @@ class Page extends BeeTreeNode implements SiteTreeNodeInterface{
         return parent::getAttributeFromArray('content');
     }
 
+    /**
+     * Convert the model's attributes to an array.
+     * Reimplemented to retrieve lazy loaded content column
+     *
+     * @return array
+     */
+    public function attributesToArray()
+    {
+        $this->getContentAttribute();
+        return parent::attributesToArray();
+    }
+
     public function getControllerClass(){
         return $this->controller_name;
     }

@@ -2,7 +2,7 @@
 
 use Cmsable\Model\SiteTreeModelInterface;
 use BeeTree\Helper;
-
+use CMS;
 class Menu {
 
     protected $siteHierarchy = array();
@@ -58,7 +58,7 @@ class Menu {
     }
 
     public function current(){
-        return \Route::currentPage();
+        return CMS::currentPage();
     }
 
     public function appendToBreadCrumbs($page){
