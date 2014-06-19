@@ -54,7 +54,7 @@ abstract class ConfigurableFormPlugin extends FormPlugin{
 
     protected function configType(){
         if(!$this->_configType){
-            $this->_configType = $this->controller()->configType();
+            $this->_configType = $this->controller()->getConfigType();
         }
         return $this->_configType;
     }
