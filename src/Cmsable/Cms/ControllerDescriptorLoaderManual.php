@@ -43,7 +43,7 @@ class ControllerDescriptorLoaderManual implements ControllerDescriptorLoaderInte
         }
     }
 
-    public function all($treeScope=1){
+    public function all($routeScope='default'){
         if(!$this->descriptorsLoaded && $this->eventDispatcher){
             $this->eventDispatcher->fire('cmsable.controllerDescriptorLoad',
                                          array($this));
@@ -51,16 +51,16 @@ class ControllerDescriptorLoaderManual implements ControllerDescriptorLoaderInte
         }
         $descriptors = array();
         foreach($this->descriptors as $id=>$descriptor){
-            if( $descriptor->getTreeScope() == $treeScope || !$descriptor->getTreeScope()){
+            if( $descriptor->getRouteScope() == $routeScope || !$descriptor->getRouteScope()){
                 $descriptors[] = $descriptor;
             }
         }
         return $descriptors;
     }
 
-    public function byCategory($treeScope=1){
+    public function byCategory($routeScope='default'){
         $categorized = array();
-        foreach($this->all($treeScope) as $info){
+        foreach($this->all($routeScope) as $info){
             if(!isset($categorized[$info->category()])){
                 $categorized[$info->category()] = array();
             }

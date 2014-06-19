@@ -32,7 +32,7 @@ class ControllerDescriptor{
 
     protected $_formPlugin;
 
-    protected $_treeScope = 1;
+    protected $_routeScope = 'default';
 
     public function __construct($id){
         $this->id = $id;
@@ -133,12 +133,12 @@ class ControllerDescriptor{
         return new $class($id);
     }
 
-    public function getTreeScope(){
-        return $this->_treeScope;
+    public function getRouteScope(){
+        return $this->_routeScope;
     }
 
-    public function setTreeScope($scopeId){
-        $this->_treeScope = $scopeId;
+    public function setRouteScope($scopeId){
+        $this->_routeScope = $scopeId;
         return $this;
     }
 
