@@ -17,7 +17,7 @@ class Page extends BeeTreeNode implements SiteTreeNodeInterface{
     protected $wholeTreeColumns = array(
         'id',
         'scope_id',
-        'controller_name',
+        'page_type',
         'url_segment',
         'title',
         'menu_title',
@@ -76,13 +76,13 @@ class Page extends BeeTreeNode implements SiteTreeNodeInterface{
         return parent::attributesToArray();
     }
 
-    public function getControllerClass(){
-        return $this->controller_name;
+    public function getPageTypeId(){
+        return $this->page_type;
     }
 
-    public function setControllerClass($className){
-        $this->controller_name = $className;
-        return $this->controller_name;
+    public function setPageTypeId($id){
+        $this->page_type = $id;
+        return $this;
     }
 
     public function canView($user){

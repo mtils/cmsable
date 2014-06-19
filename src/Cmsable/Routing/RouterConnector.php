@@ -29,6 +29,7 @@ class RouterConnector{
         $verbs = array('GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE');
         $route = new SiteTreeRoute($verbs, $uri, function(){});
         $route->setTreeLoader($siteTreeModel);
+        $route->setDescriptorLoader($this->descriptorLoader);
 
         if(!$name){
             $name = $uri;

@@ -34,4 +34,17 @@ interface SiteTreeNodeInterface extends NodeInterface{
      * @return SiteTreeNodeInterface for fluid syntax
      **/
     public function setPath($path);
+
+    /**
+     * @brief Returns the id of the page type
+     * @return string
+     **/
+    public function getPageTypeId();
+
+    /**
+     * @brief Set the id of its pagetype (ControllerDescriptor)
+     * @param string The id
+     * @return SiteTreeNodeInterface
+     **/
+    public function setPageTypeId($id);
 }

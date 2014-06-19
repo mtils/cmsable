@@ -1,5 +1,7 @@
 <?php namespace Cmsable\Cms;
 
+use App;
+
 class ControllerDescriptor{
 
     protected $id;
@@ -22,7 +24,13 @@ class ControllerDescriptor{
 
     protected $_canBeRoot;
 
-    protected $_modifierClass = 'Cmsable\Routing\DescriptorModifier';
+    protected $_controllerCreatorClass = 'Cmsable\Routing\ControllerCreator';
+
+    protected $_formPluginClass = 'Cmsable\Cms\FormPlugin';
+
+    protected $_controllerCreator;
+
+    protected $_formPlugin;
 
     protected $_treeScope = 1;
 
@@ -134,12 +142,45 @@ class ControllerDescriptor{
         return $this;
     }
 
-    public function getModifierClass(){
-        return $this->_modifierClass;
+    public function createController($page){
+        return $this->getControllerCreator()->createController($this->controllerClassName(), $page);
     }
 
-    public function setModifierClass($className){
-        $this->_modifierClass = $className;
+    public function getControllerCreator(){
+        if(!$this->_controllerCreator){
+            $this->_controllerCreator = App::make($this->getControllerCreatorClass());
+        }
+        return $this->_controllerCreator;
+    }
+
+    public function setControllerCreator($creator){
+        $this->_controllerCreator = $creator;
+        return $this;
+    }
+
+    public function getControllerCreatorClass(){
+        return $this->_controllerCreatorClass;
+    }
+
+    public function setControllerCreatorClass($class){
+        $this->_controllerCreatorClass = $class;
+        return $this;
+    }
+
+    public function getFormPlugin(){
+        if($this->_formPlugin === NULL){
+            $this->_formPlugin = App::make($this->getFormPluginClass());
+            $this->_formPlugin->setPageType($this);
+        }
+        return $this->_formPlugin;
+    }
+
+    public function getFormPluginClass(){
+        return $this->_formPluginClass;
+    }
+
+    public function setFormPluginClass($className){
+        $this->_formPluginClass = $className;
         return $this;
     }
 }

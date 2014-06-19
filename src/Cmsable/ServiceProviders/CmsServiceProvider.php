@@ -62,8 +62,8 @@ class CmsServiceProvider extends ServiceProvider{
             $pageClass = $app['config']->get('cmsable::page_model');
 
             // Create SiteTreeModels
-            $treeModel =  new AdjacencyListSiteTreeModel($pageClass,2);
-            $adminTreeModel = new AdjacencyListSiteTreeModel($pageClass,1);
+            $treeModel =  new AdjacencyListSiteTreeModel($pageClass,1);
+            $adminTreeModel = new AdjacencyListSiteTreeModel($pageClass,2);
 
             $descLoader = new ControllerDescriptorLoaderManual($this->app['events']);
 

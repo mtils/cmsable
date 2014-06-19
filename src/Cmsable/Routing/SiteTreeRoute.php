@@ -10,21 +10,9 @@ class SiteTreeRoute extends Route{
 
     protected $_treeLoader = NULL;
 
-    protected $siteTreeClass = 'SiteTree';
-
-    protected $siteTreeScope = 1;
-
-    protected $siteTreeHierarchy = NULL;
-
-    protected $siteTreePrototype = NULL;
-
-    protected $pathMap = NULL;
-
-    protected $idMap = NULL;
-
-    protected $id2Path = NULL;
-
     protected $_currentPage = NULL;
+
+    protected $descriptorLoader;
 
     /**
      * Determine if the route matches given request.
@@ -66,18 +54,19 @@ class SiteTreeRoute extends Route{
         $node = $this->treeLoader()->pageByPath($requestUri);
 
         if($node){
+
             $this->_currentPage = $node;
-            $controllerClassName = $node->getControllerClass();
+            $pageType = $this->descriptorLoader->get($node->getPageTypeId());
             $verb = mb_strtolower($request->getMethod());
             $methodName = "{$verb}Index";
 
-            $this->action['uses'] = function() use($controllerClassName, $methodName){
-                $controller = \App::make($controllerClassName);
+            $this->action['uses'] = function() use($pageType, $methodName, $node){
+                $controller = $pageType->createController($node);
                 return $controller->$methodName();
             };
             return TRUE;
         }
-        // If there is no node found by absolute equality of path chosse the
+        // If there is no node found by absolute equality of path choose the
         // last known path Controller and check if action exists
         else{
 
@@ -102,18 +91,19 @@ class SiteTreeRoute extends Route{
                 $unusedPart = str_replace("$parentPath/$actionSegment",'',
                                           $requestUri);
                 $this->_currentPage = $node;
-                $controllerClassName = $node->getControllerClass();
 
-                $controllerMethod = $this->getControllerMethod($controllerClassName,
+                $pageType = $this->descriptorLoader->get($node->getPageTypeId());
+
+                $controllerMethod = $this->getControllerMethod($pageType->controllerClassName(),
                                                                $actionSegment,
                                                                $request->getMethod());
                 if($controllerMethod){
                     $method = $controllerMethod;
-                    $this->action['uses'] = function() use($controllerClassName,
+                    $this->action['uses'] = function() use($pageType,
                                                         $node,
                                                         $method,
                                                         $unusedPart){
-                        $controller = \App::make($controllerClassName);
+                        $controller = $pageType->createController($node);
                         return $controller->$method(trim($unusedPart,'/'));
                     };
                     return TRUE;
@@ -135,6 +125,15 @@ class SiteTreeRoute extends Route{
                 }
             }
         }
+    }
+
+    public function getDescriptorLoader(){
+        return $this->descriptorLoader;
+    }
+
+    public function setDescriptorLoader($loader){
+        $this->descriptorLoader = $loader;
+        return $this;
     }
 
     public function treeLoader(){
