@@ -1,8 +1,9 @@
-<?php namespace Cmsable\Cms;
+<?php namespace Cmsable\Form\Plugin;
 
 use FormObject\Form;
+use Cmsable\Cms\ControllerDescriptor;
 
-interface FormPluginInterface{
+interface PluginInterface{
 
     public function setPageType(ControllerDescriptor $type);
 

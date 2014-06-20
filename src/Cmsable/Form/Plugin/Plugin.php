@@ -1,10 +1,11 @@
-<?php namespace Cmsable\Cms;
+<?php namespace Cmsable\Form\Plugin;
 
 use FormObject\Form;
 use FormObject\FieldList;
 use Event;
+use Cmsable\Cms\ControllerDescriptor;
 
-class FormPlugin implements FormPluginInterface{
+class Plugin implements PluginInterface{
 
     protected $pageType;
 

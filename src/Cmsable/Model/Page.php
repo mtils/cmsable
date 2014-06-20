@@ -24,6 +24,8 @@ class Page extends BeeTreeNode implements SiteTreeNodeInterface{
         'show_in_menu',
         'show_in_aside_menu',
         'show_in_search',
+        'redirect_type',
+        'redirect_target',
         'parent_id',
         'position',
         'view_permission',
@@ -47,7 +49,7 @@ class Page extends BeeTreeNode implements SiteTreeNodeInterface{
     }
 
     public function getPath(){
-        return $this->path;
+        return $this->_path;
     }
 
     public function setPath($path){
@@ -103,4 +105,24 @@ class Page extends BeeTreeNode implements SiteTreeNodeInterface{
         return $user->isSuperUser();
     }
 
+    /**
+     * @brief Returns the type of redirect this page is
+     *
+     * @see self::INTERNAL, self::EXTERNAL, self::VIRTUAL, self::NONE
+     ** @return string
+     **/
+    public function getRedirectType(){
+        return $this->redirect_type;
+    }
+
+    /**
+     * @brief Returns the redirect target. Can be a number for other pages
+     *        or a id of another page
+     *
+     * @see self::getRedirectType()
+     ** @return string
+     **/
+    public function getRedirectTarget(){
+        return $this->redirect_target;
+    }
 }

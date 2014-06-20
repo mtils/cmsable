@@ -4,6 +4,14 @@ use BeeTree\NodeInterface;
 
 interface SiteTreeNodeInterface extends NodeInterface{
 
+    const NONE = 'none';
+
+    const INTERNAL = 'internal';
+
+    const EXTERNAL = 'external';
+
+    const FIRST_CHILD = 'firstchild';
+
     /**
      * @brief Get the url segment of this node. Cmsable supports
      *        currently only nested segments. So every node has
@@ -47,4 +55,21 @@ interface SiteTreeNodeInterface extends NodeInterface{
      * @return SiteTreeNodeInterface
      **/
     public function setPageTypeId($id);
+
+    /**
+     * @brief Returns the type of redirect this page is
+     *
+     * @see self::INTERNAL, self::EXTERNAL, self::NONE
+     ** @return string
+     **/
+    public function getRedirectType();
+
+    /**
+     * @brief Returns the redirect target. Can be a number for other pages
+     *        or a id of another page
+     *
+     * @see self::getRedirectType()
+     ** @return string
+     **/
+    public function getRedirectTarget();
 }

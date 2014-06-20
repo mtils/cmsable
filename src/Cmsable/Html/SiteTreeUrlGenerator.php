@@ -2,7 +2,7 @@
 
 use Illuminate\Routing\UrlGenerator;
 use Route;
-use Cmsable\Cms\RedirectorInterface;
+use Cmsable\Model\SiteTreeNodeInterface;
 use CMS;
 
 class SiteTreeUrlGenerator extends UrlGenerator{
@@ -11,7 +11,7 @@ class SiteTreeUrlGenerator extends UrlGenerator{
     /**
      * Generate a absolute URL to the given path.
      *
-     * @param  mixed  $path or $siteTree Instance
+     * @param  mixed  $path or SiteTreeNodeInterface Instance
      * @param  mixed  $extra
      * @param  bool  $secure
      * @return string
@@ -19,11 +19,13 @@ class SiteTreeUrlGenerator extends UrlGenerator{
     public function to($path, $extra = array(), $secure = null)
     {
         if(is_object($path)){
-            if($path instanceof RedirectorInterface){
-//                 return $path->getLink($path)
-            }
-            if($route = CMS::findRouteForSiteTreeObject($path)){
-                $path = ltrim($route->treeLoader()->pathById($path->id),'/');
+            if($path instanceof SiteTreeNodeInterface){
+                $page = $path;
+                if(!$path = $page->getPath()){
+                    if($route = CMS::findRouteForSiteTreeObject($page)){
+                        $path = ltrim($route->treeLoader()->pathById($page->id),'/');
+                    }
+                }
             }
         }
         elseif(is_string($path) && CMS::inSiteTree()){

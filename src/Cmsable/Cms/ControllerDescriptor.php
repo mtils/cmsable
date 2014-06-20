@@ -26,7 +26,7 @@ class ControllerDescriptor{
 
     protected $_controllerCreatorClass = 'Cmsable\Routing\ControllerCreator';
 
-    protected $_formPluginClass = 'Cmsable\Cms\FormPlugin';
+    protected $_formPluginClass = 'Cmsable\Form\Plugin\Plugin';
 
     protected $_controllerCreator;
 

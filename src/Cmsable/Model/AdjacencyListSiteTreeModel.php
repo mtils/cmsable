@@ -152,6 +152,9 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
             $this->id2Path = array();
             $this->id2Path[$root->id] = $root->getUrlSegment();
         }
+
+        $redirects = array();
+
         foreach($childs as $child){
             $urlSegment = $child->getUrlSegment();
             $currentStack[] = $urlSegment;
@@ -161,6 +164,13 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
             }
 
             $path = implode('/',$currentStack);
+
+            if($child->getRedirectType() == SiteTreeNodeInterface::NONE){
+                $child->setPath(trim($path,'/'));
+            }
+            else{
+                $redirects[] = $child;
+            }
 
             $this->pathMap[$path]  = $child;
             $this->id2Path[$child->id] = $path;
@@ -175,6 +185,59 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
                 $this->pathMap[$homePath]  = $child;
                 $this->id2Path[$child->id] = $homePath;
             }
+        }
+
+        $this->processRedirects($redirects);
+
+    }
+
+    protected function processRedirects($redirects){
+
+        foreach($redirects as $redirect){
+
+            if($redirect->getRedirectType() == 'external'){
+
+                $redirect->setPath($redirect->getRedirectTarget());
+
+            }
+            elseif($redirect->getRedirectType() == 'internal'){
+
+                $target = $redirect->getRedirectTarget();
+
+                if(is_numeric($target)){
+                    if($targetPage = $this->pageById($target)){
+                        if($targetPage->getRedirectType() == 'None'){
+                            $redirect->setPath($targetPage->getPath());
+                        }
+                        else{
+                            $redirect->setPath('_error_');
+                        }
+                    }
+                }
+                elseif($target == SiteTreeNodeInterface::FIRST_CHILD){
+                    if($redirect->hasChildNodes()){
+                        if($child = $this->findFirstNonRedirectChild($redirect->childNodes())){
+                            $redirect->setPath($child->getPath());
+                        }
+                        else{
+                            $redirect->setPath('_error_');
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+    protected function findFirstNonRedirectChild($childNodes){
+        foreach($childNodes as $child){
+            if($child->getRedirectType() != 'None'){
+                return $child;
+            }
+            if($child->hasChildNodes()){
+                return $this->findFirstNonRedirectChild($child->childNodes());
+            }
+            break;
         }
     }
 
