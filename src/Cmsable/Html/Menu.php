@@ -111,11 +111,17 @@ class Menu {
         if($node->isRootNode()){
             $liClasses[] = 'root-node';
         }
+
+        $spanClasses = array();
+
         if($currentPageId == $node->id){
-            $liClasses[] = 'active';
+            $spanClasses[] = 'active';
         }
-        $classes = implode(' ', $liClasses);
-        $string .= "\n    <li id=\"sitetree-{$node->id}\" class=\"$classes\">{$node->menu_title}";
+
+        $liClass = implode(' ', $liClasses);
+        $spanClass = implode(' ', $spanClasses);
+
+        $string .= "\n    <li id=\"sitetree-{$node->id}\" class=\"$liClass\"><span class=\"$spanClass\">{$node->menu_title}</span>";
         if(count($node->childNodes())){
             $string .= "\n    <ul>";
             foreach($node->childNodes() as $child){
