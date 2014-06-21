@@ -30,16 +30,16 @@ class BasePageForm extends Form{
         $mainFields = new FieldList('main',trans('cmsable::forms.page-form.main'));
         $mainFields->setSwitchable(TRUE);
         $mainFields->push(TextField::create('menu_title')
-                                 ->setTitle(trans('cmsable::models.page.menu_title')));
+                                 ->setTitle(trans('cmsable::models.page.fields.menu_title')));
 
         $mainFields->push(UrlSegmentField::create('url_segment')
-                                      ->setTitle(trans('cmsable::models.page.url_segment')));
+                                      ->setTitle(trans('cmsable::models.page.fields.url_segment')));
 
         $mainFields->push(TextField::create('title')
-                                ->setTitle(trans('cmsable::models.page.title')));
+                                ->setTitle(trans('cmsable::models.page.fields.title')));
 
         $mainFields->push(TextField::create('content')
-                                ->setTitle(trans('cmsable::models.page.content'))
+                                ->setTitle(trans('cmsable::models.page.fields.content'))
                                 ->setMultiLine(TRUE)
                                 ->setValue(''));
 
@@ -52,9 +52,9 @@ class BasePageForm extends Form{
         $settingFields->push($this->createPageTypeField());
 
         $settingFields->push(
-            CheckboxField::create('show_in_menu')->setTitle(trans('cmsable::models.page.show_in_menu')),
-            CheckboxField::create('show_in_aside_menu')->setTitle(trans('cmsable::models.page.show_in_aside_menu')),
-            CheckboxField::create('show_in_search')->setTitle(trans('cmsable::models.page.show_in_search'))
+            CheckboxField::create('show_in_menu')->setTitle(trans('cmsable::models.page.fields.show_in_menu')),
+            CheckboxField::create('show_in_aside_menu')->setTitle(trans('cmsable::models.page.fields.show_in_aside_menu')),
+            CheckboxField::create('show_in_search')->setTitle(trans('cmsable::models.page.fields.show_in_search'))
         );
 
         $parentFields->push($mainFields)->push($settingFields);

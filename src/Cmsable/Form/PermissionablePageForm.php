@@ -39,16 +39,16 @@ class PermissionablePageForm extends BasePageForm{
 
         $securityFields->push(
             SelectOneField::create('view_permission')
-                            ->setTitle(trans('cmsable::models.page.view_permission'))
+                            ->setTitle(trans('cmsable::models.page.fields.view_permission'))
                             ->setSrc($viewPermissions),
             SelectOneField::create('edit_permission')
-                            ->setTitle(trans('cmsable::models.page.edit_permission'))
+                            ->setTitle(trans('cmsable::models.page.fields.edit_permission'))
                             ->setSrc($editPermissions),
             SelectOneField::create('delete_permission')
-                            ->setTitle(trans('cmsable::models.page.delete_permission'))
+                            ->setTitle(trans('cmsable::models.page.fields.delete_permission'))
                             ->setSrc($deletePermissions),
             SelectOneField::create('add_child_permission')
-                            ->setTitle(trans('cmsable::models.page.add_child_permission'))
+                            ->setTitle(trans('cmsable::models.page.fields.add_child_permission'))
                             ->setSrc($addChildPermissions)
         );
         $parentFields->push($securityFields);

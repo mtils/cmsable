@@ -1,5 +1,8 @@
 <?php
 
 return array(
-    'pagetype' => 'Seiten-Typ'
+    'pagetype' => 'Seiten-Typ',
+    'categories' => array(
+        'default' => 'Allgemeines'
+    )
 );

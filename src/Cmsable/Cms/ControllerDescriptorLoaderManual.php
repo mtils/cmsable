@@ -68,4 +68,17 @@ class ControllerDescriptorLoaderManual implements ControllerDescriptorLoaderInte
         }
         return $categorized;
     }
+
+    public function getCategory($name){
+        return new ControllerDescriptorCategory($name);
+    }
+
+    public function getCategories($routeScope='default'){
+        $categoryNames = array_keys($this->byCategory($routeScope));
+        $categories = array();
+        foreach($categoryNames as $name){
+            $categories[] = $this->getCategory($name);
+        }
+        return $categories;
+    }
 }
