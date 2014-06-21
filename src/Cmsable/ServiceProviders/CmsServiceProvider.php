@@ -16,9 +16,16 @@ use FormObject\Registry;
 
 class CmsServiceProvider extends ServiceProvider{
 
+    private $cmsPackagePath;
+
+    protected $cmsQualifier = 'ems/cmsable';
+
+    protected $cmsNamespace = 'cmsable';
+
     public function register(){
 
-        $this->package('ems/cmsable','cmsable', realpath(__DIR__.'/../../../src'));
+//         $this->package('ems/cmsable','cmsable', realpath(__DIR__.'/../../../src'));
+        $this->registerPackageConfig();
 
         $this->app->singleton('pageTypes', function(){
             return new ControllerDescriptorLoaderManual($this->app['events']);
@@ -81,6 +88,9 @@ class CmsServiceProvider extends ServiceProvider{
     }
 
     public function boot(){
+
+        $this->registerPackageLang();
+
         $this->app->validator->resolver(function($translator, $data, $rules, $messages){
             $validator = new CmsValidator($translator, $data, $rules, $messages);
             $validator->addSiteTreeLoader($this->app['cms']->getTreeModel('default'));
@@ -89,4 +99,42 @@ class CmsServiceProvider extends ServiceProvider{
             return $validator;
         });
     }
+
+    /**
+     * @brief Separatly register package config, because lang would be to early
+     *        in register
+     **/
+    protected function registerPackageConfig(){
+
+        $configPath = $this->getCmsPackagePath().'/config';
+
+        if ($this->app['files']->isDirectory($configPath))
+        {
+            $this->app['config']->package($this->cmsQualifier, $configPath, $this->cmsNamespace);
+        }
+    }
+
+    /**
+     * @brief Separatly register translator config, because lang would be to early
+     *        in register. You get otherwise a "class translator not found" error
+     **/
+    protected function registerPackageLang(){
+
+        $langPath = $this->getCmsPackagePath().'/lang';
+
+        if ($this->app['files']->isDirectory($langPath))
+        {
+            $this->app['translator']->addNamespace($this->cmsNamespace, $langPath);
+        }
+    }
+
+    protected function getCmsPackagePath(){
+
+        if(!$this->cmsPackagePath){
+            $this->cmsPackagePath = realpath(__DIR__.'/../../../src');
+        }
+        return $this->cmsPackagePath;
+
+    }
+
 }

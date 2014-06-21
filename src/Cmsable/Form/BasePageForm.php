@@ -1,0 +1,91 @@
+<?php namespace Cmsable\Form;
+
+use Form;
+use Validator;
+use FormObject\FieldList;
+use FormObject\Field;
+use FormObject\Field\TextField;
+use FormObject\Field\HiddenField;
+use FormObject\Field\Action;
+use FormObject\Field\CheckboxField;
+use FormObject\Field\BooleanRadioField;
+use FormObject\Field\SelectOneField;
+use Collection\Map\Extractor;
+use CMS;
+
+class UrlSegmentField extends TextField{
+    public $pathPrefix = '/';
+}
+
+class BasePageForm extends Form{
+
+    public function getName(){
+        return 'page-form';
+    }
+
+    public function createFields(){
+
+        $parentFields = parent::createFields();
+
+        $mainFields = new FieldList('main',trans('cmsable::forms.page-form.main'));
+        $mainFields->setSwitchable(TRUE);
+        $mainFields->push(TextField::create('menu_title')
+                                 ->setTitle(trans('cmsable::models.page.menu_title')));
+
+        $mainFields->push(UrlSegmentField::create('url_segment')
+                                      ->setTitle(trans('cmsable::models.page.url_segment')));
+
+        $mainFields->push(TextField::create('title')
+                                ->setTitle(trans('cmsable::models.page.title')));
+
+        $mainFields->push(TextField::create('content')
+                                ->setTitle(trans('cmsable::models.page.content'))
+                                ->setMultiLine(TRUE)
+                                ->setValue(''));
+
+        $mainFields->push(HiddenField::create('id'));
+        $mainFields->push(HiddenField::create('parent_id'));
+
+        $settingFields = new FieldList('settings',trans('cmsable::forms.page-form.settings'));
+        $settingFields->setSwitchable(TRUE);
+
+        $settingFields->push($this->createPageTypeField());
+
+        $settingFields->push(
+            CheckboxField::create('show_in_menu')->setTitle(trans('cmsable::models.page.show_in_menu')),
+            CheckboxField::create('show_in_aside_menu')->setTitle(trans('cmsable::models.page.show_in_aside_menu')),
+            CheckboxField::create('show_in_search')->setTitle(trans('cmsable::models.page.show_in_search'))
+        );
+
+        $parentFields->push($mainFields)->push($settingFields);
+
+        return $parentFields;
+    }
+
+    public function createActions(){
+        $actions = parent::createActions();
+        $actions('action_submit')->setTitle(trans('cmsable::forms.save'));
+        $actions->push(Action::create('delete')->setTitle(trans('cmsable::forms.delete')));
+        return $actions;
+    }
+
+    protected function createValidator(){
+
+        $rules = array(
+            'menu_title' => 'required|min:3|max:255',
+            'url_segment' => 'required|min:1|max:255|url_segment|unique_segment_of:parent_id,id|no_manual_route:parent_id',
+            'title' => 'required|min:3|max:255',
+            'page_type' => 'required',
+            'parent_id' => 'required'
+        );
+
+        return Validator::make($this->data, $rules);
+    }
+
+    protected function createPageTypeField(){
+        return SelectOneField::create('page_type')
+                               ->setTitle(trans('cmsable::pagetypes.pagetype'))
+                               ->setSrc(CMS::pageTypes()->all(),
+                                        new Extractor('getId()', 'singularName()'));
+    }
+}

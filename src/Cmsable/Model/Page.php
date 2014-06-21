@@ -89,7 +89,7 @@ class Page extends BeeTreeNode implements SiteTreeNodeInterface{
 
     public function canView($user){
         if(!$user){
-            if($this->view_permission == 'public-view'){
+            if($this->view_permission == 'page.public-view'){
                 return TRUE;
             }
             return FALSE;
