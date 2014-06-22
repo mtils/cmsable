@@ -15,7 +15,16 @@ return array(
             'view_permission'       => 'Berechtigung um Seite aufrufen zu können:',
             'edit_permission'       => 'Berechtigung um Seite bearbeiten zu können:',
             'delete_permission'     => 'Berechtigung um Seite löschen zu können:',
-            'add_child_permission'  => 'Berechtigung Unterseiten zu dieser Seite anlegen zu können:'
+            'add_child_permission'  => 'Berechtigung Unterseiten zu dieser Seite anlegen zu können:',
+            'redirect_type'         => 'Art der Weiterleitung',
+            'redirect_target'       => 'Ziel der Weiterleitung'
+        ),
+        'enums' => array(
+            'redirect_type' => array(
+                'internal' => 'Auf interne Seite weiterleiten',
+                'external' => 'Auf externe Seite weiterleiten',
+                'none'     => 'Keine Weiterleitung'
+            )
         )
     )
 
