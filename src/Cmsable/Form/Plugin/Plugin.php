@@ -36,7 +36,11 @@ class Plugin implements PluginInterface{
         
     }
 
-    public function processSubmit(Form $form, $model){
+    public function beforeSave(Form $form, $model){
+        
+    }
+
+    public function afterSave(Form $form, $model){
         
     }
 

@@ -191,9 +191,11 @@ class SiteTreeController extends Controller {
             Session::flash('message',$this->getActionMessage('page-saved',$page));
             Session::flash('messageType','success');
 
+            $pageType->getFormPlugin()->beforeSave($this->form, $page);
+
             $this->getModel()->saveNode($page);
 
-            $pageType->getFormPlugin()->processSubmit($this->form, $page);
+            $pageType->getFormPlugin()->afterSave($this->form, $page);
 
             return Redirect::action('edit', array($page->id));
         }

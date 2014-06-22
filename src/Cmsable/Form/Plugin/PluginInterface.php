@@ -11,6 +11,8 @@ interface PluginInterface{
 
     public function fillForm(Form $form, $model);
 
-    public function processSubmit(Form $form, $model);
+    public function beforeSave(Form $form, $model);
+
+    public function afterSave(Form $form, $model);
 
 }

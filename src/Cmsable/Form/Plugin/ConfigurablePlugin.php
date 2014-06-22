@@ -22,7 +22,7 @@ abstract class ConfigurablePlugin extends Plugin{
 
     }
 
-    public function processSubmit(Form $form, $model){
+    public function afterSave(Form $form, $model){
 
         $config = $this->configModel()->getConfig($this->controller(), $model->id);
 
