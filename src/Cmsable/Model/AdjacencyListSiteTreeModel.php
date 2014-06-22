@@ -195,18 +195,18 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
 
         foreach($redirects as $redirect){
 
-            if($redirect->getRedirectType() == 'external'){
+            if($redirect->getRedirectType() == SiteTreeNodeInterface::EXTERNAL){
 
                 $redirect->setPath($redirect->getRedirectTarget());
 
             }
-            elseif($redirect->getRedirectType() == 'internal'){
+            elseif($redirect->getRedirectType() == SiteTreeNodeInterface::INTERNAL){
 
                 $target = $redirect->getRedirectTarget();
 
                 if(is_numeric($target)){
-                    if($targetPage = $this->pageById($target)){
-                        if($targetPage->getRedirectType() == 'None'){
+                    if($targetPage = $this->pageById((int)$target)){
+                        if($targetPage->getRedirectType() == SiteTreeNodeInterface::NONE){
                             $redirect->setPath($targetPage->getPath());
                         }
                         else{
@@ -231,7 +231,7 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
 
     protected function findFirstNonRedirectChild($childNodes){
         foreach($childNodes as $child){
-            if($child->getRedirectType() != 'None'){
+            if($child->getRedirectType() == SiteTreeNodeInterface::NONE){
                 return $child;
             }
             if($child->hasChildNodes()){
