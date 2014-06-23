@@ -1,7 +1,7 @@
 <?php namespace Cmsable\Form;
 
-use Form;
 use Validator;
+use FormObject\Support\Laravel\LaravelForm;
 use FormObject\FieldList;
 use FormObject\Field;
 use FormObject\Field\TextField;
@@ -17,7 +17,7 @@ class UrlSegmentField extends TextField{
     public $pathPrefix = '/';
 }
 
-class BasePageForm extends Form{
+class BasePageForm extends LaravelForm{
 
     public function getName(){
         return 'page-form';

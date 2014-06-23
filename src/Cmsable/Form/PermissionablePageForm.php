@@ -1,7 +1,6 @@
 <?php namespace Cmsable\Form;
 
 use App;
-use Form;
 use Validator;
 use FormObject\FieldList;
 use FormObject\Field;
