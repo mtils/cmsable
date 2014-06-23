@@ -3,28 +3,17 @@
 use Cmsable\Model\SiteTreeNodeInterface;
 use Cmsable\Auth\CurrentUserProviderInterface;
 use Cmsable\Auth\PermissionableInterface;
+use DomainException;
 
 class MenuFilter{
 
     protected $filters = array();
 
-    protected $userProvider;
-
     public function isVisible(SiteTreeNodeInterface $page){
-        if(!$this->checkUserPermission($page)){
-            return FALSE;
-        }
-        foreach($this->filters as $property=>$value){
-            if($page->__get($property) != $value){
+        foreach($this->filters as $filter){
+            if(!$filter($page)){
                 return FALSE;
             }
-        }
-        return TRUE;
-    }
-
-    protected function checkUserPermission(SiteTreeNodeInterface $page){
-        if($this->userProvider and $page instanceof PermissionableInterface){
-            return $page->isAllowed('view', $this->userProvider->current());
         }
         return TRUE;
     }
@@ -38,8 +27,14 @@ class MenuFilter{
         return $this;
     }
 
-    public function setFilter($key, $value){
-        $this->filters[$key] = $value;
+    public function add($name, $filter){
+
+        if(!is_callable($filter)){
+            throw new DomainException("Filter has to be callable");
+        }
+
+        $this->filters[$name] = $filter;
+
         return $this;
     }
 
@@ -48,12 +43,4 @@ class MenuFilter{
         return new $class();
     }
 
-    public function getUserProvider(){
-        return $this->userProvider;
-    }
-
-    public function setUserProvider(CurrentUserProviderInterface $provider){
-        $this->userProvider = $provider;
-        return $this;
-    }
 }

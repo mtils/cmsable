@@ -4,7 +4,6 @@ use Illuminate\Support\ServiceProvider;
 use Cmsable\Model\AdjacencyListSiteTreeModel;
 use Cmsable\Cms\ControllerDescriptorLoaderManual;
 use Cmsable\Html\Menu;
-use Cmsable\Html\MenuFilter;
 use Cmsable\Html\SiteTreeUrlGenerator;
 use Cmsable\Routing\RouterConnector;
 use Cmsable\Validators\CmsValidator;
@@ -102,25 +101,37 @@ class CmsServiceProvider extends ServiceProvider{
     }
 
     protected function createMenuFilters(){
-         $this->app->singleton('Cmsable\Html\MenuFilterRegistry', function($app){
+
+        $this->app->singleton('Cmsable\Html\MenuFilterRegistry', function($app){
             return new MenuFilterRegistry($app['events']);
         });
 
-        $this->app['events']->listen('cmsable::menu-filter.create.default', function($registry){
-            $filter = MenuFilter::create()
-                                  ->setFilter('show_in_menu',1)
-                                  ->setUserProvider($this->getCurrentUserProvider());
-            $registry->setFilter('default', $filter);
-            return FALSE;
+        $this->app['events']->listen('cmsable::menu-filter.create.default', function($filter){
+
+            $filter->add('show_in_menu',function($page){
+                return (bool)$page->show_in_menu;
+            });
+
         },$priority=1);
 
-        $this->app['events']->listen('cmsable::menu-filter.create.asidemenu', function($registry){
-            $filter = MenuFilter::create()
-                                  ->setFilter('show_in_aside_menu',1)
-                                  ->setUserProvider($this->getCurrentUserProvider());
-            $registry->setFilter('asidemenu', $filter);
-            return FALSE;
+        $this->app['events']->listen('cmsable::menu-filter.create.asidemenu', function($filter){
+
+            $filter->add('show_in_aside_menu',function($page){
+                return (bool)$page->show_in_aside_menu;
+            });
+
         },$priority=1);
+
+        $provider = $this->getCurrentUserProvider();
+
+        $this->app['events']->listen('cmsable::menu-filter.create.*', function($filter) use ($provider){
+
+            $filter->add('auth',function($page) use ($provider){
+                return $page->isAllowed('view', $provider->current());
+            });
+
+        },$priority=1);
+
     }
 
     public function boot(){

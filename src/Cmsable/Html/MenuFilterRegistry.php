@@ -29,10 +29,8 @@ class MenuFilterRegistry{
 
     public function getFilter($name){
         if(!isset($this->filters[$name])){
-            $this->dispatcher->fire("cmsable::menu-filter.create.$name", array($this));
-        }
-        if(!isset($this->filters[$name])){
-            throw new OutOfBoundsException("No menufilters for name $name found.");
+            $this->filters[$name] = new MenuFilter();
+            $this->dispatcher->fire("cmsable::menu-filter.create.$name", array($this->filters[$name]));
         }
         return $this->filters[$name];
     }
