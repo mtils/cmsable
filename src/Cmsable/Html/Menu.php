@@ -9,23 +9,19 @@ class Menu {
 
     protected $_loader;
 
-    protected $_filter = NULL;
-
     protected $_root;
 
     protected $_breadcrumbs = array();
 
-    public function __construct(SiteTreeModelInterface $loader,
-                                $filter = NULL){
+    public function __construct(SiteTreeModelInterface $loader){
         $this->_loader = $loader;
-        $this->_filter = $filter;
     }
 
     public function treeLoader(){
         return $this->_loader;
     }
 
-    public function sub($level, $filter=array()){
+    public function sub($level, $filter='default'){
         $currentLevel = 1;
         foreach($this->breadcrumbs() as $crumb){
             if($currentLevel == $level){
@@ -43,9 +39,9 @@ class Menu {
         return $this->_root;
     }
 
-    public function flat(){
+    public function flat($filter='default'){
         $result = [];
-        foreach($this->all() as $node){
+        foreach($this->all($filter) as $node){
             foreach(Helper::flatify($node) as $flatted){
                 $result[] = $flatted;
             }
@@ -53,8 +49,12 @@ class Menu {
         return $result;
     }
 
-    public function all(){
-        return $this->root()->filteredChildren();
+    public function all($filter='default'){
+        $all = $this->root()->filteredChildren($filter);
+        if(!$all){
+            throw new \Exception(gettype($all)." $filter");
+        }
+        return $this->root()->filteredChildren($filter);
     }
 
     public function current(){

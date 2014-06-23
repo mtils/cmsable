@@ -5,6 +5,7 @@ use Cmsable\Html\MenuFilter;
 use Cmsable\Html\FilteredChildIterator;
 use BeeTree\Eloquent\BeeTreeNode;
 use Cmsable\Model\SiteTreeNodeInterface;
+use App;
 
 class Page extends BeeTreeNode implements SiteTreeNodeInterface{
 
@@ -34,9 +35,8 @@ class Page extends BeeTreeNode implements SiteTreeNodeInterface{
         'add_child_permission'
     );
 
-    public function filteredChildren(array $filter=array('show_in_menu'=>1)){
-        return FilteredChildIterator::create($this->childNodes(),
-                                             new MenuFilter($filter));
+    public function filteredChildren($filter='default'){
+        return App::make('Cmsable\Html\MenuFilterRegistry')->filteredChildren($this->childNodes(), $filter);
     }
 
     public function getUrlSegment(){

@@ -10,6 +10,7 @@ use Cmsable\Routing\RouterConnector;
 use Cmsable\Validators\CmsValidator;
 use ConfigurableClass\LaravelConfigModel;
 use DB;
+use Cmsable\Html\MenuFilterRegistry;
 
 use FormObject\Registry;
 
@@ -34,8 +35,7 @@ class CmsServiceProvider extends ServiceProvider{
         $this->registerRouterConnector();
 
         $this->app->singleton('adminMenu', function(){
-            return new Menu($this->app['cms']->getTreeModel('admin'),
-                            new MenuFilter());
+            return new Menu($this->app['cms']->getTreeModel('admin'));
         });
 
         $this->app->singleton('ConfigurableClass\ConfigModelInterface', function(){
@@ -45,8 +45,7 @@ class CmsServiceProvider extends ServiceProvider{
         });
 
         $this->app->singleton('menu', function(){
-            return new Menu($this->app['cms']->getTreeModel('default'),
-                            new MenuFilter());
+            return new Menu($this->app['cms']->getTreeModel('default'));
         });
 
         $this->app['url'] = $this->app->share(function($app)
@@ -60,6 +59,20 @@ class CmsServiceProvider extends ServiceProvider{
                 $app['url']->setRequest($request);
             }));
         });
+
+        $this->app->singleton('Cmsable\Html\MenuFilterRegistry', function($app){
+            return new MenuFilterRegistry($app['events']);
+        });
+
+        $this->app['events']->listen('cmsable::menu-filter.create.default', function($registry){
+            $registry->setFilter('default', new MenuFilter(array('show_in_menu' => 1)));
+            return FALSE;
+        },$priority=1);
+
+        $this->app['events']->listen('cmsable::menu-filter.create.asidemenu', function($registry){
+            $registry->setFilter('asidemenu', new MenuFilter(array('show_in_aside_menu' => 1)));
+            return FALSE;
+        },$priority=1);
     }
 
     protected function registerRouterConnector(){
