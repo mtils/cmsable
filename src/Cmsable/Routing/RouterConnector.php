@@ -1,6 +1,7 @@
 <?php namespace Cmsable\Routing;
 
 use Illuminate\Routing\Router;
+use Cmsable\Auth\CurrentUserProviderInterface;
 use Cmsable\Model\SiteTreeModelInterface;
 use Cmsable\Cms\ControllerDescriptorLoaderInterface;
 use Input;
@@ -18,8 +19,19 @@ class RouterConnector{
 
     protected $descriptorLoader;
 
-    public function __construct(ControllerDescriptorLoaderInterface $loader){
+    protected $userProvider;
+
+    public function __construct(ControllerDescriptorLoaderInterface $loader, CurrentUserProviderInterface $provider){
         $this->descriptorLoader = $loader;
+        $this->userProvider = $provider;
+    }
+
+    public function currentUser(){
+        return $this->userProvider->current();
+    }
+
+    public function getUserProvider(){
+        return $this->userProvider;
     }
 
     public function addCmsRoute($uri, SiteTreeModelInterface $siteTreeModel, $name=NULL){

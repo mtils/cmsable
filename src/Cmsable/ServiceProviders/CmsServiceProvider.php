@@ -23,6 +23,8 @@ class CmsServiceProvider extends ServiceProvider{
 
     protected $cmsNamespace = 'cmsable';
 
+    protected $currentUserProvider;
+
     public function register(){
 
 //         $this->package('ems/cmsable','cmsable', realpath(__DIR__.'/../../../src'));
@@ -60,19 +62,8 @@ class CmsServiceProvider extends ServiceProvider{
             }));
         });
 
-        $this->app->singleton('Cmsable\Html\MenuFilterRegistry', function($app){
-            return new MenuFilterRegistry($app['events']);
-        });
+        $this->createMenuFilters();
 
-        $this->app['events']->listen('cmsable::menu-filter.create.default', function($registry){
-            $registry->setFilter('default', new MenuFilter(array('show_in_menu' => 1)));
-            return FALSE;
-        },$priority=1);
-
-        $this->app['events']->listen('cmsable::menu-filter.create.asidemenu', function($registry){
-            $registry->setFilter('asidemenu', new MenuFilter(array('show_in_aside_menu' => 1)));
-            return FALSE;
-        },$priority=1);
     }
 
     protected function registerRouterConnector(){
@@ -91,13 +82,45 @@ class CmsServiceProvider extends ServiceProvider{
                 $descLoader->setDescriptors($descriptors);
             }
 
-            $cms = new RouterConnector($descLoader);
+            $cms = new RouterConnector($descLoader, $this->getCurrentUserProvider());
             $cms->addCmsRoute('/', $treeModel, 'default');
             $cms->addCmsRoute('/admin', $adminTreeModel, 'admin');
             $cms->register($this->app['router']);
 
             return $cms;
         });
+    }
+
+    protected function getCurrentUserProvider(){
+        if(!$this->currentUserProvider){
+            $userModel = $this->app['config']->get('cmsable::user_model');
+            $providerClass = $this->app['config']->get('cmsable::user_provider');
+            $this->currentUserProvider = $this->app->make($providerClass, array($userModel));
+        }
+        return $this->currentUserProvider;
+
+    }
+
+    protected function createMenuFilters(){
+         $this->app->singleton('Cmsable\Html\MenuFilterRegistry', function($app){
+            return new MenuFilterRegistry($app['events']);
+        });
+
+        $this->app['events']->listen('cmsable::menu-filter.create.default', function($registry){
+            $filter = MenuFilter::create()
+                                  ->setFilter('show_in_menu',1)
+                                  ->setUserProvider($this->getCurrentUserProvider());
+            $registry->setFilter('default', $filter);
+            return FALSE;
+        },$priority=1);
+
+        $this->app['events']->listen('cmsable::menu-filter.create.asidemenu', function($registry){
+            $filter = MenuFilter::create()
+                                  ->setFilter('show_in_aside_menu',1)
+                                  ->setUserProvider($this->getCurrentUserProvider());
+            $registry->setFilter('asidemenu', $filter);
+            return FALSE;
+        },$priority=1);
     }
 
     public function boot(){

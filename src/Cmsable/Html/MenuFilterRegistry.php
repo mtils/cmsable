@@ -37,7 +37,7 @@ class MenuFilterRegistry{
         return $this->filters[$name];
     }
 
-    public function setFilter($name, MenuFilterInterface $filter){
+    public function setFilter($name, MenuFilter $filter){
         $this->filters[$name] = $filter;
         return $this;
     }

@@ -12,6 +12,10 @@ return array(
     */
     'page_model' => 'Cmsable\Model\Page',
 
+    'user_model' => 'User',
+
+    'user_provider' => 'Cmsable\Auth\LaravelCurrentUserProvider',
+
     'pagetype-categories' => array(
         'default'    => array('icon'    => 'fa-file-text-o')
     ),

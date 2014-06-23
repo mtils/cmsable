@@ -1,13 +1,14 @@
 <?php namespace Cmsable\Model;
 
 use Eloquent;
-use Cmsable\Html\MenuFilter;
+use Cmsable\Auth\PermissionableInterface;
+use Cmsable\Auth\UserPermissionInterface;
 use Cmsable\Html\FilteredChildIterator;
 use BeeTree\Eloquent\BeeTreeNode;
 use Cmsable\Model\SiteTreeNodeInterface;
 use App;
 
-class Page extends BeeTreeNode implements SiteTreeNodeInterface{
+class Page extends BeeTreeNode implements SiteTreeNodeInterface,PermissionableInterface{
 
     protected $_path = '';
 
@@ -87,22 +88,16 @@ class Page extends BeeTreeNode implements SiteTreeNodeInterface{
         return $this;
     }
 
-    public function canView($user){
-        if(!$user){
+    public function isAllowed($perm, UserPermissionInterface $user){
+        if($perm == 'view'){
             if($this->view_permission == 'page.public-view'){
                 return TRUE;
             }
-            return FALSE;
-        }
-        if(strpos('.',$this->view_permission) === FALSE){
-            if($user->hasAccess("page.{$this->view_permission}")){
+            if($user->canAccess("{$this->view_permission}")){
                 return TRUE;
             }
         }
-        if($user->hasAccess("{$this->view_permission}")){
-            return TRUE;
-        }
-        return $user->isSuperUser();
+        return FALSE;
     }
 
     /**
