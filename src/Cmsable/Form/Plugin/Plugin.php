@@ -7,18 +7,43 @@ use Cmsable\Cms\ControllerDescriptor;
 
 class Plugin implements PluginInterface{
 
+    /**
+     * @brief The ControllerDescriptor of the matching Page
+     * @var Cmsable\Cms\ControllerDescriptor
+     **/
     protected $pageType;
 
+    /**
+     * @brief Returns the ControllerDescriptor of its Page instance. The pagetype is
+     *        immediatly after instanciation. If your plugin does anything depending on its
+     *        PageType, you can ask by $this->getPageType()
+     *
+     * @return Cmsable\Cms\ControllerDescriptor
+     **/
+    public function getPageType(){
+        return $this->pageType;
+    }
+
+    /**
+     * @brief This method is immediatly called after instanciation
+     *        of this Plugin.
+     *
+     * @see Cmsable\Cms\ControllerDescriptor::getFormPlugin
+     * @return Cmsable\Cms\ControllerDescriptor
+     **/
     public function setPageType(ControllerDescriptor $type){
         $this->pageType = $type;
         return $this;
     }
 
-    public function modifyFormFields(FieldList $fields){}
-
-    public function modifyValidator($validator){}
-
-    public function modifyForm(Form $form){
+    /**
+     * @brief The base method of PluginInterface is final, because it devides into
+     *        fields, validator and actions
+     *
+     * @param FormObject\Form $form The page form
+     * @return void
+     **/
+    public final function modifyForm(Form $form){
 
         $formName = $form->getName();
         $mod = $this;
@@ -30,18 +55,65 @@ class Plugin implements PluginInterface{
         Event::listen("form.validator-created.$formName", function($validator) use ($mod){
             $mod->modifyValidator($validator);
         });
+
+        Event::listen("form.form.actions-created.$formName", function($validator) use ($mod){
+            $mod->modifyValidator($validator);
+        });
     }
 
-    public function fillForm(Form $form, $model){
-        
-    }
+    /**
+     * @brief This method is called after the form created its fields. 
+     *        The sequence is:
+     *        1. Form::createFields()
+     *        2. Form sends Event form.fields-created.$formname
+     *        3. $this->modifyFormFields(FieldList $mainFieldList) is called
+     *        This method is called before it is filled. So here is no chance to do
+     *        something depending on the page or request
+     *
+     * @param FormObject\FieldList
+     * @return void
+     **/
+    public function modifyFormFields(FieldList $fields){}
 
-    public function beforeSave(Form $form, $model){
-        
-    }
+    /**
+     * @brief This method is called after the form created its validator
+     *
+     * @see self::modifyFormFields
+     * @param mixed $validator
+     * @return void
+     **/
+    public function modifyValidator($validator){}
 
-    public function afterSave(Form $form, $model){
-        
-    }
+    /**
+     * @brief This method is called after the form created its actions
+     *
+     * @see self::modifyFormFields
+     * @param FormObject\FieldList $fields
+     * @return void
+     **/
+    public function modifyActions(FieldList $fields){}
+
+    /**
+     * @brief This method is called before the form is filled. If you need to fill
+     *        selects or add fields depending on its page this is the right place
+     *
+     * @param FormObject $form The page form
+     * @param SiteTreeNodeInterface $model
+     * @return void
+     **/
+    public function beforeFillForm(Form $form, $model){}
+
+    /**
+     * @brief This method is called after the form is filled by SiteTreeController.
+     *
+     * @param FormObject $form The page form
+     * @param SiteTreeNodeInterface $model
+     * @return void
+     **/
+    public function fillForm(Form $form, $model){}
+
+    public function beforeSave(Form $form, $model){}
+
+    public function afterSave(Form $form, $model){}
 
 }

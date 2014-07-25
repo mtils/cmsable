@@ -147,6 +147,7 @@ class SiteTreeController extends Controller {
         $pathPrefix = (bool)$parentId ? $this->getModel()->pathById($parentId) . '/' : '/';
 
         if(!$this->form->wasSubmitted()){
+            $pageType->getFormPlugin()->beforeFillForm($this->form, $page);
             $this->form->get('id')->setValue($pageId);
             $this->form->fillByArray($page->toArray());
             $pageType->getFormPlugin()->fillForm($this->form, $page);
