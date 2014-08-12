@@ -10,6 +10,7 @@ use Cmsable\Validators\CmsValidator;
 use ConfigurableClass\LaravelConfigModel;
 use DB;
 use Cmsable\Html\MenuFilterRegistry;
+use Cmsable\Cms\Action\Registry as ActionRegistry;
 
 use FormObject\Registry;
 
@@ -31,6 +32,10 @@ class CmsServiceProvider extends ServiceProvider{
 
         $this->app->singleton('pageTypes', function(){
             return new ControllerDescriptorLoaderManual($this->app['events']);
+        });
+
+        $this->app->singleton('cmsable.actions', function(){
+            return new ActionRegistry();
         });
 
         $this->registerRouterConnector();
