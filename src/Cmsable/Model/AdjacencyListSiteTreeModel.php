@@ -142,12 +142,12 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
         }
     }
 
-    protected function buildLookups($childs=NULL, $currentStack=NULL){
+    protected function buildLookups($childs=NULL, $currentStack=NULL, $filter='default'){
 
         if( $childs=== NULL && $currentStack === NULL ){
             $currentStack = $this->getEmptyPathStack();
             $root = parent::tree($this->getRootId());
-            $childs = $root->childNodes();
+            $childs = $root->filteredChildren($filter);
             $this->pathMap = array();
             $this->id2Path = array();
             $this->id2Path[$root->id] = $root->getUrlSegment();
@@ -159,8 +159,8 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
             $urlSegment = $child->getUrlSegment();
             $currentStack[] = $urlSegment;
 
-            if($child->childNodes()){
-                $this->buildLookups($child->childNodes(), $currentStack);
+            if($child->hasChildNodes()){
+                $this->buildLookups($child->childNodes(), $currentStack, $filter);
             }
 
             $path = implode('/',$currentStack);
@@ -191,7 +191,7 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
 
     }
 
-    protected function processRedirects($redirects){
+    protected function processRedirects($redirects, $filter = 'default'){
 
         foreach($redirects as $redirect){
 
@@ -216,7 +216,7 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
                 }
                 elseif($target == SiteTreeNodeInterface::FIRST_CHILD){
                     if($redirect->hasChildNodes()){
-                        if($child = $this->findFirstNonRedirectChild($redirect->childNodes())){
+                        if($child = $this->findFirstNonRedirectChild($redirect->filteredChildren($filter))){
                             $redirect->setPath($child->getPath());
                         }
                         else{
@@ -229,13 +229,13 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
 
     }
 
-    protected function findFirstNonRedirectChild($childNodes){
+    protected function findFirstNonRedirectChild($childNodes, $filter='default'){
         foreach($childNodes as $child){
             if($child->getRedirectType() == SiteTreeNodeInterface::NONE){
                 return $child;
             }
             if($child->hasChildNodes()){
-                return $this->findFirstNonRedirectChild($child->childNodes());
+                return $this->findFirstNonRedirectChild($child->filteredChildren($filter));
             }
             break;
         }
