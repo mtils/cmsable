@@ -147,7 +147,7 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
         if( $childs=== NULL && $currentStack === NULL ){
             $currentStack = $this->getEmptyPathStack();
             $root = parent::tree($this->getRootId());
-            $childs = $root->filteredChildren($filter);
+            $childs = $root->childNodes();
             $this->pathMap = array();
             $this->id2Path = array();
             $this->id2Path[$root->id] = $root->getUrlSegment();
