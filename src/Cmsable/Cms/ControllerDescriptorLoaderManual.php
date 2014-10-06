@@ -32,6 +32,16 @@ class ControllerDescriptorLoaderManual implements ControllerDescriptorLoaderInte
         throw new OutOfBoundsException("No PageType found with id '$id'");
     }
 
+    public function has($id){
+        try{
+            $type = $this->get($id);
+            return TRUE;
+        }
+        catch(OutOfBoundsException $e){
+            return FALSE;
+        }
+    }
+
     public function add(ControllerDescriptor $info){
         $this->descriptors[$info->getId()] = $info;
         return $this;

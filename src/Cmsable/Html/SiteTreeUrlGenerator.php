@@ -18,6 +18,8 @@ class SiteTreeUrlGenerator extends UrlGenerator{
      */
     public function to($path, $extra = array(), $secure = null)
     {
+        
+        // Page object passed
         if(is_object($path)){
             if($path instanceof SiteTreeNodeInterface){
                 $page = $path;
@@ -28,6 +30,33 @@ class SiteTreeUrlGenerator extends UrlGenerator{
                 }
             }
         }
+
+        // PageTypeId passed
+        elseif(is_string($path) && CMS::pageTypes()->has($path)){
+            
+            foreach(CMS::getCmsRoutes() as $route){
+                if($loader = $route->treeLoader()){
+                    if($pages = $loader->pagesByTypeId($path)){
+
+                        $lowestDepth = 1000;
+                        $topMost = NULL;
+                        $i=0;
+
+                        foreach($pages as $page){
+                            if($page->getDepth() < $lowestDepth){
+                                $topMost = $i;
+                                $lowestDepth = $page->getDepth();
+                            }
+                            $i++;
+                        }
+                        return $this->to($pages[$topMost],$extra,$secure);
+                    }
+                }
+            }
+            
+        }
+
+        // Path passed inside CMS-SiteTree
         elseif(is_string($path) && CMS::inSiteTree()){
             if($extra && !isset($extra[0])){
                 $extra = array_values($extra);
