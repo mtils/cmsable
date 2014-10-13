@@ -113,7 +113,7 @@ class RouterConnector implements RouteInspectorInterface{
             if($route = $this->findBestMatchingCmsRoute(Input::path())){
                 $this->matchedNode = $route->getMatchedNode();
                 if(!$this->matchedNode){
-                    $this->matchedNode = $route->fallbackPage();
+                    $this->matchedNode = $route->getFallbackPage();
                 }
             }
         }
@@ -127,6 +127,12 @@ class RouterConnector implements RouteInspectorInterface{
             }
         }
         return $this->matchedRoutable;
+    }
+
+    public function getFallbackPage(){
+        if($route = $this->findBestMatchingCmsRoute(Input::path())){
+            return $route->getFallbackPage();
+        }
     }
 
 }

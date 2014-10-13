@@ -68,7 +68,10 @@ class Menu {
         if($this->manualCurrentPage){
             return $this->manualCurrentPage;
         }
-        return $this->inspector->getMatchedNode();
+        if($node = $this->inspector->getMatchedNode()){
+            return $this->inspector->getMatchedNode();
+        }
+        return $this->inspector->getFallBackPage();
     }
 
     public function setCurrent($pageOrMenuTitle, $title=NULL, $content=NULL){

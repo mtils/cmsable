@@ -24,4 +24,12 @@ interface RouteInspectorInterface{
     * @return \Cmsable\Routing\Routable\Routable
     */
     public function getMatchedRoutable();
+
+    /**
+    * @brief Return a default page if non found. This is handy for menus to
+    *        habe an object guarantee
+    * 
+    * @return SiteTreeNodeInterface
+    */
+    public function getFallbackPage();
 }

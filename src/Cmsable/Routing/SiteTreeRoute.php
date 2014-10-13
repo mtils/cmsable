@@ -164,7 +164,7 @@ class SiteTreeRoute extends Route implements RouteInspectorInterface{
         return ($this->matchedNode instanceof SiteTreeNodeInterface);
     }
 
-    public function fallbackPage(){
+    public function getFallbackPage(){
         return $this->_treeLoader->pageByPath('home');
     }
 }
