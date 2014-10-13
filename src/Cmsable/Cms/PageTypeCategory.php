@@ -2,7 +2,7 @@
 
 use Config;
 
-class ControllerDescriptorCategory{
+class PageTypeCategory{
 
     protected $name;
 

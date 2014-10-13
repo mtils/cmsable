@@ -11,6 +11,8 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
 
     protected $id2Path;
 
+    protected $pageTypeToPages = [];
+
     protected $rootId;
 
     public function __construct($pageClassName='\Cmsable\Model\Page', $rootId=1){
@@ -106,6 +108,14 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
         return isset($this->pathMap[$path]);
     }
 
+    public function pagesByTypeId($pageTypeId){
+        $this->ensureLookups();
+        if(isset($this->pagesByTypeId[$pageTypeId])){
+            return $this->pagesByTypeId[$pageTypeId];
+        }
+        //return isset($this->pathMap[$path]);
+    }
+
     /**
      * @brief Retrieve a tree by its _ID_. Reimplemented to ensure only pages of this tree are loaded
      * 
@@ -148,8 +158,9 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
             $currentStack = $this->getEmptyPathStack();
             $root = parent::tree($this->getRootId());
             $childs = $root->childNodes();
-            $this->pathMap = array();
-            $this->id2Path = array();
+            $this->pathMap = [];
+            $this->id2Path = [];
+            $this->pageTypeToPages = [];
             $this->id2Path[$root->id] = $root->getUrlSegment();
         }
 
@@ -174,6 +185,12 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
 
             $this->pathMap[$path]  = $child;
             $this->id2Path[$child->id] = $path;
+
+            if(!isset($this->pagesByTypeId[$child->getPageTypeId()])){
+                $this->pagesByTypeId[$child->getPageTypeId()] = [];
+            }
+
+            $this->pagesByTypeId[$child->getPageTypeId()][] = $child;
 
             array_pop($currentStack);
 

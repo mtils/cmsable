@@ -3,22 +3,22 @@
 use FormObject\Form;
 use FormObject\FieldList;
 use Event;
-use Cmsable\Cms\ControllerDescriptor;
+use Cmsable\Cms\PageType;
 
 class Plugin implements PluginInterface{
 
     /**
-     * @brief The ControllerDescriptor of the matching Page
-     * @var Cmsable\Cms\ControllerDescriptor
+     * @brief The PageType of the matching Page
+     * @var Cmsable\Cms\PageType
      **/
     protected $pageType;
 
     /**
-     * @brief Returns the ControllerDescriptor of its Page instance. The pagetype is
+     * @brief Returns the PageType of its Page instance. The pagetype is
      *        immediatly after instanciation. If your plugin does anything depending on its
      *        PageType, you can ask by $this->getPageType()
      *
-     * @return Cmsable\Cms\ControllerDescriptor
+     * @return Cmsable\Cms\PageType
      **/
     public function getPageType(){
         return $this->pageType;
@@ -28,10 +28,10 @@ class Plugin implements PluginInterface{
      * @brief This method is immediatly called after instanciation
      *        of this Plugin.
      *
-     * @see Cmsable\Cms\ControllerDescriptor::getFormPlugin
-     * @return Cmsable\Cms\ControllerDescriptor
+     * @see Cmsable\Cms\PageType::getFormPlugin
+     * @return Cmsable\Cms\PageType
      **/
-    public function setPageType(ControllerDescriptor $type){
+    public function setPageType(PageType $type){
         $this->pageType = $type;
         return $this;
     }

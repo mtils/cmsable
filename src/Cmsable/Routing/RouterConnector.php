@@ -3,26 +3,29 @@
 use Illuminate\Routing\Router;
 use Cmsable\Auth\CurrentUserProviderInterface;
 use Cmsable\Model\SiteTreeModelInterface;
-use Cmsable\Cms\ControllerDescriptorLoaderInterface;
+use Cmsable\Routing\Routable\CreatorInterface;
+use Cmsable\Cms\PageTypeRepositoryInterface;
 use Input;
 use Route;
 
-class RouterConnector{
+class RouterConnector implements RouteInspectorInterface{
 
     protected $cmsRoutes = array();
 
-    protected $_currentPage = NULL;
+    protected $matchedNode = NULL;
+
+    protected $matchedRoutable = NULL;
 
     protected $_isSiteTreeRoute = NULL;
 
     protected $router;
 
-    protected $descriptorLoader;
+    protected $pageTypes;
 
     protected $userProvider;
 
-    public function __construct(ControllerDescriptorLoaderInterface $loader, CurrentUserProviderInterface $provider){
-        $this->descriptorLoader = $loader;
+    public function __construct(PageTypeRepositoryInterface $pageTypes, CurrentUserProviderInterface $provider){
+        $this->pageTypes = $pageTypes;
         $this->userProvider = $provider;
     }
 
@@ -34,32 +37,13 @@ class RouterConnector{
         return $this->userProvider;
     }
 
-    public function addCmsRoute($uri, SiteTreeModelInterface $siteTreeModel, $name=NULL){
-
-        $siteTreeModel->setPathPrefix($uri);
-
-        $verbs = array('GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE');
-        $route = new SiteTreeRoute($verbs, $uri, function(){});
-        $route->setTreeLoader($siteTreeModel);
-        $route->setDescriptorLoader($this->descriptorLoader);
-
-        if(!$name){
-            $name = $uri;
-        }
+    public function addCmsRoute(RouteInspectorInterface $route, $name){
 
         $this->cmsRoutes[$name] = $route;
     }
 
-    public function controllerDescriptors(){
-        return $this->descriptorLoader;
-    }
-
     public function pageTypes(){
-        return $this->controllerDescriptors();
-    }
-
-    public function getTreeModel($routeName){
-        return $this->cmsRoutes[$routeName]->treeLoader();
+        return $this->pageTypes;
     }
 
     public function getCmsRoutes(){
@@ -124,16 +108,25 @@ class RouterConnector{
         return $this->_isSiteTreeRoute;
     }
 
-    public function currentPage(){
-        if($this->_currentPage === NULL){
+    public function getMatchedNode(){
+        if($this->matchedNode === NULL){
             if($route = $this->findBestMatchingCmsRoute(Input::path())){
-                $this->_currentPage = $route->currentPage();
-                if(!$this->_currentPage){
-                    $this->_currentPage = $route->fallbackPage();
+                $this->matchedNode = $route->getMatchedNode();
+                if(!$this->matchedNode){
+                    $this->matchedNode = $route->fallbackPage();
                 }
             }
         }
-        return $this->_currentPage;
+        return $this->matchedNode;
+    }
+
+    public function getMatchedRoutable(){
+        if($this->matchedRoutable === NULL){
+            if($route = $this->findBestMatchingCmsRoute(Input::path())){
+                $this->matchedRoutable = $route->getMatchedRoutable();
+            }
+        }
+        return $this->matchedRoutable;
     }
 
 }

@@ -2,6 +2,7 @@
 
 use FormObject\Field\HiddenField;
 use Cmsable\Model\SiteTreeNodeInterface;
+use Cmsable\Model\SiteTreeModelInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use View;
 use AdminMenu;
@@ -42,8 +43,9 @@ class SiteTreeController extends Controller {
 
     protected $newPageTemplate = '';
 
-    public function __construct(PageForm $form){
+    public function __construct(PageForm $form, SiteTreeModelInterface $model){
         $this->form = $form;
+        $this->model = $model;
         $this->registerViewMacros();
     }
 
@@ -79,11 +81,11 @@ class SiteTreeController extends Controller {
 
         $parent = $this->getParent();
 
-        $page = $this->getModel()->makeNode();
+        $page = $this->model->makeNode();
         $page->parent_id = $parent->id;
         $page->setPageTypeId(Input::get('page_type') ? Input::get('page_type') : 'cmsable.page');
 
-        $pathPrefix = $this->getModel()->pathById($parent->id);
+        $pathPrefix = $this->model->pathById($parent->id);
 
         $this->form->get('url_segment')->pathPrefix = '/'. ltrim($pathPrefix,'/');
 
@@ -111,13 +113,13 @@ class SiteTreeController extends Controller {
 
         $parent = $this->getParent();
 
-        $page = $this->getModel()->makeNode();
+        $page = $this->model->makeNode();
 
         if($this->form->wasSubmitted() && $this->form->getValidator()->passes()){
 
-            $page = $this->getModel()->makeNode();
+            $page = $this->model->makeNode();
             $page->fill($this->form->getData());
-            $this->getModel()->makeChildOf($page, $parent);
+            $this->model->makeChildOf($page, $parent);
 
             Session::flash('message', $this->getActionMessage('page-created', $page));
             Session::flash('messageType','success');
@@ -132,7 +134,7 @@ class SiteTreeController extends Controller {
     public function getEdit($id){
 
         if(is_numeric($id)){
-            $page = $this->getModel()->pageById((int)$id);
+            $page = $this->model->pageById((int)$id);
             $pageId = $page->id;
             $parentId = $page->parent_id;
         }
@@ -144,7 +146,7 @@ class SiteTreeController extends Controller {
 
         $pageType->getFormPlugin()->modifyForm($this->form);
 
-        $pathPrefix = (bool)$parentId ? $this->getModel()->pathById($parentId) . '/' : '/';
+        $pathPrefix = (bool)$parentId ? $this->model->pathById($parentId) . '/' : '/';
 
         if(!$this->form->wasSubmitted()){
             $pageType->getFormPlugin()->beforeFillForm($this->form, $page);
@@ -171,7 +173,7 @@ class SiteTreeController extends Controller {
             throw new BadMethodCallException('Keine ID übergeben');
         }
 
-        $page = $this->getModel()->makeNode()->findOrFail((int)$id);
+        $page = $this->model->makeNode()->findOrFail((int)$id);
 
         $pageType = CMS::pageTypes()->get($page->getPageTypeId());
 
@@ -194,7 +196,7 @@ class SiteTreeController extends Controller {
 
             $pageType->getFormPlugin()->beforeSave($this->form, $page);
 
-            $this->getModel()->saveNode($page);
+            $this->model->saveNode($page);
 
             $pageType->getFormPlugin()->afterSave($this->form, $page);
 
@@ -207,9 +209,9 @@ class SiteTreeController extends Controller {
 
     public function getDelete($id){
 
-        $page = $this->getModel()->makeNode()->findOrFail((int)$id);
+        $page = $this->model->makeNode()->findOrFail((int)$id);
 
-        $this->getModel()->delete($page);
+        $this->model->delete($page);
 
         Session::flash('message',$this->getActionMessage('page-deleted', $page));
         Session::flash('messageType','success');
@@ -223,17 +225,17 @@ class SiteTreeController extends Controller {
         if(!is_numeric($parentId) || !is_numeric($position)){
             throw new RuntimeException('No numeric parentId and position');
         }
-        if(!$parentNode = $this->getModel()->pageById($parentId)){
+        if(!$parentNode = $this->model->pageById($parentId)){
             throw new NotFoundHttpException();
         }
-        if(!$movedNode = $this->getModel()->pageById($movedId)){
+        if(!$movedNode = $this->model->pageById($movedId)){
             throw new NotFoundHttpException();
         }
 
         if(!$newAnchestor = $this->findChildByPosition($parentNode, (int)$position)){
             // If there is no anchestor, simply add it as the first child
             if((int)$position == 1){
-                $this->getModel()->makeChildOf($movedNode, $parentNode);
+                $this->model->makeChildOf($movedNode, $parentNode);
                 Session::flash('message',$this->getActionMessage('page-moved', $movedNode));
                 Session::flash('messageType','success');
             }
@@ -242,7 +244,7 @@ class SiteTreeController extends Controller {
             }
         }
         else{
-            $this->getModel()->insertBefore($movedNode, $newAnchestor);
+            $this->model->insertBefore($movedNode, $newAnchestor);
             Session::flash('message',$this->getActionMessage('page-moved', $movedNode));
             Session::flash('messageType','success');
         }
@@ -262,7 +264,7 @@ class SiteTreeController extends Controller {
 
     protected function findChildByPosition($parent, $position){
 
-        $posCol = $this->getModel()->sortCol();
+        $posCol = $this->model->sortCol();
 
         foreach($parent->childNodes() as $child){
             if($child->__get($posCol) == $position){
@@ -303,9 +305,6 @@ class SiteTreeController extends Controller {
     * @return Cmsable\Model\SiteTreeModelInterface
     */
     protected function getModel(){
-        if(!$this->model){
-            $this->model = CMS::getTreeModel($this->cmsRouteName);
-        }
         return $this->model;
     }
 

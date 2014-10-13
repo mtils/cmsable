@@ -2,7 +2,8 @@
 
 use Illuminate\Support\ServiceProvider;
 use Cmsable\Model\AdjacencyListSiteTreeModel;
-use Cmsable\Cms\ControllerDescriptorLoaderManual;
+use Cmsable\Cms\PageType;
+use Cmsable\Cms\ManualPageTypeRepository;
 use Cmsable\Html\Menu;
 use Cmsable\Html\SiteTreeUrlGenerator;
 use Cmsable\Routing\RouterConnector;
@@ -11,6 +12,14 @@ use ConfigurableClass\LaravelConfigModel;
 use DB;
 use Cmsable\Html\MenuFilterRegistry;
 use Cmsable\Cms\Action\Registry as ActionRegistry;
+
+use Cmsable\Routing\Routable\CreatorRegistry;
+use Cmsable\Routing\Routable\PathEqualsCreator;
+use Cmsable\Routing\Routable\ControllerMethodCreator;
+use Cmsable\Routing\Routable\SubRoutableCreator;
+use Cmsable\Routing\SiteTreeRoute;
+use Cmsable\Controller\SiteTreeController;
+use Cmsable\Controller\AdminSiteTreeController;
 
 use FormObject\Registry;
 
@@ -25,23 +34,30 @@ class CmsServiceProvider extends ServiceProvider{
 
     protected $currentUserProvider;
 
+    protected $defaultScopeId = 1;
+
+    protected $adminScopeId = 2;
+
     public function register(){
 
-//         $this->package('ems/cmsable','cmsable', realpath(__DIR__.'/../../../src'));
         $this->registerPackageConfig();
 
-        $this->app->singleton('pageTypes', function(){
-            return new ControllerDescriptorLoaderManual($this->app['events']);
-        });
+        $serviceProvider = $this;
 
-        $this->app->singleton('cmsable.actions', function(){
-            return new ActionRegistry();
-        });
+        $this->registerPageTypeRepository();
+
+        $this->registerActionRegistry();
+
+        $this->registerRoutableCreator();
 
         $this->registerRouterConnector();
 
-        $this->app->singleton('adminMenu', function(){
-            return new Menu($this->app['cms']->getTreeModel('admin'));
+        $this->registerDefaultTreeModel();
+
+        $this->registerAdminTreeModel();
+
+        $this->app->singleton('adminMenu', function($app){
+            return new Menu($app['cmsable.tree-admin'], $app['cmsable.route-admin']);
         });
 
         $this->app->singleton('ConfigurableClass\ConfigModelInterface', function(){
@@ -50,9 +66,13 @@ class CmsServiceProvider extends ServiceProvider{
             return $model;
         });
 
-        $this->app->singleton('menu', function(){
-            return new Menu($this->app['cms']->getTreeModel('default'));
+        $this->app->singleton('menu', function($app){
+            return new Menu($app['cmsable.tree-default'], $app['cmsable.route-default']);
         });
+
+        $this->registerSiteTreeController();
+
+        $this->registerAdminSiteTreeController();
 
         $this->app['url'] = $this->app->share(function($app)
         {
@@ -70,9 +90,95 @@ class CmsServiceProvider extends ServiceProvider{
 
     }
 
+    protected function registerPageTypeRepository(){
+        $this->app->singleton('cmsable.pageTypes', function($app){
+            return new ManualPageTypeRepository(new PageType, $app, $app['events']);
+        });
+    }
+
+    protected function registerActionRegistry(){
+
+        $this->app->singleton('cmsable.actions', function(){
+            return new ActionRegistry();
+        });
+
+    }
+
+    protected function registerRoutableCreator(){
+
+        $serviceProvider = $this;
+
+        $this->app->singleton('cmsable.routable-creator', function($app) use ($serviceProvider){
+
+            $registry = new CreatorRegistry;
+            $serviceProvider->registerRoutableCreators($registry);
+            return $registry;
+
+        });
+
+    }
+
+    protected function registerRoutableCreators(CreatorRegistry $registry){
+
+        $this->registerPathEqualsCreator($registry);
+        $this->registerControllerMethodCreator($registry);
+        $this->registerSubRoutableCreator($registry);
+
+    }
+
+    protected function registerDefaultTreeModel(){
+
+        $pageClass = $this->app['config']->get('cmsable::page_model');
+
+        $this->app->singleton('cmsable.tree-default', function($app) use ($pageClass){
+
+            return new AdjacencyListSiteTreeModel($pageClass,1);
+
+        });
+
+    }
+
+    protected function registerAdminTreeModel(){
+
+        $pageClass = $this->app['config']->get('cmsable::page_model');
+
+        $this->app->singleton('cmsable.tree-admin', function($app) use ($pageClass){
+
+            return new AdjacencyListSiteTreeModel($pageClass,2);
+
+        });
+
+    }
+
+    protected function registerPathEqualsCreator(CreatorRegistry $registry){
+
+        $pageTypes = $this->app->make('cmsable.pageTypes');
+        $inspector = $this->app->make('Illuminate\Routing\ControllerInspector');
+        $registry->addCreator(new PathEqualsCreator($pageTypes, $inspector));
+
+    }
+
+    protected function registerControllerMethodCreator(CreatorRegistry $registry){
+
+        $pageTypes = $this->app->make('cmsable.pageTypes');
+        $inspector = $this->app->make('Illuminate\Routing\ControllerInspector');
+        $registry->addCreator(new ControllerMethodCreator($pageTypes, $inspector));
+
+    }
+
+    protected function registerSubRoutableCreator(CreatorRegistry $registry){
+
+        $pageTypes = $this->app->make('cmsable.pageTypes');
+        $inspector = $this->app->make('Illuminate\Routing\ControllerInspector');
+        $registry->addCreator(new SubRoutableCreator($pageTypes, $inspector));
+
+    }
+
     protected function registerRouterConnector(){
 
-        $this->app->singleton('cms', function($app){
+        $serviceProvider = $this;
+
+        $this->app->singleton('cms', function($app) use ($serviceProvider){
 
             $pageClass = $app['config']->get('cmsable::page_model');
 
@@ -80,19 +186,44 @@ class CmsServiceProvider extends ServiceProvider{
             $treeModel =  new AdjacencyListSiteTreeModel($pageClass,1);
             $adminTreeModel = new AdjacencyListSiteTreeModel($pageClass,2);
 
-            $descLoader = new ControllerDescriptorLoaderManual($this->app['events']);
+            $pageTypeLoader = $this->app->make('cmsable.pageTypes');
 
-            if($descriptors = $app['config']->get('cmsable::pagetypes')){
-                $descLoader->setDescriptors($descriptors);
+            if($pageTypeArray = $app['config']->get('cmsable::pagetypes')){
+                $pageTypeLoader->fillByArray($pageTypeArray);
             }
 
-            $cms = new RouterConnector($descLoader, $this->getCurrentUserProvider());
-            $cms->addCmsRoute('/', $treeModel, 'default');
-            $cms->addCmsRoute('/admin', $adminTreeModel, 'admin');
-            $cms->register($this->app['router']);
+            $cms = new RouterConnector($pageTypeLoader, $this->getCurrentUserProvider());
+
+            $serviceProvider->addDefaultSiteTreeRoute($cms);
+            $serviceProvider->addAdminSiteTreeRoute($cms);
+
+            $cms->register($app['router']);
 
             return $cms;
         });
+    }
+
+    protected function addDefaultSiteTreeRoute(RouterConnector $cms){
+
+        $route = new SiteTreeRoute($this->app->make('cmsable.tree-default'),
+                                   $this->app->make('cmsable.routable-creator'),
+                                   '/');
+
+        $cms->addCmsRoute($route,'default');
+
+        $this->app->instance('cmsable.route-default', $route);
+
+    }
+
+    protected function addAdminSiteTreeRoute(RouterConnector $cms){
+
+        $route = new SiteTreeRoute($this->app->make('cmsable.tree-admin'),
+                                   $this->app->make('cmsable.routable-creator'),
+                                   '/admin');
+        $cms->addCmsRoute($route,'admin');
+
+        $this->app->instance('cmsable.route-admin', $route);
+
     }
 
     protected function getCurrentUserProvider(){
@@ -139,15 +270,29 @@ class CmsServiceProvider extends ServiceProvider{
 
     }
 
+    protected function registerSiteTreeController(){
+        $this->app->bind('\Cmsable\Controller\SiteTreeController',function($app){
+            return new SiteTreeController($app['PageForm'], $app['cmsable.tree-default']);
+        });
+    }
+
+    protected function registerAdminSiteTreeController(){
+        $this->app->bind('\Cmsable\Controller\AdminSiteTreeController',function($app){
+            return new AdminSiteTreeController($app['Cmsable\Form\AdminPageForm'], $app['cmsable.tree-admin']);
+        });
+    }
+
     public function boot(){
 
         $this->registerPackageLang();
 
-        $this->app->validator->resolver(function($translator, $data, $rules, $messages){
+        $app = $this->app;
+
+        $this->app->validator->resolver(function($translator, $data, $rules, $messages) use ($app){
             $validator = new CmsValidator($translator, $data, $rules, $messages);
-            $validator->addSiteTreeLoader($this->app['cms']->getTreeModel('default'));
-            $validator->addSiteTreeLoader($this->app['cms']->getTreeModel('admin'));
-            $validator->setRouter($this->app['router']);
+            $validator->addSiteTreeLoader($app['cmsable.tree-default']);
+            $validator->addSiteTreeLoader($app['cmsable.tree-admin']);
+            $validator->setRouter($app['router']);
             return $validator;
         });
     }

@@ -1,11 +1,11 @@
 <?php namespace Cmsable\Form\Plugin;
 
 use FormObject\Form;
-use Cmsable\Cms\ControllerDescriptor;
+use Cmsable\Cms\PageType;
 
 interface PluginInterface{
 
-    public function setPageType(ControllerDescriptor $type);
+    public function setPageType(PageType $type);
 
     public function modifyForm(Form $form);
 

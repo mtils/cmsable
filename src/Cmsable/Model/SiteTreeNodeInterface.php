@@ -50,7 +50,7 @@ interface SiteTreeNodeInterface extends NodeInterface{
     public function getPageTypeId();
 
     /**
-     * @brief Set the id of its pagetype (ControllerDescriptor)
+     * @brief Set the id of its PageType
      * @param string The id
      * @return SiteTreeNodeInterface
      **/

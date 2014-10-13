@@ -61,4 +61,6 @@ interface SiteTreeModelInterface{
      **/
     public function pathExists($path);
 
+    public function pagesByTypeId($pageTypeId);
+
 }

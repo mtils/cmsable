@@ -2,17 +2,43 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
+use Cmsable\Model\SiteTreeNodeInterface;
 use Cmsable\Model\SiteTreeModelInterface;
+use Cmsable\Cms\PageTypeRepositoryInterface;
+use Cmsable\Routing\Routable\CreatorInterface;
+use App;
 
-class SiteTreeRoute extends Route{
+class SiteTreeRoute extends Route implements RouteInspectorInterface{
 
     protected $parameters = array();
 
-    protected $_treeLoader = NULL;
+    protected $_treeLoader;
 
-    protected $_currentPage = NULL;
+    protected $matchedNode;
 
-    protected $descriptorLoader;
+    protected $matchedRoutable;
+
+    protected $defaultMethods = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'];
+
+    protected $routableCreator;
+
+    /**
+     * Create a new Route instance.
+     *
+     * @param  array   $methods
+     * @param  string  $uri
+     * @param  \Closure|array  $action
+     * @return void
+     */
+    public function __construct(SiteTreeModelInterface $treeModel, CreatorInterface $routableCreator, $uri){
+
+        parent::__construct($this->defaultMethods, $uri, function(){});
+
+        $treeModel->setPathPrefix($uri);
+        $this->_treeLoader = $treeModel;
+        $this->routableCreator = $routableCreator;
+
+    }
 
     /**
      * Determine if the route matches given request.
@@ -23,14 +49,42 @@ class SiteTreeRoute extends Route{
     public function matches(Request $request, $includingMethod = true)
     {
         $this->compileRoute();
-        $myUri = trim($this->uri,'/');
-        $requestUri = trim($request->path(),'/');
-        $performedHomeFallback = FALSE;
 
-        if($myUri != ''){
-            if($requestUri != $myUri){
+        if(!$this->pathMatchesRoutePrefix($request)){
+            return FALSE;
+        }
+
+        $requestUri = $this->getTranslatedPath($request);
+
+        // Find matching page
+        if(!$node = $this->getFirstMatchingNode($requestUri)){
+            return FALSE;
+        }
+
+        $this->matchedNode = $node;
+
+        // Find matching Routable
+        if(!$routable = $this->routableCreator->createRoutable($request, $node, $requestUri)){
+            return FALSE;
+        }
+
+        $this->matchedRoutable = $routable;
+
+        $this->action['uses'] =  $routable->getPageType()->createExecutor($routable);
+
+        return TRUE;
+
+    }
+
+    public function pathMatchesRoutePrefix(Request $request){
+
+        $prefix = trim($this->uri,'/');
+        $requestUri = trim($request->path(),'/');
+
+        if($prefix != ''){
+            if($requestUri != $prefix){
                 $requestTiles = explode('/', $requestUri);
-                $myTiles = explode('/', $myUri);
+                $myTiles = explode('/', $prefix);
                 for($i=0; $i<count($requestTiles); $i++){
                     if(isset($myTiles[$i])){
                         if($requestTiles[$i] != $myTiles[$i]){
@@ -39,101 +93,54 @@ class SiteTreeRoute extends Route{
                     }
                 }
             }
-            if($myUri == $requestUri){
-                $requestUri = $myUri.'/home';
-                $performedHomeFallback = TRUE;
+        }
+        return TRUE;
+    }
+
+    public function getTranslatedPath(Request $request){
+
+        $prefix = trim($this->uri,'/');
+        $normalized = trim($request->path(),'/');
+
+        if($prefix != ''){
+            if($prefix == $normalized){
+                $normalized = $prefix.'/home';
             }
         }
         else{
-            if($requestUri == ''){
-                $requestUri = 'home';
-                $performedHomeFallback = TRUE;
+            if($normalized == ''){
+                $normalized = 'home';
             }
         }
 
-        $node = $this->treeLoader()->pageByPath($requestUri);
+        return $normalized;
+    }
 
-        if($node){
+    public function getFirstMatchingNode($path){
 
-            $this->_currentPage = $node;
-            $pageType = $this->descriptorLoader->get($node->getPageTypeId());
-            $verb = mb_strtolower($request->getMethod());
-            $methodName = "{$verb}Index";
-
-            $this->action['uses'] = function() use($pageType, $methodName, $node){
-                $controller = $pageType->createController($node);
-                return $controller->$methodName();
-            };
-            return TRUE;
+        // If $path matches a node path return it
+        if($node = $this->treeLoader()->pageByPath($path)){
+            return $node;
         }
-        // If there is no node found by absolute equality of path choose the
-        // last known path Controller and check if action exists
+        // If not find last matching segment
         else{
 
-            $requestSegments = explode('/', $requestUri);
-
+            $requestSegments = explode('/', $path);
             $pathStack = array();
-            $actionSegment = NULL;
-            $node = NULL;
 
             foreach($requestSegments as $segment){
+
                 $pathStack[] = $segment;
                 $currentPath = implode('/',$pathStack);
+
                 if(!$this->_treeLoader->pathExists($currentPath)){
-                    $actionSegment = $segment;
                     array_pop($pathStack);
                     $parentPath = implode('/',$pathStack);
-                    $node = $this->_treeLoader->pageByPath($parentPath);
-                    break;
-                }
-            }
-            if($actionSegment && $node){
-                $unusedPart = str_replace("$parentPath/$actionSegment",'',
-                                          $requestUri);
-                $this->_currentPage = $node;
-
-                $pageType = $this->descriptorLoader->get($node->getPageTypeId());
-
-                $controllerMethod = $this->getControllerMethod($pageType->controllerClassName(),
-                                                               $actionSegment,
-                                                               $request->getMethod());
-                if($controllerMethod){
-                    $method = $controllerMethod;
-                    $this->action['uses'] = function() use($pageType,
-                                                        $node,
-                                                        $method,
-                                                        $unusedPart){
-                        $controller = $pageType->createController($node);
-                        return $controller->$method(trim($unusedPart,'/'));
-                    };
-                    return TRUE;
+                    return $this->_treeLoader->pageByPath($parentPath);
                 }
             }
         }
-        return FALSE;
-    }
-    
-    protected function getControllerMethod($controllerClassName, $actionSegment, $verb){
-        $routable = \Route::getInspector()->getRoutable($controllerClassName,'');
-        $verb = strtolower($verb);
-        $controllerMethod = strtolower($verb) . ucfirst(camel_case($actionSegment));
-        if($routable){
-            foreach ($routable as $method => $routes)
-            {
-                if($method == $controllerMethod){
-                    return $method;
-                }
-            }
-        }
-    }
 
-    public function getDescriptorLoader(){
-        return $this->descriptorLoader;
-    }
-
-    public function setDescriptorLoader($loader){
-        $this->descriptorLoader = $loader;
-        return $this;
     }
 
     public function treeLoader(){
@@ -145,8 +152,16 @@ class SiteTreeRoute extends Route{
         return $this;
     }
 
-    public function currentPage(){
-        return $this->_currentPage;
+    public function getMatchedNode(){
+        return $this->matchedNode;
+    }
+
+    public function getMatchedRoutable(){
+        return $this->matchedRoutable;
+    }
+
+    public function inSiteTree(){
+        return ($this->matchedNode instanceof SiteTreeNodeInterface);
     }
 
     public function fallbackPage(){

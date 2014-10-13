@@ -1,8 +1,10 @@
 <?php namespace Cmsable\Html;
 
+use Cmsable\Model\SiteTreeNodeInterface;
 use Cmsable\Model\SiteTreeModelInterface;
+use Cmsable\Routing\RouteInspectorInterface;
 use BeeTree\Helper;
-use CMS;
+
 class Menu {
 
     protected $siteHierarchy = array();
@@ -13,8 +15,13 @@ class Menu {
 
     protected $_breadcrumbs = array();
 
-    public function __construct(SiteTreeModelInterface $loader){
+    protected $inspector;
+
+    protected $manualCurrentPage;
+
+    public function __construct(SiteTreeModelInterface $loader, RouteInspectorInterface $inspector){
         $this->_loader = $loader;
+        $this->inspector = $inspector;
     }
 
     public function treeLoader(){
@@ -58,7 +65,49 @@ class Menu {
     }
 
     public function current(){
-        return CMS::currentPage();
+        if($this->manualCurrentPage){
+            return $this->manualCurrentPage;
+        }
+        return $this->inspector->getMatchedNode();
+    }
+
+    public function setCurrent($pageOrMenuTitle, $title=NULL, $content=NULL){
+
+        if($pageOrMenuTitle instanceof SiteTreeNodeInterface){
+            $page = $pageOrMenuTitle;
+        }
+        else{
+
+            $page = $this->_loader->makeNode();
+            $page->menu_title = $pageOrMenuTitle;
+            if(!$title !== NULL){
+                $page->title = $title;
+            }
+            if(!$content !== NULL){
+                $page->content = $content;
+            }
+        }
+
+        if(!$page->id){
+            $page->id = -1;
+        }
+
+        if($matchedNode = $this->inspector->getMatchedNode()){
+            $page->setParentNode($matchedNode);
+        }
+
+        $this->manualCurrentPage = $page;
+
+        return $this;
+    }
+
+    public function inSubPath(){
+        if($routable = $this->inspector->getMatchedRoutable()){
+            if($routable->isSameController() && $routable->isIndex()){
+                return FALSE;
+            }
+        }
+        return TRUE;
     }
 
     public function appendToBreadCrumbs($page){
@@ -68,12 +117,14 @@ class Menu {
     }
 
     public function breadcrumbs($page=NULL){
+
         if($page === NULL){
             $page = $this->current();
         }
+
         if($page){
             $pageId = $page->id;
-            if(!isset($this->_breadcrumbs[$page->id])){
+            if(!isset($this->_breadcrumbs[$pageId])){
                 $breadcrumbs = array();
                 $breadcrumbs[] = $page;
                 while($parent = $page->parentNode()){

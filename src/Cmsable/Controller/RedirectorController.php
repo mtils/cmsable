@@ -10,7 +10,7 @@ class RedirectorController extends Controller{
 
     public function getIndex()
     {
-        if($page = CMS::currentPage()){
+        if($page = CMS::getMatchedNode()){
             if($page->getRedirectType() != SiteTreeNodeInterface::NONE){
                 $target = $page->getPath();
                 if($target != '_error_'){
