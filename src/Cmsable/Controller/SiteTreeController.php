@@ -1,6 +1,7 @@
 <?php namespace Cmsable\Controller;
 
 use FormObject\Field\HiddenField;
+use FormObject\Support\Laravel\ValidationException;
 use Cmsable\Model\SiteTreeNodeInterface;
 use Cmsable\Model\SiteTreeModelInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -12,7 +13,7 @@ use Session;
 use URL;
 use Redirect;
 use RuntimeException;
-use DB;
+use DB; 
 use App;
 use Event;
 use CMS;
@@ -22,6 +23,7 @@ use Response;
 use Config;
 use HTML;
 use Controller;
+use BadMethodCallException;
 
 class SiteTreeController extends Controller {
 
@@ -69,7 +71,7 @@ class SiteTreeController extends Controller {
 
     protected function getParent(){
         if(!$parent_id = Input::get('parent_id') ? Input::get('parent_id') : Input::old('parent_id')){
-            throw new \BadMethodCallException('Missing parent_id');
+            throw new BadMethodCallException('Missing parent_id');
         }
         if(!$parent = $this->getModel()->pageById($parent_id)){
             throw new NotFoundHttpException();
@@ -89,14 +91,7 @@ class SiteTreeController extends Controller {
 
         $this->form->get('url_segment')->pathPrefix = '/'. ltrim($pathPrefix,'/');
 
-        $old = Input::old();
-
-        if($old){
-            $this->form->fillByRequestArray($old);
-        }
-        else{
-            $this->form->fillByArray($page->toArray());
-        }
+        $this->form->fillByArray($page->toArray());
 
         $this->form->actions->offsetUnset('action_delete');
 
@@ -115,7 +110,7 @@ class SiteTreeController extends Controller {
 
         $page = $this->model->makeNode();
 
-        if($this->form->wasSubmitted() && $this->form->getValidator()->passes()){
+        try{
 
             $page = $this->model->makeNode();
             $page->fill($this->form->getData());
@@ -124,10 +119,11 @@ class SiteTreeController extends Controller {
             Session::flash('message', $this->getActionMessage('page-created', $page));
             Session::flash('messageType','success');
 
-            return Redirect::action('edit', array($page->id));
+            return Redirect::action('edit', [$page->id]);
+
         }
-        else{
-            return Redirect::action('create')->withInput();
+        catch(ValidationException $error){
+            return Redirect::action('create')->withInput()->withErrors($error);
         }
     }
 
@@ -139,7 +135,7 @@ class SiteTreeController extends Controller {
             $parentId = $page->parent_id;
         }
         else{
-            throw new \BadMethodCallException('Wrong id param');
+            throw new BadMethodCallException('Wrong id param');
         }
 
         $pageType = CMS::pageTypes()->get($page->getPageTypeId());
@@ -148,14 +144,12 @@ class SiteTreeController extends Controller {
 
         $pathPrefix = (bool)$parentId ? $this->model->pathById($parentId) . '/' : '/';
 
-        if(!$this->form->wasSubmitted()){
-            $pageType->getFormPlugin()->beforeFillForm($this->form, $page);
-            $this->form->get('id')->setValue($pageId);
-            $this->form->fillByArray($page->toArray());
-            $pageType->getFormPlugin()->fillForm($this->form, $page);
-        }
-
+        $pageType->getFormPlugin()->beforeFillForm($this->form, $page);
         $this->form->get('url_segment')->pathPrefix = '/'. ltrim($pathPrefix,'/');
+
+        $this->form->get('id')->setValue($pageId);
+        $this->form->fillByArray($page->toArray());
+        $pageType->getFormPlugin()->fillForm($this->form, $page);
 
         $viewData = array(
             'editedPage' => $page,
@@ -184,11 +178,12 @@ class SiteTreeController extends Controller {
         if($action == 'delete'){
             return $this->getDelete($id);
         }
+
         if($action != 'submit'){
             throw new NotFoundHttpException();
         }
 
-        if($this->form->wasSubmitted() && $this->form->getValidator()->passes()){
+        try{
             $page->fill($this->form->getData(FALSE));
 
             Session::flash('message',$this->getActionMessage('page-saved',$page));
@@ -200,10 +195,10 @@ class SiteTreeController extends Controller {
 
             $pageType->getFormPlugin()->afterSave($this->form, $page);
 
-            return Redirect::action('edit', array($page->id));
+            return Redirect::action('edit', [$page->id]);
         }
-        else{
-            return Redirect::action('edit', array($page->id))->withInput();
+        catch(ValidationException $error){
+            return Redirect::action('edit', [$page->id])->withInput()->withErrors($error);
         }
     }
 
