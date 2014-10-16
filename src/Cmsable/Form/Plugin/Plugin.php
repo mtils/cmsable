@@ -56,8 +56,8 @@ class Plugin implements PluginInterface{
             $mod->modifyValidator($validator);
         });
 
-        Event::listen("form.form.actions-created.$formName", function($validator) use ($mod){
-            $mod->modifyValidator($validator);
+        Event::listen("form.form.actions-created.$formName", function($actions) use ($mod){
+            $mod->modifyActions($actions);
         });
     }
 
