@@ -5,6 +5,7 @@ use Cmsable\Model\SiteTreeModelInterface;
 use AdminMenu;
 use URL;
 use HTML;
+use View;
 
 class AdminSiteTreeController extends SiteTreeController {
 
@@ -23,6 +24,9 @@ class AdminSiteTreeController extends SiteTreeController {
     protected function registerViewMacros(){
         HTML::macro('jsTree', function($editedId){
             return AdminMenu::jsTree($editedId);
+        });
+        View::composer($this->getNewPageTemplate(), function($view){
+            $view->with('useAdminTree',true);
         });
     }
 
