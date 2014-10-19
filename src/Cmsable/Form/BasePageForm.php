@@ -10,8 +10,11 @@ use FormObject\Field\Action;
 use FormObject\Field\CheckboxField;
 use FormObject\Field\BooleanRadioField;
 use FormObject\Field\SelectOneField;
+use FormObject\Field\SelectFlagsField;
 use Collection\Map\Extractor;
 use CMS;
+use Config;
+use ReflectionClass;
 
 class UrlSegmentField extends TextField{
     public $pathPrefix = '/';
@@ -46,20 +49,47 @@ class BasePageForm extends Form{
         $mainFields->push(HiddenField::create('id'));
         $mainFields->push(HiddenField::create('parent_id'));
 
+        $parentFields->push($mainFields)->push($this->getSettingFields());
+
+        return $parentFields;
+    }
+
+    protected function getSettingFields(){
+
         $settingFields = new FieldList('settings',trans('cmsable::forms.page-form.settings'));
         $settingFields->setSwitchable(TRUE);
 
         $settingFields->push($this->createPageTypeField());
 
-        $settingFields->push(
-            CheckboxField::create('show_in_menu')->setTitle(trans('cmsable::models.page.fields.show_in_menu')),
-            CheckboxField::create('show_in_aside_menu')->setTitle(trans('cmsable::models.page.fields.show_in_aside_menu')),
-            CheckboxField::create('show_in_search')->setTitle(trans('cmsable::models.page.fields.show_in_search'))
-        );
+        if($this->hasVisibilityField()){
 
-        $parentFields->push($mainFields)->push($settingFields);
+            $options = [
+                trans('cmsable::models.page.enums.visibility.show_in_menu'),
+                trans('cmsable::models.page.enums.visibility.show_in_aside_menu'),
+                trans('cmsable::models.page.enums.visibility.show_in_search')
+            ];
 
-        return $parentFields;
+            $settingFields->push(
+                SelectFlagsField::create('visibility')
+                                ->setTitle(trans('cmsable::models.page.fields.visibility'))
+                                ->setSrc($options)
+            );
+        }
+        else{
+            $settingFields->push(
+                CheckboxField::create('show_in_menu')->setTitle(trans('cmsable::models.page.fields.show_in_menu')),
+                CheckboxField::create('show_in_aside_menu')->setTitle(trans('cmsable::models.page.fields.show_in_aside_menu')),
+                CheckboxField::create('show_in_search')->setTitle(trans('cmsable::models.page.fields.show_in_search'))
+            );
+        }
+
+        return $settingFields;
+
+    }
+
+    protected function hasVisibilityField(){
+        $pageClass = Config::get('cmsable::page_model');
+        return (strpos($pageClass,'Prodis') === false);
     }
 
     public function createActions(){

@@ -119,7 +119,7 @@ class CmsServiceProvider extends ServiceProvider{
     }
 
     protected function registerRoutableCreators(CreatorRegistry $registry){
-
+        
         $this->registerPathEqualsCreator($registry);
         $this->registerControllerMethodCreator($registry);
         $this->registerSubRoutableCreator($registry);
@@ -242,6 +242,14 @@ class CmsServiceProvider extends ServiceProvider{
             return new MenuFilterRegistry($app['events']);
         });
 
+        if($filterConfig = $this->app['config']->get('cmsable::menu-filters')){
+            $filterPath = app_path().'/'.ltrim($filterConfig,'/');
+            if(is_string($filterConfig) && file_exists($filterPath)){
+                include $filterPath;
+            }
+            return;
+        }
+
         $this->app['events']->listen('cmsable::menu-filter.create.default', function($filter){
 
             $filter->add('show_in_menu',function($page){
@@ -287,6 +295,8 @@ class CmsServiceProvider extends ServiceProvider{
         $this->registerPackageLang();
 
         $app = $this->app;
+
+        $this->app->make('cms');
 
         $this->app->validator->resolver(function($translator, $data, $rules, $messages) use ($app){
             $validator = new CmsValidator($translator, $data, $rules, $messages);

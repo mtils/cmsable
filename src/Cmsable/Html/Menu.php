@@ -57,10 +57,6 @@ class Menu {
     }
 
     public function all($filter='default'){
-        $all = $this->root()->filteredChildren($filter);
-        if(!$all){
-            throw new \Exception(gettype($all)." $filter");
-        }
         return $this->root()->filteredChildren($filter);
     }
 

@@ -24,5 +24,7 @@ return array(
 
     'sitetree-controller.main-template' => 'cmsable::sitetree',
 
-    'sitetree-controller.new-page-template' => 'cmsable::sitetree-new'
+    'sitetree-controller.new-page-template' => 'cmsable::sitetree-new',
+
+    'menu-filters' => ''
 );

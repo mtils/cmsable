@@ -15,10 +15,6 @@ use CMS;
 
 class PermissionablePageForm extends BasePageForm{
 
-    public function getName(){
-        return 'page-form';
-    }
-
     public function createFields(){
 
         $parentFields = parent::createFields();
@@ -55,23 +51,4 @@ class PermissionablePageForm extends BasePageForm{
         return $parentFields;
     }
 
-    protected function createValidator(){
-
-        $rules = array(
-            'menu_title' => 'required|min:3|max:255',
-            'url_segment' => 'required|min:1|max:255|url_segment|unique_segment_of:parent_id,id|no_manual_route:parent_id',
-            'title' => 'required|min:3|max:255',
-            'page_type' => 'required',
-            'parent_id' => 'required'
-        );
-
-        return Validator::make($this->data, $rules);
-    }
-
-    protected function createPageTypeField(){
-        return SelectOneField::create('page_type')
-                               ->setTitle('Seitentyp')
-                               ->setSrc(CMS::pageTypes()->all(),
-                                        new Extractor('getId()', 'singularName()'));
-    }
 }

@@ -18,14 +18,12 @@ class Page extends BeeTreeNode implements SiteTreeNodeInterface,PermissionableIn
 
     protected $wholeTreeColumns = array(
         'id',
-        'scope_id',
+        'root_id',
         'page_type',
         'url_segment',
         'title',
         'menu_title',
-        'show_in_menu',
-        'show_in_aside_menu',
-        'show_in_search',
+        'visibility',
         'redirect_type',
         'redirect_target',
         'parent_id',

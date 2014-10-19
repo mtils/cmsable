@@ -9,6 +9,7 @@ return array(
             'url_segment'           => 'URL-Segment',
             'title'                 => 'Titel',
             'content'               => 'Inhalt',
+            'visibility'            => 'Sichtbarkeit',
             'show_in_menu'          => 'In Hauptmenü anzeigen?',
             'show_in_aside_menu'    => 'In Fußmenü anzeigen?',
             'show_in_search'        => 'In Suche anzeigen?',
@@ -24,6 +25,11 @@ return array(
                 'internal' => 'Auf interne Seite weiterleiten',
                 'external' => 'Auf externe Seite weiterleiten',
                 'none'     => 'Keine Weiterleitung'
+            ),
+            'visibility' => array(
+                'show_in_menu'          => 'In Hauptmenü anzeigen?',
+                'show_in_aside_menu'    => 'In Fußmenü anzeigen?',
+                'show_in_search'        => 'In Suche anzeigen?',
             )
         )
     )
