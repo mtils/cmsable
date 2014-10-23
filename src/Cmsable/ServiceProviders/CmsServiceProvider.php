@@ -12,6 +12,8 @@ use ConfigurableClass\LaravelConfigModel;
 use DB;
 use Cmsable\Html\MenuFilterRegistry;
 use Cmsable\Cms\Action\Registry as ActionRegistry;
+use Cmsable\Cms\Action\NamedGroupCreator;
+use Cmsable\Cms\Action\ClassResourceTypeIdentifier;
 
 use Cmsable\Routing\Routable\CreatorRegistry;
 use Cmsable\Routing\Routable\PathEqualsCreator;
@@ -21,9 +23,6 @@ use Cmsable\Routing\SiteTreeRoute;
 use Cmsable\Controller\SiteTreeController;
 use Cmsable\Controller\AdminSiteTreeController;
 
-use FormObject\Registry;
-
-
 class CmsServiceProvider extends ServiceProvider{
 
     private $cmsPackagePath;
@@ -31,8 +30,6 @@ class CmsServiceProvider extends ServiceProvider{
     protected $cmsQualifier = 'ems/cmsable';
 
     protected $cmsNamespace = 'cmsable';
-
-    protected $currentUserProvider;
 
     protected $defaultScopeId = 1;
 
@@ -45,6 +42,8 @@ class CmsServiceProvider extends ServiceProvider{
         $serviceProvider = $this;
 
         $this->registerPageTypeRepository();
+
+        $this->registerUserProvider();
 
         $this->registerActionRegistry();
 
@@ -98,8 +97,12 @@ class CmsServiceProvider extends ServiceProvider{
 
     protected function registerActionRegistry(){
 
-        $this->app->singleton('cmsable.actions', function(){
-            return new ActionRegistry();
+        $this->app->singleton('cmsable.actions', function($app){
+            return new ActionRegistry(
+                new NamedGroupCreator,
+                new ClassResourceTypeIdentifier,
+                $app->make('Cmsable\Auth\CurrentUserProviderInterface')
+            );
         });
 
     }
@@ -119,7 +122,7 @@ class CmsServiceProvider extends ServiceProvider{
     }
 
     protected function registerRoutableCreators(CreatorRegistry $registry){
-        
+
         $this->registerPathEqualsCreator($registry);
         $this->registerControllerMethodCreator($registry);
         $this->registerSubRoutableCreator($registry);
@@ -174,6 +177,18 @@ class CmsServiceProvider extends ServiceProvider{
 
     }
 
+    protected function registerUserProvider(){
+
+        $this->app->singleton('Cmsable\Auth\CurrentUserProviderInterface', function($app){
+
+            $userModel = $app['config']->get('cmsable::user_model');
+            $providerClass = $app['config']->get('cmsable::user_provider');
+            return $app->make($providerClass, [$userModel]);
+
+        });
+
+    }
+
     protected function registerRouterConnector(){
 
         $serviceProvider = $this;
@@ -192,7 +207,7 @@ class CmsServiceProvider extends ServiceProvider{
                 $pageTypeLoader->fillByArray($pageTypeArray);
             }
 
-            $cms = new RouterConnector($pageTypeLoader, $this->getCurrentUserProvider());
+            $cms = new RouterConnector($pageTypeLoader, $app->make('Cmsable\Auth\CurrentUserProviderInterface'));
 
             $serviceProvider->addDefaultSiteTreeRoute($cms);
             $serviceProvider->addAdminSiteTreeRoute($cms);
@@ -226,16 +241,6 @@ class CmsServiceProvider extends ServiceProvider{
 
     }
 
-    protected function getCurrentUserProvider(){
-        if(!$this->currentUserProvider){
-            $userModel = $this->app['config']->get('cmsable::user_model');
-            $providerClass = $this->app['config']->get('cmsable::user_provider');
-            $this->currentUserProvider = $this->app->make($providerClass, array($userModel));
-        }
-        return $this->currentUserProvider;
-
-    }
-
     protected function createMenuFilters(){
 
         $this->app->singleton('Cmsable\Html\MenuFilterRegistry', function($app){
@@ -266,7 +271,7 @@ class CmsServiceProvider extends ServiceProvider{
 
         },$priority=1);
 
-        $provider = $this->getCurrentUserProvider();
+        $provider = $this->app->make('Cmsable\Auth\CurrentUserProviderInterface');
 
         $this->app['events']->listen('cmsable::menu-filter.create.*', function($filter) use ($provider){
 

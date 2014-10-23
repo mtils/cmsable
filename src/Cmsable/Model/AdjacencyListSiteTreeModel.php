@@ -61,7 +61,9 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
      * @return SiteTreeNodeInterface
      **/
     public function pageByPath($path){
+
         $this->ensureLookups();
+
         if(isset($this->pathMap[$path])){
             return $this->pathMap[$path];
         }

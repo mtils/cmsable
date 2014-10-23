@@ -12,8 +12,19 @@ class Group implements Countable, IteratorAggregate, ArrayAccess{
 
     protected $actions = array();
 
-    public function __construct(){
+    protected $name = 'default';
 
+    public function __construct($name = 'default'){
+        $this->setName($name);
+    }
+
+    public function getName(){
+        return $this->name;
+    }
+
+    public function setName($name){
+        $this->name = $name;
+        return $this;
     }
 
     public function append(Action $action){
