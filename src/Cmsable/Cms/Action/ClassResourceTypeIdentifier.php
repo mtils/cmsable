@@ -1,5 +1,7 @@
 <?php namespace Cmsable\Cms\Action;
 
+use Traversable;
+
 class ClassResourceTypeIdentifier implements ResourceTypeIdentifierInterface{
 
     /**
@@ -8,7 +10,7 @@ class ClassResourceTypeIdentifier implements ResourceTypeIdentifierInterface{
      * @param mixed $resourceType 
      * @return string
      **/
-    public function identify($resource){
+    public function identifyItem($resource){
 
         // If object passed
         if(is_object($resource)){
@@ -29,6 +31,24 @@ class ClassResourceTypeIdentifier implements ResourceTypeIdentifierInterface{
         }
 
         // otherwise just return the php internal typename
+        return gettype($resource);
+
+    }
+
+    /**
+     * @brief Returns an id for a collection
+     *
+     * @param Traversable $resource
+     * @return string
+     **/
+    public function identifyCollection($resource){
+
+        if(is_array($resource) || $resource instanceof Traversable){
+            foreach($resource as $item){
+                return $this->identifyItem($item);
+            }
+        }
+
         return gettype($resource);
 
     }

@@ -59,7 +59,7 @@ class Registry{
 
         foreach($resources as $resource){
 
-            $resourceTypeId = $this->identifier->identify($resource);
+            $resourceTypeId = $this->identifier->identifyItem($resource);
 
             if(!isset($this->itemCreators[$resourceTypeId])){
                 $this->itemCreators[$resourceTypeId] = [];
@@ -86,7 +86,7 @@ class Registry{
 
         foreach($resources as $resource){
 
-            $resourceTypeId = $this->identifier->identify($resource);
+            $resourceTypeId = $this->identifier->identifyItem($resource);
 
             if(!isset($this->collectionCreators[$resourceTypeId])){
                 $this->collectionCreators[$resourceTypeId] = [];
@@ -102,7 +102,7 @@ class Registry{
 
         $actionGroup = $this->groupCreator->createGroup('default',$resource, $context);
 
-        $resourceTypeId = $this->identifier->identify($resource);
+        $resourceTypeId = $this->identifier->identifyItem($resource);
 
         if(isset($this->itemCreators[$resourceTypeId])){
 
@@ -121,7 +121,7 @@ class Registry{
 
         $actionGroup = $this->groupCreator->createGroup('default',$resource, $context);
 
-        $resourceTypeId = $this->identifier->identify($resource);
+        $resourceTypeId = $this->identifier->identifyCollection($resource);
 
         if(isset($this->collectionCreators[$resourceTypeId])){
 

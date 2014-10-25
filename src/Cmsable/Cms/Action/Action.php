@@ -10,13 +10,15 @@ class Action{
 
     protected $checked;
 
-    protected $enabled;
+    protected $enabled = TRUE;
 
     protected $checkable;
 
     protected $group;
 
     protected $visible = TRUE;
+
+    protected $onClick = '';
 
     protected $url;
 
@@ -75,6 +77,15 @@ class Action{
 
     public function setUrl($url){
         $this->url = $url;
+        return $this;
+    }
+
+    public function getOnClick(){
+        return $this->onClick;
+    }
+
+    public function setOnClick($onClick){
+        $this->onClick = $onClick;
         return $this;
     }
 
