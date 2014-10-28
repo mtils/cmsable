@@ -1,5 +1,6 @@
 <?php namespace Cmsable\Cms\Action;
 
+use Collection\Table\Table;
 use Traversable;
 
 class ClassResourceTypeIdentifier implements ResourceTypeIdentifierInterface{
@@ -46,6 +47,11 @@ class ClassResourceTypeIdentifier implements ResourceTypeIdentifierInterface{
         if(is_array($resource) || $resource instanceof Traversable){
             foreach($resource as $item){
                 return $this->identifyItem($item);
+            }
+
+            // empty result || Collection\Table\Table
+            if(is_object($resource) && isset($resource->itemClass)){
+                return $resource->itemClass;
             }
         }
 
