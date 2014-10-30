@@ -99,4 +99,22 @@ class SiteTreeUrlGenerator extends UrlGenerator{
         }
         return parent::action($action, $parameters, $absolute);
     }
+
+    public function page($page=NULL, $extra = array(), $secure = null){
+
+        if($page === NULL){
+            $page = CMS::getMatchedNode();
+        }
+
+        if($page instanceof SiteTreeNodeInterface){
+            return $this->to($page, $extra, $secure);
+        }
+
+    }
+
+    public function currentPage($extra=[], $secure = null){
+
+        return $this->to(CMS::getMatchedNode(), $extra, $secure);
+
+    }
 }

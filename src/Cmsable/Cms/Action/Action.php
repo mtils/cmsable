@@ -1,5 +1,7 @@
 <?php namespace Cmsable\Cms\Action;
 
+use Collection\StringList;
+
 class Action{
 
     protected $title;
@@ -21,6 +23,8 @@ class Action{
     protected $onClick = '';
 
     protected $url;
+
+    protected $contexts;
 
     public function getTitle(){
         return $this->title;
@@ -131,8 +135,37 @@ class Action{
         return $this->setVisible(!$hidden);
     }
 
+    public function getContexts(){
+        if(!$this->contexts){
+            $this->contexts = new StringList;
+        }
+        return $this->contexts;
+    }
+
+    public function showIn($contexts){
+
+        if(is_array($contexts)){
+            $this->contexts = new StringList($contexts);
+        }
+        elseif($contexts instanceof StringList){
+            $this->contexts = $contexts;
+        }
+        elseif(func_num_args() > 1){
+            $this->contexts = new StringList(func_get_args());
+        }
+        elseif(is_string($contexts)){
+            $this->contexts = StringList::fromString($contexts);
+        }
+        return $this;
+    }
+
     public function __get($name){
         $method = "get$name";
         return $this->$method();
+    }
+
+    public function __set($name, $value){
+        $method = "set$name";
+        return $this->{$method}($value);
     }
 }

@@ -160,4 +160,50 @@ class Group implements Countable, IteratorAggregate, ArrayAccess{
     public function offsetUnset($offset){
         $this->pop($offset);
     }
+
+    public function filtered($contexts){
+
+        $contexts = is_array($contexts) ? $contexts : [$contexts];
+
+        if($contexts == 'default'){
+            return clone $this;
+        }
+
+        $onlyBlocked = TRUE;
+
+        foreach($contexts as $context){
+            if(strpos($context,'!') !== 0){
+                $onlyBlocked = FALSE;
+                break;
+            }
+        }
+
+        $filtered = new static('filtered');
+
+        foreach($this as $action){
+
+            foreach($contexts as $context){
+
+                if(strpos($context,'!') === 0){
+
+                    $ctx = substr($context,1);
+
+                    // If action contains blocked content, skip it
+                    if($action->contexts->contains($ctx)){
+                        continue;
+                    }
+                    elseif($onlyBlocked){
+                        $filtered->append($action);
+                    }
+                }
+                else{
+                    if($onlyBlocked || $action->contexts->contains($context)){
+                        $filtered->append($action);
+                    }
+                }
+            }
+
+        }
+        return $filtered;
+    }
 }

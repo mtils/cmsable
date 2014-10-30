@@ -100,7 +100,7 @@ class Registry{
 
     public function forItem($resource, $context='default'){
 
-        $actionGroup = $this->groupCreator->createGroup('default',$resource, $context);
+        $actionGroup = $this->groupCreator->createGroup('default', $resource, $context);
 
         $resourceTypeId = $this->identifier->identifyItem($resource);
 
@@ -113,6 +113,9 @@ class Registry{
             }
         }
 
+        if($context != 'default'){
+            return $actionGroup->filtered($context);
+        }
         return $actionGroup;
 
     }
@@ -130,6 +133,10 @@ class Registry{
             foreach($this->collectionCreators[$resourceTypeId] as $creator){
                 $creator($actionGroup, $user, $resource, $context);
             }
+        }
+
+        if($context != 'default'){
+            return $actionGroup->filtered($context);
         }
 
         return $actionGroup;
