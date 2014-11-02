@@ -4,10 +4,14 @@ use Illuminate\Routing\UrlGenerator;
 use Route;
 use Cmsable\Model\SiteTreeNodeInterface;
 use CMS;
+use Cmsable\Routing\SiteTreePathFinderInterface;
 
 class SiteTreeUrlGenerator extends UrlGenerator{
 
     protected $siteTreeLoader;
+
+    protected $pathFinder;
+
     /**
      * Generate a absolute URL to the given path.
      *
@@ -18,41 +22,15 @@ class SiteTreeUrlGenerator extends UrlGenerator{
      */
     public function to($path, $extra = array(), $secure = null)
     {
-        
+
         // Page object passed
-        if(is_object($path)){
-            if($path instanceof SiteTreeNodeInterface){
-                $page = $path;
-                if(!$path = $page->getPath()){
-                    if($route = CMS::findRouteForSiteTreeObject($page)){
-                        $path = ltrim($route->treeLoader()->pathById($page->id),'/');
-                    }
-                }
-            }
+        if(is_object($path) && $path instanceof SiteTreeNodeInterface){
+            $path = $this->pathFinder->toPage($path);
         }
 
         // PageTypeId passed
         elseif(is_string($path) && CMS::pageTypes()->has($path)){
-            
-            foreach(CMS::getCmsRoutes() as $route){
-                if($loader = $route->treeLoader()){
-                    if($pages = $loader->pagesByTypeId($path)){
-
-                        $lowestDepth = 1000;
-                        $topMost = NULL;
-                        $i=0;
-
-                        foreach($pages as $page){
-                            if($page->getDepth() < $lowestDepth){
-                                $topMost = $i;
-                                $lowestDepth = $page->getDepth();
-                            }
-                            $i++;
-                        }
-                        return $this->to($pages[$topMost],$extra,$secure);
-                    }
-                }
-            }
+            $path = $this->pathFinder->toPageType($path);
         }
 
         // Path passed inside CMS-SiteTree
@@ -77,25 +55,8 @@ class SiteTreeUrlGenerator extends UrlGenerator{
     */
     public function action($action, $parameters = array(), $absolute = true)
     {
-        if(!mb_strpos($action,'@')){
-            if($routable = CMS::getMatchedRoutable()){
-                if($controllerPath = $routable->getControllerPath()){
-                    return $this->to("$controllerPath/$action", $parameters);
-                }
-            }
-            if($page = CMS::getMatchedNode()){
-                if(!$parameters){
-                    return $this->to($page) . '/' . ltrim($action,'/');
-                }
-                if(isset($parameters[0])){
-                    array_unshift($parameters, $action);
-                    return $this->to($page, $parameters);
-                }
-                else{
-                    $actionParam = array('action'=>$action);
-                    return $this->to($page, array_merge($actionParam, $parameters));
-                }
-            }
+        if($path = $this->pathFinder->toControllerAction($action)){
+            return $this->to($path, $parameters);
         }
         return parent::action($action, $parameters, $absolute);
     }
@@ -116,5 +77,14 @@ class SiteTreeUrlGenerator extends UrlGenerator{
 
         return $this->to(CMS::getMatchedNode(), $extra, $secure);
 
+    }
+
+    public function getPathFinder(){
+        return $this->pathFinder;
+    }
+
+    public function setPathFinder(SiteTreePathFinderInterface $pathFinder){
+        $this->pathFinder = $pathFinder;
+        return $this;
     }
 }

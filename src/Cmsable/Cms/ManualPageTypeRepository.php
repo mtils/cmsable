@@ -6,11 +6,15 @@ use Illuminate\Container\Container;
 
 class ManualPageTypeRepository implements PageTypeRepositoryInterface{
 
+    public $loadEventName = 'cmsable.pageTypeLoadRequested';
+
     protected $pageTypes = array();
 
     protected $pageTypesLoaded = FALSE;
 
     protected $eventDispatcher;
+
+    protected $eventFired = FALSE;
 
     protected $prototype;
 
@@ -35,6 +39,9 @@ class ManualPageTypeRepository implements PageTypeRepositoryInterface{
     }
 
     public function get($id){
+
+        $this->fireLoadEvent();
+
         if(isset($this->pageTypes[$id])){
             return $this->pageTypes[$id];
         }
@@ -91,7 +98,7 @@ class ManualPageTypeRepository implements PageTypeRepositoryInterface{
         }
 
         foreach(['singularName','pluralName','description','category',
-                 'formPluginClass','routeScope'] as $key){
+                 'formPluginClass','routeScope','targetPath'] as $key){
 
             if(isset($pageTypeData[$key])){
                 $method = 'set'.ucfirst($key);
@@ -100,22 +107,15 @@ class ManualPageTypeRepository implements PageTypeRepositoryInterface{
 
         }
 
-        if(isset($pageTypeData['subRoutables'])){
-            foreach($pageTypeData['subRoutables'] as $path=>$routable){
-                $pageType->addSubRoutable($path, $routable);
-            }
-        }
-
         return $pageType;
     }
 
     public function all($routeScope='default'){
-        if(!$this->pageTypesLoaded && $this->eventDispatcher){
-            $this->eventDispatcher->fire('cmsable.controllerDescriptorLoad',
-                                         array($this));
-            $this->pageTypesLoaded = TRUE;
-        }
-        $pageTypes = array();
+
+        $this->fireLoadEvent();
+
+        $pageTypes = [];
+
         foreach($this->pageTypes as $id=>$pageType){
             if( $pageType->getRouteScope() == $routeScope || !$pageType->getRouteScope()){
                 $pageTypes[] = $pageType;
@@ -146,5 +146,14 @@ class ManualPageTypeRepository implements PageTypeRepositoryInterface{
             $categories[] = $this->getCategory($name);
         }
         return $categories;
+    }
+
+    protected function fireLoadEvent(){
+
+        if($this->eventDispatcher && !$this->eventFired){
+            $this->eventDispatcher->fire($this->loadEventName, $this);
+            $this->eventFired = TRUE;
+        }
+
     }
 }

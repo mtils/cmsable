@@ -115,7 +115,7 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
         if(isset($this->pagesByTypeId[$pageTypeId])){
             return $this->pagesByTypeId[$pageTypeId];
         }
-        //return isset($this->pathMap[$path]);
+        return [];
     }
 
     /**
@@ -178,12 +178,7 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
 
             $path = implode('/',$currentStack);
 
-            if($child->getRedirectType() == SiteTreeNodeInterface::NONE){
-                $child->setPath(trim($path,'/'));
-            }
-            else{
-                $redirects[] = $child;
-            }
+            $child->setPath(trim($path,'/'));
 
             $this->pathMap[$path]  = $child;
             $this->id2Path[$child->id] = $path;
@@ -206,58 +201,6 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
             }
         }
 
-        $this->processRedirects($redirects);
-
-    }
-
-    protected function processRedirects($redirects, $filter = 'default'){
-
-        foreach($redirects as $redirect){
-
-            if($redirect->getRedirectType() == SiteTreeNodeInterface::EXTERNAL){
-
-                $redirect->setPath($redirect->getRedirectTarget());
-
-            }
-            elseif($redirect->getRedirectType() == SiteTreeNodeInterface::INTERNAL){
-
-                $target = $redirect->getRedirectTarget();
-
-                if(is_numeric($target)){
-                    if($targetPage = $this->pageById((int)$target)){
-                        if($targetPage->getRedirectType() == SiteTreeNodeInterface::NONE){
-                            $redirect->setPath($targetPage->getPath());
-                        }
-                        else{
-                            $redirect->setPath('_error_');
-                        }
-                    }
-                }
-                elseif($target == SiteTreeNodeInterface::FIRST_CHILD){
-                    if($redirect->hasChildNodes()){
-                        if($child = $this->findFirstNonRedirectChild($redirect->filteredChildren($filter))){
-                            $redirect->setPath($child->getPath());
-                        }
-                        else{
-                            $redirect->setPath('_error_');
-                        }
-                    }
-                }
-            }
-        }
-
-    }
-
-    protected function findFirstNonRedirectChild($childNodes, $filter='default'){
-        foreach($childNodes as $child){
-            if($child->getRedirectType() == SiteTreeNodeInterface::NONE){
-                return $child;
-            }
-            if($child->hasChildNodes()){
-                return $this->findFirstNonRedirectChild($child->filteredChildren($filter));
-            }
-            break;
-        }
     }
 
     private function getEmptyPathStack(){

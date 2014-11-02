@@ -1,7 +1,5 @@
 <?php namespace Cmsable\Cms;
 
-use Cmsable\Routing\Routable\Routable;
-use Cmsable\Routing\RoutableExecutor;
 use App;
 
 class PageType{
@@ -34,9 +32,9 @@ class PageType{
 
     protected $_formPlugin;
 
-    protected $_subRoutables = [];
-
     protected $_routeScope = 'default';
+
+    protected $_targetPath = '';
 
     public function __construct($id=NULL){
         $this->id = $id;
@@ -61,6 +59,15 @@ class PageType{
 
     public function setControllerClassName($className){
         $this->_controllerClassName = $className;
+        return $this;
+    }
+
+    public function getTargetPath(){
+        return $this->_targetPath;
+    }
+
+    public function setTargetPath($routePath){
+        $this->_targetPath = $routePath;
         return $this;
     }
 
@@ -150,10 +157,6 @@ class PageType{
         return $this;
     }
 
-    public function createExecutor(Routable $routable){
-        return new RoutableExecutor($routable);
-    }
-
     public function createController($page){
         return $this->getControllerCreator()->createController($this->controllerClassName(), $page);
     }
@@ -194,24 +197,5 @@ class PageType{
     public function setFormPluginClass($className){
         $this->_formPluginClass = $className;
         return $this;
-    }
-
-    public function getSubRoutables(){
-        return $this->_subRoutables;
-    }
-
-    public function getSubRoutable($subUrl){
-        if(isset($this->_subRoutables[$subUrl])){
-            return $this->_subRoutables[$subUrl];
-        }
-    }
-
-    public function addSubRoutable($subUrl, $routable){
-        $this->_subRoutables[$subUrl] = $routable;
-        return $this;
-    }
-
-    public function hasSubRoutable($subUrl){
-        return isset($this->_subRoutables[$subUrl]);
     }
 }

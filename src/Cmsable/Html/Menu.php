@@ -2,7 +2,7 @@
 
 use Cmsable\Model\SiteTreeNodeInterface;
 use Cmsable\Model\SiteTreeModelInterface;
-use Cmsable\Routing\RouteInspectorInterface;
+use Cmsable\Http\CurrentCmsPathProviderInterface;
 use BeeTree\Helper;
 
 class Menu {
@@ -15,13 +15,33 @@ class Menu {
 
     protected $_breadcrumbs = array();
 
-    protected $inspector;
+    protected $currentPathProvider;
+
+    protected $currentCmsPath;
 
     protected $manualCurrentPage;
 
-    public function __construct(SiteTreeModelInterface $loader, RouteInspectorInterface $inspector){
+    protected $routeScope = 'default';
+
+    public function __construct(SiteTreeModelInterface $loader, CurrentCmsPathProviderInterface $currentPathProvider){
         $this->_loader = $loader;
-        $this->inspector = $inspector;
+        $this->currentPathProvider = $currentPathProvider;
+    }
+
+    public function getRouteScope(){
+        return $this->routeScope;
+    }
+
+    public function setRouteScope($scope){
+        $this->routeScope = $scope;
+        return $this;
+    }
+
+    public function currentCmsPath(){
+        if(!$this->currentCmsPath){
+            $this->currentCmsPath = $this->currentPathProvider->getCurrentCmsPath($this->getRouteScope());
+        }
+        return $this->currentCmsPath;
     }
 
     public function treeLoader(){
@@ -64,10 +84,10 @@ class Menu {
         if($this->manualCurrentPage){
             return $this->manualCurrentPage;
         }
-        if($node = $this->inspector->getMatchedNode()){
-            return $this->inspector->getMatchedNode();
+        if($node = $this->currentCmsPath()->getMatchedNode()){
+            return $this->currentCmsPath()->getMatchedNode();
         }
-        return $this->inspector->getFallBackPage();
+        return $this->currentCmsPath()->getFallBackNode();
     }
 
     public function setCurrent($pageOrMenuTitle, $title=NULL, $content=NULL){
@@ -91,7 +111,7 @@ class Menu {
             $page->id = -1;
         }
 
-        if($matchedNode = $this->inspector->getMatchedNode()){
+        if($matchedNode = $this->currentCmsPath()->getMatchedNode()){
             $page->setParentNode($matchedNode);
         }
 
@@ -101,12 +121,13 @@ class Menu {
     }
 
     public function inSubPath(){
-        if($routable = $this->inspector->getMatchedRoutable()){
-            if($routable->isSameController() && $routable->isIndex()){
-                return FALSE;
-            }
+
+        $subPath = trim($this->currentCmsPath()->getSubPath(),'/ ');
+        if($subPath){
+            return TRUE;
         }
-        return TRUE;
+
+        return FALSE;
     }
 
     public function appendToBreadCrumbs($page){
