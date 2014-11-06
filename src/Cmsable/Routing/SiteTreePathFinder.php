@@ -1,5 +1,7 @@
 <?php namespace Cmsable\Routing;
 
+use Illuminate\Routing\Router;
+
 use Cmsable\Cms\Action\Action;
 use Cmsable\Http\CurrentCmsPathProviderInterface;
 use Cmsable\Model\SiteTreeModelInterface;
@@ -13,12 +15,17 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
     protected $siteTreeModel;
 
+    protected $router;
+
     public $routeScope = 'default';
 
-    public function __construct(SiteTreeModelInterface $siteTreeModel, CurrentCmsPathProviderInterface $provider){
+    public function __construct(SiteTreeModelInterface $siteTreeModel,
+                                CurrentCmsPathProviderInterface $provider,
+                                Router $router){
 
         $this->currentPathProvider = $provider;
         $this->siteTreeModel = $siteTreeModel;
+        $this->router = $router;
 
     }
 
@@ -74,8 +81,23 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
     public function toControllerAction($action){
 
         if(!mb_strpos($action,'@')){
-            if($page = $this->currentPathProvider->getCurrentCmsPath($this->routeScope)->getMatchedNode()){
-                return $this->toPage($page) . '/' . ltrim($action,'/');
+            if($cmsPath = $this->currentPathProvider->getCurrentCmsPath($this->routeScope)){
+
+                if($page = $cmsPath->getMatchedNode()){
+
+                    if($route = $this->currentRoute()){
+
+                        if($this->hasIndexUri($route)){
+                            return $this->toPage($page) . '/' . ltrim($action,'/');
+                        }
+
+                        if($path = $this->findParentControllerPath($route, $cmsPath)){
+                            return $path . '/' . ltrim($action,'/');
+                        }
+
+                    }
+                    return $this->toPage($page) . '/' . ltrim($action,'/');
+                }
             }
         }
 
@@ -85,6 +107,82 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
     public function toCmsAction(Action $action){
     
+    }
+
+    protected function findParentControllerPath($route, $cmsPath){
+
+        $pathParts = explode('/',$cmsPath->getOriginalPath());
+        $uriParts = explode('/',$route->uri());
+
+        for($i=count($uriParts)-1,$cutted=0; $i >= 0; $i--,$cutted++){
+
+            if(starts_with($uriParts[$i],'{')){
+                continue;
+            }
+
+            $poppedPath = implode('/',array_slice($uriParts,0,$i+1));
+
+            if($route = $this->findRouteByUri($poppedPath)){
+
+                if($this->hasIndexUri($route)){
+                    return implode('/',array_slice($pathParts,0,count($pathParts)-$cutted));
+                }
+
+            }
+        }
+
+    }
+
+    protected function hasIndexUri($route){
+
+        $cleanedUri = trim($route->uri(),'/');
+
+        if(strpos($cleanedUri, '/') === FALSE || $cleanedUri == ''){
+            return TRUE;
+        }
+
+        $action = $this->getControllerAction($route);
+
+        if(strpos(strtolower($action),'index') !== FALSE){
+            return TRUE;
+        }
+
+        return FALSE;
+
+    }
+
+    protected function getControllerClass($route){
+
+        $controllerAction = $route->getActionName();
+
+        if(strpos($controllerAction,'@')){
+            list($controller, $action) = explode('@', $controllerAction);
+            return $controller;
+        }
+
+    }
+
+    protected function getControllerAction($route){
+
+        $controllerAction = $route->getActionName();
+
+        if(strpos($controllerAction,'@')){
+            list($controller, $action) = explode('@', $controllerAction);
+            return $action;
+        }
+
+    }
+
+    protected function currentPageTypeControllerClass(){
+
+        if($route = $this->currentRoute()){
+            $currentControllerAction = $route->getActionName();
+            if(strpos($currentControllerAction,'@')){
+                list($controller, $currentAction) = explode('@',$currentControllerAction);
+                return $controller;
+            }
+        }
+        return $this->toPage($page) . '/' . ltrim($action,'/');
     }
 
     protected function recalculatePagePath(SiteTreeNodeInterface $page){
@@ -146,6 +244,24 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
             break;
         }
 
+    }
+
+    protected function currentRoute(){
+        return $this->router->current();
+    }
+
+    protected function currentRouteName(){
+        if($route = $this->currentRoute()){
+            return $route->getName();
+        }
+    }
+
+    protected function findRouteByUri($uri){
+        foreach($this->router->getRoutes() as $route){
+            if($route->uri() == $uri){
+                return $route;
+            }
+        }
     }
 
 }

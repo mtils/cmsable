@@ -387,7 +387,8 @@ class CmsServiceProvider extends ServiceProvider{
     protected function registerDefaultUrlGenerator(){
 
         $pathFinder = new SiteTreePathFinder($this->app['cmsable.tree-default'],
-                                             $this->app['cmsable.cms']);
+                                             $this->app['cmsable.cms'],
+                                             $this->app['router']);
 
         $routes = $this->app['router']->getRoutes();
 
@@ -403,7 +404,8 @@ class CmsServiceProvider extends ServiceProvider{
     protected function registerAdminUrlGenerator(){
 
         $pathFinder = new SiteTreePathFinder($this->app['cmsable.tree-admin'],
-                                             $this->app['cmsable.cms']);
+                                             $this->app['cmsable.cms'],
+                                             $this->app['router']);
         $pathFinder->routeScope = 'admin';
 
         $routes = $this->app['router']->getRoutes();
