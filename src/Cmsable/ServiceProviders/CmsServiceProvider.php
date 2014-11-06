@@ -22,6 +22,9 @@ use Cmsable\Cms\Application;
 use Cmsable\Routing\ControllerDispatcher;
 use Cmsable\Routing\SiteTreePathFinder;
 use Cmsable\Routing\SiteTreeUrlDispatcher;
+use Cmsable\Html\Breadcrumbs\SiteTreeCrumbsCreator;
+use Cmsable\Html\Breadcrumbs\Factory as BreadcrumbFactory;
+use Blade;
 use Log;
 
 class CmsServiceProvider extends ServiceProvider{
@@ -54,27 +57,15 @@ class CmsServiceProvider extends ServiceProvider{
 
         $this->registerActionRegistry();
 
-        $this->app->singleton('adminMenu', function($app){
-            $menu = new Menu($app['cmsable.tree-admin'], $app['cmsable.cms']);
-            $menu->setRouteScope('admin');
-            return $menu;
-        });
-
         $this->app->singleton('ConfigurableClass\ConfigModelInterface', function(){
             $model = $this->app->make('ConfigurableClass\LaravelConfigModel');
             $model->setTableName('controller_config');
             return $model;
         });
 
-        $this->app->singleton('menu', function($app){
-            $menu = new Menu($app['cmsable.tree-default'], $app['cmsable.cms']);
-            $menu->setRouteScope('default');
-            return $menu;
-        });
-
         $this->registerSiteTreeController();
 
-        $this->registerAdminSiteTreeController();
+        $this->registerRedirctController();
 
         $this->app['url'] = $this->app->share(function($app)
         {
@@ -95,6 +86,11 @@ class CmsServiceProvider extends ServiceProvider{
         });
 
         $this->createMenuFilters();
+
+        Blade::extend(function($view, $compiler){
+            $pattern = $compiler->createMatcher('toJsTree');
+            return preg_replace($pattern, '$1<?php $f = new \BeeTree\Support\HtmlPrinter(); echo $f->toJsTree$2 ?>', $view);
+        });
 
     }
 
@@ -272,18 +268,95 @@ class CmsServiceProvider extends ServiceProvider{
 
         },$priority=1);
 
+         $this->app['events']->listen('cmsable::menu-filter.create.*', function($filter){
+
+            $filter->add('page_exists',function($page){
+                return (bool)$page->exists;
+            });
+
+        },$priority=1);
+
     }
 
     protected function registerSiteTreeController(){
-        $this->app->bind('\Cmsable\Controller\SiteTreeController',function($app){
-            return new SiteTreeController($app['PageForm'], $app['cmsable.tree-default']);
+
+        $routePrefix = $this->app['config']->get('cmsable::sitetree-controller.routename-prefix');
+
+        $this->app['router']->get(
+            "$routePrefix/new",
+            ['as'=>"$routePrefix-new",'uses'=>'Cmsable\Controller\SiteTreeController@getNew']
+        );
+
+        $this->app['router']->get(
+            "$routePrefix/create",
+            ['as'=>"$routePrefix-make",'uses'=>'Cmsable\Controller\SiteTreeController@getCreate']
+        );
+
+        $this->app['router']->post(
+            "$routePrefix/create",
+            ['as'=>"$routePrefix-create",'uses'=>'Cmsable\Controller\SiteTreeController@postCreate']
+        );
+
+        $this->app['router']->get(
+            "$routePrefix/edit/{id}",
+            ['as'=>"$routePrefix-edit",'uses'=>'Cmsable\Controller\SiteTreeController@getEdit']
+        );
+
+        $this->app['router']->post(
+            "$routePrefix/edit/{id}",
+            ['as'=>"$routePrefix-store",'uses'=>'Cmsable\Controller\SiteTreeController@postEdit']
+        );
+
+        $this->app['router']->get(
+            "$routePrefix/delete/{id}",
+            ['as'=>"$routePrefix-delete",'uses'=>'Cmsable\Controller\SiteTreeController@getDelete']
+        );
+
+        $this->app['router']->get(
+            "$routePrefix/move/{id}",
+            ['as'=>"$routePrefix-move",'uses'=>'Cmsable\Controller\SiteTreeController@getMove']
+        );
+
+        $this->app['router']->get(
+            "$routePrefix/js-config",
+            ['as'=>"$routePrefix-jsconfig",'uses'=>'Cmsable\Controller\SiteTreeController@getJsConfig']
+        );
+
+        $this->app['router']->get(
+            "$routePrefix",
+            ['as'=>"$routePrefix",'uses'=>'Cmsable\Controller\SiteTreeController@getIndex']
+        );
+
+        $this->app->bind('Cmsable\Controller\SiteTreeController',function($app){
+
+            $treeModel = $app['cmsable.tree-default'];
+            $scope = 'default';
+
+            if($cmsPath = $app['cmsable.cms']->getCurrentCmsPath()){
+                if($node = $cmsPath->getMatchedNode()){
+                    if($node->getPageTypeId() == 'cmsable.admin-sitetree-editor'){
+                        $treeModel = $app['cmsable.tree-admin'];
+                        $scope = 'admin';
+                    }
+                }
+            }
+
+            $c = new SiteTreeController($app['PageForm'], $treeModel);
+            $c->setRouteScope($scope);
+            return $c;
+
         });
     }
 
-    protected function registerAdminSiteTreeController(){
-        $this->app->bind('\Cmsable\Controller\AdminSiteTreeController',function($app){
-            return new AdminSiteTreeController($app['Cmsable\Form\AdminPageForm'], $app['cmsable.tree-admin']);
-        });
+    protected function registerRedirctController(){
+
+        $routePrefix = $this->app['config']->get('cmsable::redirect-controller.routename-prefix');
+
+        $this->app['router']->get(
+            "$routePrefix",
+            ['as'=>"$routePrefix",'uses'=>'Cmsable\Controller\RedirectorController@index']
+        );
+
     }
 
     public function boot(){
@@ -306,6 +379,9 @@ class CmsServiceProvider extends ServiceProvider{
             return $validator;
         });
 
+        $this->registerBreadcrumbs();
+        $this->registerMenu();
+
     }
 
     protected function registerDefaultUrlGenerator(){
@@ -320,7 +396,7 @@ class CmsServiceProvider extends ServiceProvider{
         $urlGenerator->setPathFinder($pathFinder);
 
 
-        $this->app['url']->addUrlGenerator('default', $urlGenerator);
+        $this->app['url']->setForwarder('default', $urlGenerator);
 
     }
 
@@ -337,7 +413,7 @@ class CmsServiceProvider extends ServiceProvider{
 
         $urlGenerator->setPathFinder($pathFinder);
 
-        $this->app['url']->addUrlGenerator('admin', $urlGenerator);
+        $this->app['url']->setForwarder('admin', $urlGenerator);
 
 
 
@@ -353,6 +429,110 @@ class CmsServiceProvider extends ServiceProvider{
 
         $this->app['router']->filter('cmsable.scope-filter', function($route, $request) use ($cmsApp){
             return $cmsApp->onRouterBefore($route, $request);
+        });
+
+    }
+
+    protected function registerBreadcrumbs(){
+
+        $serviceProvider = $this;
+
+        $this->app->singleton('cmsable.breadcrumbs', function($app) use ($serviceProvider){
+
+            $crumbsCreator = new SiteTreeCrumbsCreator($app['cmsable.tree-default'],
+                                                       $app['cmsable.cms']);
+
+            $factory = new BreadcrumbFactory($crumbsCreator, $app['router']);
+            $factory->setEventDispatcher($app['events']);
+
+            return $factory;
+
+        });
+
+        $this->app['events']->listen('cmsable::breadcrumbs-load', function($factory) use ($serviceProvider){
+            $serviceProvider->loadBreadCrumbRules($factory);
+        });
+
+    }
+
+    protected function loadBreadCrumbRules($factory){
+
+        $filePath = $this->app['config']->get('cmsable::breadcrumbs.file');
+
+        if(file_exists($filePath)){
+            include_once $filePath;
+        }
+
+        $this->appendBreadcrumbsForSiteTreeControllers($factory);
+    }
+
+    protected function appendBreadcrumbsForSiteTreeControllers($factory){
+
+        $routePrefix = $this->app['config']->get('cmsable::sitetree-controller.routename-prefix');
+
+        $app = $this->app;
+
+        $factory->register("$routePrefix-new", function($breadcrumbs) use ($app){
+
+            $menuTitle = $app['translator']->get('cmsable::pages.sitetree-new.menu_title');
+            $title = $app['translator']->get('cmsable::pages.sitetree-new.title');
+
+            $breadcrumbs->add($menuTitle, null, $title);
+
+        });
+
+        $factory->register("$routePrefix-make", function($breadcrumbs) use ($app){
+
+            $menuTitle = $app['translator']->get('cmsable::pages.sitetree-new.menu_title');
+            $title = $app['translator']->get('cmsable::pages.sitetree-new.title');
+
+            $breadcrumbs->add($menuTitle, null, $title);
+
+        });
+
+        $factory->register("$routePrefix-edit", function($breadcrumbs, $siteId) use ($app){
+
+            $page = null;
+
+            if(!$page = $app['cmsable.tree-default']->pageById($siteId)){
+                $page = $app['cmsable.tree-admin']->pageById($siteId);
+            }
+
+            if(!$page){
+                return;
+            }
+
+            $reversedCrumbs = [$page];
+
+            while($parent = $page->parentNode()){
+                if(!$parent->isRootNode()){
+                    $reversedCrumbs[] = $parent;
+                }
+                $page = $parent;
+            }
+
+            foreach(array_reverse($reversedCrumbs) as $crumb){
+                $breadcrumbs->add($crumb->menu_title,
+                                  $app['url']->action('edit',[$crumb->id]),
+                                  $crumb->title,
+                                  $crumb->content);
+            }
+
+        });
+
+    }
+
+    protected function registerMenu(){
+
+        $this->app->singleton('menu', function($app){
+
+            $menu = new Menu($app['cmsable.cms'], $app['cmsable.breadcrumbs']);
+            $menu->setCurrentScopeProvider($app['cmsable.cms']);
+
+            $menu->setForwarder('default', $app['cmsable.tree-default']);
+            $menu->setForwarder('admin', $app['cmsable.tree-admin']);
+
+            return $menu;
         });
 
     }

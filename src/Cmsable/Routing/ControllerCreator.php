@@ -4,6 +4,7 @@ use App;
 use Cmsable\Cms\ConfigurableControllerInterface;
 use ConfigurableClass\ConfigModelInterface;
 use Cmsable\Model\SiteTreeNodeInterface;
+use PageTypes;
 
 class ControllerCreator implements ControllerCreatorInterface{
 
@@ -24,6 +25,9 @@ class ControllerCreator implements ControllerCreatorInterface{
         if($this->isConfigurable($controller)){
             $this->bootConfigurableController($controller, $page);
         }
+        else{
+            PageTypes::resetCurrentPageConfig();
+        }
 
         return $controller;
 
@@ -40,6 +44,7 @@ class ControllerCreator implements ControllerCreatorInterface{
 
         $config = App::make('ConfigurableClass\ConfigModelInterface')->getConfig($controller, $id);
         $controller->setConfig($config);
+        PageTypes::setCurrentPageConfig($config);
 
     }
 

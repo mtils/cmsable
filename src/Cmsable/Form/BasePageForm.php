@@ -22,8 +22,19 @@ class UrlSegmentField extends TextField{
 
 class BasePageForm extends Form{
 
+    protected $routeScope = 'default';
+
     public function getName(){
         return 'page-form';
+    }
+
+    public function getRouteScope(){
+        return $this->routeScope;
+    }
+
+    public function setRouteScope($scope){
+        $this->routeScope = $scope;
+        return $this;
     }
 
     public function createFields(){
@@ -115,7 +126,7 @@ class BasePageForm extends Form{
     protected function createPageTypeField(){
         return SelectOneField::create('page_type')
                                ->setTitle(trans('cmsable::pagetypes.pagetype'))
-                               ->setSrc(CMS::pageTypes()->all(),
+                               ->setSrc(CMS::pageTypes()->all($this->getRouteScope()),
                                         new Extractor('getId()', 'singularName()'));
     }
 }

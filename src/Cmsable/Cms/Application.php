@@ -15,8 +15,9 @@ use Cmsable\Http\CmsRequest;
 use Cmsable\Http\CurrentCmsPathProviderInterface;
 use Cmsable\Support\EventSenderTrait;
 use Cmsable\Routing\ControllerDispatcher;
+use Cmsable\Routing\CurrentScopeProviderInterface;
 
-class Application implements CurrentCmsPathProviderInterface{
+class Application implements CurrentCmsPathProviderInterface, CurrentScopeProviderInterface{
 
     use EventSenderTrait;
 
@@ -187,15 +188,23 @@ class Application implements CurrentCmsPathProviderInterface{
 
     }
 
-    public function getCurrentCmsPath($routeScope='default'){
-
-        $cmsPathPrefix = $this->routeScopeToPathPrefix($routeScope);
+    public function getCurrentCmsPath($routeScope=NULL){
 
         if($cmsPath = $this->getCmsPath()){
-//             echo("$cmsPath $routeScope $cmsPathPrefix");
+
+            if($routeScope === NULL){
+                return $cmsPath;
+            }
+
+            $cmsPathPrefix = $this->routeScopeToPathPrefix($routeScope);
+
             if($cmsPath->getCmsPathPrefix() == $cmsPathPrefix){
                 return $cmsPath;
             }
+        }
+
+        if($routeScope === NULL){
+            $routeScope = 'default';
         }
 
         if($creator = $this->getPathCreator($routeScope)){

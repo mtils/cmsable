@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Facade;
 class PageTypes extends Facade{
 
     protected static function getFacadeAccessor(){
-        return 'pageTypes';
+        return 'cmsable.pageTypes';
     }
+
 }

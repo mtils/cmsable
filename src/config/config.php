@@ -22,9 +22,14 @@ return array(
 
     'cms-editor-css' => '/css/editor.css',
 
-    'sitetree-controller.main-template' => 'cmsable::sitetree',
+    'sitetree-controller' => ['routename-prefix' => 'sitetree',
+                              'main-template' => 'cmsable::sitetree',
+                              'new-page-template' => 'cmsable::sitetree-new'],
 
-    'sitetree-controller.new-page-template' => 'cmsable::sitetree-new',
+    'redirect-controller' => ['routename-prefix' => 'cms-redirect'],
+    'menu-filters' => '',
 
-    'menu-filters' => ''
+    'breadcrumbs' => array(
+        'file' => app_path() . '/breadcrumbs.php'
+     )
 );

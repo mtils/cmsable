@@ -2,8 +2,9 @@
 
 use BeeTree\Eloquent\OrderedAdjacencyListModel;
 use BadMethodCallException;
+use Cmsable\Html\Breadcrumbs\NodeCreatorInterface;
 
-class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements SiteTreeModelInterface{
+class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements SiteTreeModelInterface, NodeCreatorInterface{
 
     protected $_pathPrefix = '';
 
@@ -154,7 +155,7 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
         }
     }
 
-    protected function buildLookups($childs=NULL, $currentStack=NULL, $filter='default'){
+    protected function buildLookups($childs=NULL, $currentStack=NULL){
 
         if( $childs=== NULL && $currentStack === NULL ){
             $currentStack = $this->getEmptyPathStack();
@@ -173,7 +174,7 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
             $currentStack[] = $urlSegment;
 
             if($child->hasChildNodes()){
-                $this->buildLookups($child->childNodes(), $currentStack, $filter);
+                $this->buildLookups($child->childNodes(), $currentStack);
             }
 
             $path = implode('/',$currentStack);
@@ -217,6 +218,10 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
         $node = parent::makeNode();
         $node->__set($this->rootCol(), $this->getRootId());
         return $node;
+    }
+
+    public function newNode(){
+        return parent::makeNode();
     }
 
 }

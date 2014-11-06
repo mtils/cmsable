@@ -72,4 +72,16 @@ interface SiteTreeNodeInterface extends NodeInterface{
      ** @return string
      **/
     public function getRedirectTarget();
+
+    public function getMenuTitle();
+
+    public function setMenuTitle($menuTitle);
+
+    public function getTitle();
+
+    public function setTitle($title);
+
+    public function getContent();
+
+    public function setContent($content);
 }

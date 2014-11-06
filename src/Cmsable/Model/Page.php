@@ -118,4 +118,34 @@ class Page extends BeeTreeNode implements SiteTreeNodeInterface,PermissionableIn
     public function getRedirectTarget(){
         return $this->redirect_target;
     }
+
+    public function getMenuTitle(){
+        return $this->menu_title;
+    }
+
+    public function setMenuTitle($menuTitle){
+
+        $this->menu_title = $menuTitle;
+        return $this;
+
+    }
+
+    public function getTitle(){
+        return $this->title;
+    }
+
+    public function setTitle($title){
+        $this->title = $title;
+    }
+
+    public function getContent(){
+        return $this->content;
+    }
+
+    public function setContent($content){
+
+        $this->content = $content;
+        return $this;
+
+    }
 }

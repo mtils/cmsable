@@ -3,17 +3,19 @@
 use Cmsable\Model\SiteTreeNodeInterface;
 use Cmsable\Model\SiteTreeModelInterface;
 use Cmsable\Http\CurrentCmsPathProviderInterface;
+use Cmsable\Routing\ScopeDispatcherTrait;
+use Cmsable\Html\Breadcrumbs\Factory as BreadcrumbFactory;
 use BeeTree\Helper;
 
 class Menu {
 
-    protected $siteHierarchy = array();
+    use ScopeDispatcherTrait;
 
-    protected $_loader;
-
-    protected $_root;
+    protected $_roots = [];
 
     protected $_breadcrumbs = array();
+
+    protected $crumbFactory;
 
     protected $currentPathProvider;
 
@@ -23,29 +25,23 @@ class Menu {
 
     protected $routeScope = 'default';
 
-    public function __construct(SiteTreeModelInterface $loader, CurrentCmsPathProviderInterface $currentPathProvider){
-        $this->_loader = $loader;
+    public function __construct(CurrentCmsPathProviderInterface $currentPathProvider,
+                                BreadcrumbFactory $crumbFactory){
+
         $this->currentPathProvider = $currentPathProvider;
-    }
+        $this->crumbFactory = $crumbFactory;
 
-    public function getRouteScope(){
-        return $this->routeScope;
-    }
-
-    public function setRouteScope($scope){
-        $this->routeScope = $scope;
-        return $this;
     }
 
     public function currentCmsPath(){
         if(!$this->currentCmsPath){
-            $this->currentCmsPath = $this->currentPathProvider->getCurrentCmsPath($this->getRouteScope());
+            $this->currentCmsPath = $this->currentPathProvider->getCurrentCmsPath($this->getScope());
         }
         return $this->currentCmsPath;
     }
 
     public function treeLoader(){
-        return $this->_loader;
+        return $this->forwarder();
     }
 
     public function sub($level, $filter='default'){
@@ -60,10 +56,11 @@ class Menu {
     }
 
     public function root(){
-        if(!isset($this->_root)){
-            $this->_root = $this->_loader->tree();
+        $scope = $this->getScope(FALSE);
+        if(!isset($this->_roots[$scope])){
+            $this->_roots[$scope] = $this->treeLoader()->tree();
         }
-        return $this->_root;
+        return $this->_roots[$scope];
     }
 
     public function flat($filter='default'){
@@ -81,23 +78,17 @@ class Menu {
     }
 
     public function current(){
-        if($this->manualCurrentPage){
-            return $this->manualCurrentPage;
-        }
-        if($node = $this->currentCmsPath()->getMatchedNode()){
-            return $this->currentCmsPath()->getMatchedNode();
-        }
-        return $this->currentCmsPath()->getFallBackNode();
+        return $this->crumbFactory->get()->last();
     }
 
     public function setCurrent($pageOrMenuTitle, $title=NULL, $content=NULL){
-
+        return;
         if($pageOrMenuTitle instanceof SiteTreeNodeInterface){
             $page = $pageOrMenuTitle;
         }
         else{
 
-            $page = $this->_loader->makeNode();
+            $page = $this->treeLoader()->makeNode();
             $page->menu_title = $pageOrMenuTitle;
             if(!$title !== NULL){
                 $page->title = $title;
@@ -131,6 +122,7 @@ class Menu {
     }
 
     public function appendToBreadCrumbs($page){
+        return;
         $currentPage = $this->current();
         $breadcrumbs = $this->breadcrumbs($currentPage);
         $this->_breadcrumbs[$currentPage->id][] = $page;
@@ -165,7 +157,7 @@ class Menu {
     }
 
     public function isSection($page){
-        foreach($this->breadcrumbs() as $crumb){
+        foreach($this->crumbFactory->get() as $crumb){
             if($crumb->id == $page->id){
                 return TRUE;
             }
@@ -173,34 +165,4 @@ class Menu {
         return FALSE;
     }
 
-    public function jsTree($currentPageId=NULL, &$string=NULL, $node=NULL){
-        if($string === NULL){
-            $string = '<ul>';
-            $node =  $this->_loader->tree();
-        }
-        $liClasses = array('jstree-open');
-        if($node->isRootNode()){
-            $liClasses[] = 'root-node';
-        }
-
-        $spanClasses = array();
-
-        if($currentPageId == $node->id){
-            $spanClasses[] = 'active';
-        }
-
-        $liClass = implode(' ', $liClasses);
-        $spanClass = implode(' ', $spanClasses);
-
-        $string .= "\n    <li id=\"sitetree-{$node->id}\" class=\"$liClass\"><span class=\"$spanClass\">{$node->menu_title}</span>";
-        if(count($node->childNodes())){
-            $string .= "\n    <ul>";
-            foreach($node->childNodes() as $child){
-                $this->jsTree($currentPageId, $string, $child);
-            }
-            $string .= "\n    </ul>";
-        }
-        $string .= "</li>";
-        return $string . "\n</ul>";
-    }
 }

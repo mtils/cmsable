@@ -20,6 +20,8 @@ class ManualPageTypeRepository implements PageTypeRepositoryInterface{
 
     protected $app;
 
+    protected $currentPageConfig;
+
     public function __construct(PageType $prototype, Container $container, $eventDispatcher=NULL){
 
         $this->prototype = $prototype;
@@ -93,9 +95,6 @@ class ManualPageTypeRepository implements PageTypeRepositoryInterface{
         if(isset($pageTypeData['controller'])){
             $pageType->setControllerClassName($pageTypeData['controller']);
         }
-        else{
-            throw new OutOfBoundsException('A PageType needs an controller classname');
-        }
 
         foreach(['singularName','pluralName','description','category',
                  'formPluginClass','routeScope','targetPath'] as $key){
@@ -155,5 +154,19 @@ class ManualPageTypeRepository implements PageTypeRepositoryInterface{
             $this->eventFired = TRUE;
         }
 
+    }
+
+    public function currentPageConfig(){
+        return $this->currentPageConfig;
+    }
+
+    public function setCurrentPageConfig($pageConfig){
+        $this->currentPageConfig = $pageConfig;
+        return $this;
+    }
+
+    public function resetCurrentPageConfig(){
+        $this->currentPageConfig = NULL;
+        return $this;
     }
 }

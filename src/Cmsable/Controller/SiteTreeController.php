@@ -6,7 +6,6 @@ use Cmsable\Model\SiteTreeNodeInterface;
 use Cmsable\Model\SiteTreeModelInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use View;
-use AdminMenu;
 use Menu;
 use Input;
 use Session;
@@ -37,7 +36,7 @@ class SiteTreeController extends Controller {
     * @brief hier wird bestimmt, welcher Loader benutzt wird
     * @var string
     */
-    protected $cmsRouteName = 'default';
+    protected $routeScope = 'default';
 
     protected $form;
 
@@ -46,7 +45,9 @@ class SiteTreeController extends Controller {
     protected $newPageTemplate = '';
 
     public function __construct(PageForm $form, SiteTreeModelInterface $model){
+
         $this->form = $form;
+        $this->form->setRouteScope($this->getRouteScope());
         $this->model = $model;
         $this->registerViewMacros();
     }
@@ -67,16 +68,6 @@ class SiteTreeController extends Controller {
             'parent_id' => Input::get('parent_id')
         );
         return View::make($this->getNewPageTemplate(), $viewData);
-    }
-
-    protected function getParent(){
-        if(!$parent_id = Input::get('parent_id') ? Input::get('parent_id') : Input::old('parent_id')){
-            throw new BadMethodCallException('Missing parent_id');
-        }
-        if(!$parent = $this->getModel()->pageById($parent_id)){
-            throw new NotFoundHttpException();
-        }
-        return $parent;
     }
 
     public function getCreate(){
@@ -211,7 +202,7 @@ class SiteTreeController extends Controller {
         Session::flash('message',$this->getActionMessage('page-deleted', $page));
         Session::flash('messageType','success');
 
-        return Redirect::to(AdminMenu::current());
+        return Redirect::to(Menu::current());
     }
 
     public function getMove($movedId){
@@ -244,7 +235,7 @@ class SiteTreeController extends Controller {
             Session::flash('messageType','success');
         }
 
-        return Redirect::to(URL::to(AdminMenu::current()));
+        return Redirect::to(URL::to(Menu::current()));
     }
 
     public function getJsConfig(){
@@ -304,9 +295,16 @@ class SiteTreeController extends Controller {
     }
 
     protected function registerViewMacros(){
-        HTML::macro('jsTree', function($editedId){
-            return Menu::jsTree($editedId);
+
+        $templates = [
+            $this->getNewPageTemplate(),
+            $this->getMainTemplate()
+        ];
+
+        View::composer($templates, function($view){
+            $view->with('routeScope',$this->getRouteScope());
         });
+
     }
 
     protected function getMainTemplate(){
@@ -321,5 +319,25 @@ class SiteTreeController extends Controller {
             $this->newPageTemplate = Config::get('cmsable::sitetree-controller.new-page-template');
         }
         return $this->newPageTemplate;
+    }
+
+    public function getRouteScope(){
+        return $this->routeScope;
+    }
+
+    public function setRouteScope($scope){
+        $this->routeScope = $scope;
+        $this->form->setRouteScope($scope);
+        return $this;
+    }
+
+    protected function getParent(){
+        if(!$parent_id = Input::get('parent_id') ? Input::get('parent_id') : Input::old('parent_id')){
+            throw new BadMethodCallException('Missing parent_id');
+        }
+        if(!$parent = $this->getModel()->pageById($parent_id)){
+            throw new NotFoundHttpException();
+        }
+        return $parent;
     }
 }

@@ -9,7 +9,7 @@ use URL;
 
 class RedirectorController extends Controller{
 
-    public function getIndex()
+    public function index()
     {
 
         if($page = CMS::getMatchedNode()){
