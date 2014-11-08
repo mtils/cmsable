@@ -23,7 +23,7 @@ class UrlSegmentField extends TextField{
 
 class BasePageForm extends Form{
 
-    public $rules = [
+    public $validationRules = [
         'menu_title' => 'required|min:3|max:255',
         'url_segment' => 'required|min:1|max:255|url_segment|unique_segment_of:parent_id,id|no_manual_route:parent_id',
         'title' => 'required|min:3|max:255',
