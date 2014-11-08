@@ -1,7 +1,7 @@
 <?php namespace Cmsable\Controller;
 
 use FormObject\Field\HiddenField;
-use FormObject\Support\Laravel\ValidationException;
+use FormObject\Support\Laravel\Validator\ValidationException;
 use Cmsable\Model\SiteTreeNodeInterface;
 use Cmsable\Model\SiteTreeModelInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
