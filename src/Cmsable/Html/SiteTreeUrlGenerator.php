@@ -60,10 +60,18 @@ class SiteTreeUrlGenerator extends UrlGenerator{
     */
     public function action($action, $parameters = array(), $absolute = true)
     {
-        if($path = $this->pathFinder->toControllerAction($action)){
-            return $this->to($path, $parameters);
+
+        if($path = $this->pathFinder->toControllerAction($action, $parameters)){
+
+            if(!$absolute){
+                return $path;
+            }
+
+            return $this->to($path);
         }
+
         return parent::action($action, $parameters, $absolute);
+
     }
 
     public function page($page=NULL, $extra = array(), $secure = null){

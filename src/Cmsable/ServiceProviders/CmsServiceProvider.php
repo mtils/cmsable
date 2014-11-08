@@ -1,6 +1,7 @@
 <?php namespace Cmsable\ServiceProviders;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Routing\UrlGenerator;
 use Cmsable\Model\AdjacencyListSiteTreeModel;
 use Cmsable\Cms\PageType;
 use Cmsable\Cms\ManualPageTypeRepository;
@@ -65,7 +66,9 @@ class CmsServiceProvider extends ServiceProvider{
 
         $this->registerSiteTreeController();
 
-        $this->registerRedirctController();
+        $this->registerRedirectController();
+
+        $this->app->instance('url.original', $this->app['url']);
 
         $this->app['url'] = $this->app->share(function($app)
         {
@@ -282,50 +285,52 @@ class CmsServiceProvider extends ServiceProvider{
 
         $routePrefix = $this->app['config']->get('cmsable::sitetree-controller.routename-prefix');
 
-        $this->app['router']->get(
-            "$routePrefix/new",
-            ['as'=>"$routePrefix-new",'uses'=>'Cmsable\Controller\SiteTreeController@getNew']
-        );
+//         $this->app['router']->get(
+//             "$routePrefix/new",
+//             ['as'=>"$routePrefix-new",'uses'=>'Cmsable\Controller\SiteTreeController@getNew']
+//         );
 
-        $this->app['router']->get(
-            "$routePrefix/create",
-            ['as'=>"$routePrefix-make",'uses'=>'Cmsable\Controller\SiteTreeController@getCreate']
-        );
+//         $this->app['router']->get(
+//             "$routePrefix/create",
+//             ['as'=>"$routePrefix-make",'uses'=>'Cmsable\Controller\SiteTreeController@getCreate']
+//         );
 
-        $this->app['router']->post(
-            "$routePrefix/create",
-            ['as'=>"$routePrefix-create",'uses'=>'Cmsable\Controller\SiteTreeController@postCreate']
-        );
+//         $this->app['router']->post(
+//             "$routePrefix/create",
+//             ['as'=>"$routePrefix-create",'uses'=>'Cmsable\Controller\SiteTreeController@postCreate']
+//         );
 
-        $this->app['router']->get(
-            "$routePrefix/edit/{id}",
-            ['as'=>"$routePrefix-edit",'uses'=>'Cmsable\Controller\SiteTreeController@getEdit']
-        );
+//         $this->app['router']->get(
+//             "$routePrefix/edit/{id}",
+//             ['as'=>"$routePrefix-edit",'uses'=>'Cmsable\Controller\SiteTreeController@getEdit']
+//         );
 
-        $this->app['router']->post(
-            "$routePrefix/edit/{id}",
-            ['as'=>"$routePrefix-store",'uses'=>'Cmsable\Controller\SiteTreeController@postEdit']
-        );
+//         $this->app['router']->post(
+//             "$routePrefix/edit/{id}",
+//             ['as'=>"$routePrefix-store",'uses'=>'Cmsable\Controller\SiteTreeController@postEdit']
+//         );
 
-        $this->app['router']->get(
-            "$routePrefix/delete/{id}",
-            ['as'=>"$routePrefix-delete",'uses'=>'Cmsable\Controller\SiteTreeController@getDelete']
-        );
+//         $this->app['router']->get(
+//             "$routePrefix/delete/{id}",
+//             ['as'=>"$routePrefix-delete",'uses'=>'Cmsable\Controller\SiteTreeController@getDelete']
+//         );
 
         $this->app['router']->get(
             "$routePrefix/move/{id}",
-            ['as'=>"$routePrefix-move",'uses'=>'Cmsable\Controller\SiteTreeController@getMove']
+            ['as'=>"$routePrefix.move",'uses'=>'Cmsable\Controller\SiteTreeController@move']
         );
 
         $this->app['router']->get(
             "$routePrefix/js-config",
-            ['as'=>"$routePrefix-jsconfig",'uses'=>'Cmsable\Controller\SiteTreeController@getJsConfig']
+            ['as'=>"$routePrefix.jsconfig",'uses'=>'Cmsable\Controller\SiteTreeController@getJsConfig']
         );
 
-        $this->app['router']->get(
-            "$routePrefix",
-            ['as'=>"$routePrefix",'uses'=>'Cmsable\Controller\SiteTreeController@getIndex']
-        );
+        $this->app['router']->resource("$routePrefix",'Cmsable\Controller\SiteTreeController');
+
+//         $this->app['router']->get(
+//             "$routePrefix",
+//             ['as'=>"$routePrefix",'uses'=>'Cmsable\Controller\SiteTreeController@getIndex']
+//         );
 
         $this->app->bind('Cmsable\Controller\SiteTreeController',function($app){
 
@@ -348,7 +353,7 @@ class CmsServiceProvider extends ServiceProvider{
         });
     }
 
-    protected function registerRedirctController(){
+    protected function registerRedirectController(){
 
         $routePrefix = $this->app['config']->get('cmsable::redirect-controller.routename-prefix');
 
@@ -388,7 +393,8 @@ class CmsServiceProvider extends ServiceProvider{
 
         $pathFinder = new SiteTreePathFinder($this->app['cmsable.tree-default'],
                                              $this->app['cmsable.cms'],
-                                             $this->app['router']);
+                                             $this->app['router'],
+                                             $this->app['url.original']);
 
         $routes = $this->app['router']->getRoutes();
 
@@ -405,7 +411,8 @@ class CmsServiceProvider extends ServiceProvider{
 
         $pathFinder = new SiteTreePathFinder($this->app['cmsable.tree-admin'],
                                              $this->app['cmsable.cms'],
-                                             $this->app['router']);
+                                             $this->app['router'],
+                                             $this->app['url.original']);
         $pathFinder->routeScope = 'admin';
 
         $routes = $this->app['router']->getRoutes();

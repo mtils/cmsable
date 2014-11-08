@@ -16,14 +16,14 @@ interface SiteTreePathFinderInterface{
 
     public function toPage($pageOrId);
 
-    public function toRoutePath($path, $searchMethod=self::NEAREST);
+    public function toRoutePath($path, array $params=[], $searchMethod=self::NEAREST);
 
-    public function toRouteName($name, $searchMethod=self::NEAREST);
+    public function toRouteName($name, array $params=[], $searchMethod=self::NEAREST);
 
-    public function toPageType($pageType, $searchMethod= self::NEAREST);
+    public function toPageType($pageType, array $params=[], $searchMethod= self::NEAREST);
 
-    public function toControllerAction($action);
+    public function toControllerAction($action, array $params=[], $searchMethod= self::NEAREST);
 
-    public function toCmsAction(Action $action);
+    public function toCmsAction(Action $action, array $params=[], $searchMethod= self::NEAREST);
 
 }

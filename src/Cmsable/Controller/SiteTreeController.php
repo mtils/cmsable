@@ -52,7 +52,7 @@ class SiteTreeController extends Controller {
         $this->registerViewMacros();
     }
 
-    public function getIndex()
+    public function index()
     {
 
         $viewData = array(
@@ -63,14 +63,19 @@ class SiteTreeController extends Controller {
         return View::make($this->getMainTemplate(), $viewData);
     }
 
-    public function getNew(){
-        $viewData = array(
-            'parent_id' => Input::get('parent_id')
+    protected function choosePageTypePage(){
+
+        return View::make($this->getNewPageTemplate())
+                     ->withParentId(Input::get('parent_id')
         );
-        return View::make($this->getNewPageTemplate(), $viewData);
+
     }
 
-    public function getCreate(){
+    public function create(){
+
+        if(!Input::get('page_type')){
+            return $this->choosePageTypePage();
+        }
 
         $parent = $this->getParent();
 
@@ -95,7 +100,7 @@ class SiteTreeController extends Controller {
         return View::make($this->getMainTemplate(), $viewData);
     }
 
-    public function postCreate(){
+    public function store(){
 
         $parent = $this->getParent();
 
@@ -118,7 +123,7 @@ class SiteTreeController extends Controller {
         }
     }
 
-    public function getEdit($id){
+    public function edit($id){
 
         if(is_numeric($id)){
             $page = $this->model->pageById((int)$id);
@@ -152,7 +157,7 @@ class SiteTreeController extends Controller {
         return View::make($this->getMainTemplate(), $viewData);
     }
 
-    public function postEdit($id){
+    public function update($id){
 
         if(!is_numeric($id)){
             throw new BadMethodCallException('Keine ID übergeben');
@@ -167,7 +172,7 @@ class SiteTreeController extends Controller {
         $action = $this->form->getSelectedAction()->value;
 
         if($action == 'delete'){
-            return $this->getDelete($id);
+            return $this->delete($id);
         }
 
         if($action != 'submit'){
@@ -193,7 +198,7 @@ class SiteTreeController extends Controller {
         }
     }
 
-    public function getDelete($id){
+    public function delete($id){
 
         $page = $this->model->makeNode()->findOrFail((int)$id);
 
@@ -202,10 +207,10 @@ class SiteTreeController extends Controller {
         Session::flash('message',$this->getActionMessage('page-deleted', $page));
         Session::flash('messageType','success');
 
-        return Redirect::to(Menu::current());
+        return Redirect::to(URL::currentPage());
     }
 
-    public function getMove($movedId){
+    public function move($movedId){
         $parentId = Input::get('into');
         $position = Input::get('position');
         if(!is_numeric($parentId) || !is_numeric($position)){
@@ -235,7 +240,7 @@ class SiteTreeController extends Controller {
             Session::flash('messageType','success');
         }
 
-        return Redirect::to(URL::to(Menu::current()));
+        return Redirect::to(URL::currentPage());
     }
 
     public function getJsConfig(){

@@ -8,6 +8,9 @@ use Cmsable\Model\SiteTreeModelInterface;
 use Cmsable\Model\SiteTreeNodeInterface;
 use Cmsable\Cms\PageType;
 use Cmsable\Http\CmsPath;
+use Illuminate\Routing\UrlGenerator;
+
+use Log;
 
 class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
@@ -17,15 +20,19 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
     protected $router;
 
+    protected $urlGenerator;
+
     public $routeScope = 'default';
 
     public function __construct(SiteTreeModelInterface $siteTreeModel,
                                 CurrentCmsPathProviderInterface $provider,
-                                Router $router){
+                                Router $router,
+                                UrlGenerator $urlGenerator){
 
         $this->currentPathProvider = $provider;
         $this->siteTreeModel = $siteTreeModel;
         $this->router = $router;
+        $this->urlGenerator = $urlGenerator;
 
     }
 
@@ -46,15 +53,15 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
     }
 
-    public function toRoutePath($path, $searchMethod=self::NEAREST){
+    public function toRoutePath($path, array $params=[], $searchMethod=self::NEAREST){
     
     }
 
-    public function toRouteName($name, $searchMethod=self::NEAREST){
+    public function toRouteName($name, array $params=[], $searchMethod=self::NEAREST){
     
     }
 
-    public function toPageType($pageType, $searchMethod= self::NEAREST){
+    public function toPageType($pageType, array $params=[], $searchMethod= self::NEAREST){
 
         $pageTypeId = ($pageType instanceof PageType) ? $pageType->getId() : $pageType;
 
@@ -78,7 +85,44 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
     }
 
-    public function toControllerAction($action){
+    public function toControllerAction($action, array $params=[], $searchMethod= self::NEAREST){
+
+        $explicitControllerPassed = FALSE;
+
+        $currentRoute = $this->currentRoute();
+
+        $currentController = $this->getControllerClass($currentRoute);
+
+        if(strpos($action,'@')){
+            list($requestedController, $requestedAction) = explode('@', $action);
+            $explicitControllerPassed = TRUE;
+        }
+        else{
+            $requestedController = $currentController;
+            $requestedAction = $action;
+        }
+
+//         Log::info("URL::action($requestedController@$requestedAction)");
+
+        // If the current controller is the requested we will try to find the
+        // action inside the current route (group)
+        if( ($requestedController == $currentController) && $currentRoute->getName()){
+
+            $actionRouteName = $this->replaceAction($currentRoute->getName(), $requestedAction);
+
+            if($actionRoute = $this->router->getRoutes()->getByName($actionRouteName)){
+
+                $actionController = $this->getControllerClass($actionRoute);
+
+                if($actionController == $currentController){
+                    $targetPath = $this->urlGenerator->route($actionRouteName, $params, FALSE);
+                    if($page = $this->currentPage()){
+                        return $this->replaceWithPagePath($targetPath);
+                    }
+                }
+
+            }
+        }
 
         if(!mb_strpos($action,'@')){
             if($cmsPath = $this->currentPathProvider->getCurrentCmsPath($this->routeScope)){
@@ -105,7 +149,7 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
     }
 
-    public function toCmsAction(Action $action){
+    public function toCmsAction(Action $action, array $params=[], $searchMethod= self::NEAREST){
     
     }
 
@@ -244,6 +288,50 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
             break;
         }
 
+    }
+
+    protected function replaceWithPagePath($routePath){
+
+        if($cmsPath = $this->currentCmsPath()){
+
+            $pageType = $cmsPath->getPageType();
+            $page = $cmsPath->getMatchedNode();
+
+            return $this->replacePathHead($pageType->getTargetPath(), $this->toPage($page), $routePath);
+
+        }
+
+        return $routePath;
+
+    }
+
+    public function replacePathHead($oldHead, $newHead, $path){
+        return preg_replace('#'.$oldHead.'#', $newHead, $path, 1);
+    }
+
+    protected function replaceAction($routeName, $newAction){
+
+        $tiles = explode('.',$routeName);
+        $last = array_pop($tiles);
+        $tiles[] = $newAction;
+
+        return implode('.',$tiles);
+    }
+
+    protected function currentPage(){
+        if($cmsPath = $this->currentCmsPath()){
+            return $cmsPath->getMatchedNode();
+        }
+    }
+
+    protected function currentPageType(){
+        if($cmsPath = $this->currentCmsPath()){
+            return $cmsPath->getPageType();
+        }
+    }
+
+    protected function currentCmsPath(){
+        return $this->currentPathProvider->getCurrentCmsPath($this->routeScope);
     }
 
     protected function currentRoute(){

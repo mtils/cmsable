@@ -15,12 +15,21 @@ use Collection\Map\Extractor;
 use CMS;
 use Config;
 use ReflectionClass;
+use URL;
 
 class UrlSegmentField extends TextField{
     public $pathPrefix = '/';
 }
 
 class BasePageForm extends Form{
+
+    public $rules = [
+        'menu_title' => 'required|min:3|max:255',
+        'url_segment' => 'required|min:1|max:255|url_segment|unique_segment_of:parent_id,id|no_manual_route:parent_id',
+        'title' => 'required|min:3|max:255',
+        'page_type' => 'required',
+        'parent_id' => 'required'
+    ];
 
     protected $routeScope = 'default';
 
@@ -108,19 +117,6 @@ class BasePageForm extends Form{
         $actions('action_submit')->setTitle(trans('cmsable::forms.save'));
         $actions->push(Action::create('delete')->setTitle(trans('cmsable::forms.delete')));
         return $actions;
-    }
-
-    protected function createValidator(){
-
-        $rules = array(
-            'menu_title' => 'required|min:3|max:255',
-            'url_segment' => 'required|min:1|max:255|url_segment|unique_segment_of:parent_id,id|no_manual_route:parent_id',
-            'title' => 'required|min:3|max:255',
-            'page_type' => 'required',
-            'parent_id' => 'required'
-        );
-
-        return Validator::make($this->data, $rules);
     }
 
     protected function createPageTypeField(){
