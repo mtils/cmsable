@@ -1,18 +1,20 @@
-<?php namespace Cmsable\Form\Plugin;
+<?php namespace Cmsable\Controller\SiteTree\Plugin;
 
 use FormObject\Form;
 use FormObject\FieldList;
 use FormObject\Field\TextField;
 use FormObject\Field\SelectOneField;
 use FormObject\Field\SelectOneGroup;
-use Event;
-use App;
+use FormObject\Validator\ValidatorInterface;
+
+use Cmsable\Model\SiteTreeNodeInterface;
+
 use Lang;
 use Menu;
 
 class RedirectorPlugin extends Plugin{
 
-    public function modifyFormFields(FieldList $fields){
+    public function modifyFormFields(FieldList $fields, SiteTreeNodeInterface $page){
 
         $fields('main')->offsetUnset('content');
 
@@ -31,7 +33,7 @@ class RedirectorPlugin extends Plugin{
 
     }
 
-    public function fillForm(Form $form, $model){
+    public function fillForm(Form $form, SiteTreeNodeInterface $model){
         switch($form['redirect_type']){
             case 'internal':
                 $form('redirect__redirect_target_i')->setValue($model->redirect_target);
@@ -44,7 +46,7 @@ class RedirectorPlugin extends Plugin{
         }
     }
 
-    public function beforeSave(Form $form, $model){
+    public function prepareSave(Form $form, SiteTreeNodeInterface $model){
         switch($form['redirect_type']){
             case 'internal':
                 $model->redirect_target = $form['redirect__redirect_target_i'];
@@ -55,16 +57,16 @@ class RedirectorPlugin extends Plugin{
         }
     }
 
-    public function modifyValidator($validator){
+    public function modifyFormValidator(ValidatorInterface $validator, SiteTreeNodeInterface $page){
 
         $allowedPageIds = implode(',',$this->getAllowedPageIDs());
 
-        $rules = array(
+        $validator->addRules([
             'redirect_type' => 'in:internal,external',
             'redirect__redirect_target_e' => 'required_if:redirect_type,external|url',
             'redirect__redirect_target_i' => "required_if:redirect_type,internal|in:$allowedPageIds",
-        );
-        $validator->setRules(array_merge($validator->getRules(),$rules));
+        ]);
+
     }
 
     protected function getSiteTreeSelect(){

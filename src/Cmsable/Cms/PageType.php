@@ -26,7 +26,7 @@ class PageType{
 
     protected $_controllerCreatorClass = 'Cmsable\Routing\ControllerCreator';
 
-    protected $_formPluginClass = 'Cmsable\Form\Plugin\Plugin';
+    protected $_formPluginClass;
 
     protected $_controllerCreator;
 

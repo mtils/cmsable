@@ -1,8 +1,10 @@
-<?php namespace Cmsable\Form\Plugin;
+<?php namespace Cmsable\Controller\SiteTree\Plugin;;
 
 use FormObject\Form;
 use FormObject\FieldList;
-use Event;
+
+use Cmsable\Model\SiteTreeNodeInterface;
+
 use App;
 
 abstract class ConfigurablePlugin extends Plugin{
@@ -15,14 +17,14 @@ abstract class ConfigurablePlugin extends Plugin{
 
     protected $_fieldPrefix = 'ctlsettings';
 
-    public function fillForm(Form $form, $model){
+    public function fillForm(Form $form, SiteTreeNodeInterface $model){
 
         $config = $this->configModel()->getConfig($this->controller(), $model->id);
         $form->fillByArray($config, $this->fieldPrefix());
 
     }
 
-    public function afterSave(Form $form, $model){
+    public function finalizeSave(Form $form, SiteTreeNodeInterface $model){
 
         $config = $this->configModel()->getConfig($this->controller(), $model->id);
 

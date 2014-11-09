@@ -7,7 +7,6 @@ use Cmsable\Cms\PageType;
 use Cmsable\Cms\ManualPageTypeRepository;
 use Cmsable\Html\Menu;
 use Cmsable\Html\SiteTreeUrlGenerator;
-use Cmsable\Routing\RouterConnector;
 use Cmsable\Validators\CmsValidator;
 use ConfigurableClass\LaravelConfigModel;
 use DB;
@@ -16,8 +15,7 @@ use Cmsable\Cms\Action\Registry as ActionRegistry;
 use Cmsable\Cms\Action\NamedGroupCreator;
 use Cmsable\Cms\Action\ClassResourceTypeIdentifier;
 
-use Cmsable\Controller\SiteTreeController;
-use Cmsable\Controller\AdminSiteTreeController;
+use Cmsable\Controller\SiteTree\SiteTreeController;
 use Cmsable\Http\SiteTreeModelPathCreator;
 use Cmsable\Cms\Application;
 use Cmsable\Routing\ControllerDispatcher;
@@ -25,6 +23,7 @@ use Cmsable\Routing\SiteTreePathFinder;
 use Cmsable\Routing\SiteTreeUrlDispatcher;
 use Cmsable\Html\Breadcrumbs\SiteTreeCrumbsCreator;
 use Cmsable\Html\Breadcrumbs\Factory as BreadcrumbFactory;
+use Cmsable\Controller\SiteTree\Plugin\Dispatcher;
 use Blade;
 use Log;
 
@@ -285,54 +284,20 @@ class CmsServiceProvider extends ServiceProvider{
 
         $routePrefix = $this->app['config']->get('cmsable::sitetree-controller.routename-prefix');
 
-//         $this->app['router']->get(
-//             "$routePrefix/new",
-//             ['as'=>"$routePrefix-new",'uses'=>'Cmsable\Controller\SiteTreeController@getNew']
-//         );
-
-//         $this->app['router']->get(
-//             "$routePrefix/create",
-//             ['as'=>"$routePrefix-make",'uses'=>'Cmsable\Controller\SiteTreeController@getCreate']
-//         );
-
-//         $this->app['router']->post(
-//             "$routePrefix/create",
-//             ['as'=>"$routePrefix-create",'uses'=>'Cmsable\Controller\SiteTreeController@postCreate']
-//         );
-
-//         $this->app['router']->get(
-//             "$routePrefix/edit/{id}",
-//             ['as'=>"$routePrefix-edit",'uses'=>'Cmsable\Controller\SiteTreeController@getEdit']
-//         );
-
-//         $this->app['router']->post(
-//             "$routePrefix/edit/{id}",
-//             ['as'=>"$routePrefix-store",'uses'=>'Cmsable\Controller\SiteTreeController@postEdit']
-//         );
-
-//         $this->app['router']->get(
-//             "$routePrefix/delete/{id}",
-//             ['as'=>"$routePrefix-delete",'uses'=>'Cmsable\Controller\SiteTreeController@getDelete']
-//         );
-
         $this->app['router']->get(
             "$routePrefix/move/{id}",
-            ['as'=>"$routePrefix.move",'uses'=>'Cmsable\Controller\SiteTreeController@move']
+            ['as'=>"$routePrefix.move",'uses'=>'Cmsable\Controller\SiteTree\SiteTreeController@move']
         );
 
         $this->app['router']->get(
             "$routePrefix/js-config",
-            ['as'=>"$routePrefix.jsconfig",'uses'=>'Cmsable\Controller\SiteTreeController@getJsConfig']
+            ['as'=>"$routePrefix.jsconfig",'uses'=>'Cmsable\Controller\SiteTree\SiteTreeController@getJsConfig']
         );
 
-        $this->app['router']->resource("$routePrefix",'Cmsable\Controller\SiteTreeController');
+        $this->app['router']->resource("$routePrefix",'Cmsable\Controller\SiteTree\SiteTreeController');
 
-//         $this->app['router']->get(
-//             "$routePrefix",
-//             ['as'=>"$routePrefix",'uses'=>'Cmsable\Controller\SiteTreeController@getIndex']
-//         );
 
-        $this->app->bind('Cmsable\Controller\SiteTreeController',function($app){
+        $this->app->bind('Cmsable\Controller\SiteTree\SiteTreeController', function($app){
 
             $treeModel = $app['cmsable.tree-default'];
             $scope = 'default';
@@ -346,8 +311,11 @@ class CmsServiceProvider extends ServiceProvider{
                 }
             }
 
-            $c = new SiteTreeController($app['PageForm'], $treeModel);
+            $c = new SiteTreeController($app['PageForm'], $treeModel, $app['events']);
             $c->setRouteScope($scope);
+
+            $this->registerPluginDispatcher();
+
             return $c;
 
         });
@@ -543,6 +511,14 @@ class CmsServiceProvider extends ServiceProvider{
 
             return $menu;
         });
+
+    }
+
+    protected function registerPluginDispatcher(){
+
+        $dispatcher = new Dispatcher($this->app['cmsable.pageTypes'],
+                                     $this->app['events'],
+                                     $this->app);
 
     }
 

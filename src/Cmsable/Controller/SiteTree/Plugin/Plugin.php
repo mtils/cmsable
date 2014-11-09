@@ -1,11 +1,13 @@
-<?php namespace Cmsable\Form\Plugin;
+<?php namespace Cmsable\Controller\SiteTree\Plugin;
 
 use FormObject\Form;
 use FormObject\FieldList;
-use Event;
-use Cmsable\Cms\PageType;
+use FormObject\Validator\ValidatorInterface;
 
-class Plugin implements PluginInterface{
+use Cmsable\Cms\PageType;
+use Cmsable\Model\SiteTreeNodeInterface;
+
+abstract class Plugin implements PluginInterface{
 
     /**
      * @brief The PageType of the matching Page
@@ -37,35 +39,10 @@ class Plugin implements PluginInterface{
     }
 
     /**
-     * @brief The base method of PluginInterface is final, because it devides into
-     *        fields, validator and actions
-     *
-     * @param FormObject\Form $form The page form
-     * @return void
-     **/
-    public final function modifyForm(Form $form){
-
-        $formName = $form->getName();
-        $mod = $this;
-
-        Event::listen("form.fields-created.$formName", function($fields) use ($mod){
-            $mod->modifyFormFields($fields);
-        });
-
-        Event::listen("form.validator-created.$formName", function($validator) use ($mod){
-            $mod->modifyValidator($validator);
-        });
-
-        Event::listen("form.form.actions-created.$formName", function($actions) use ($mod){
-            $mod->modifyActions($actions);
-        });
-    }
-
-    /**
      * @brief This method is called after the form created its fields. 
      *        The sequence is:
      *        1. Form::createFields()
-     *        2. Form sends Event form.fields-created.$formname
+     *        2. Form sends Event form.fields-setted.$formname
      *        3. $this->modifyFormFields(FieldList $mainFieldList) is called
      *        This method is called before it is filled. So here is no chance to do
      *        something depending on the page or request
@@ -73,7 +50,7 @@ class Plugin implements PluginInterface{
      * @param FormObject\FieldList
      * @return void
      **/
-    public function modifyFormFields(FieldList $fields){}
+    public function modifyFormFields(FieldList $fields, SiteTreeNodeInterface $page){}
 
     /**
      * @brief This method is called after the form created its validator
@@ -82,7 +59,7 @@ class Plugin implements PluginInterface{
      * @param mixed $validator
      * @return void
      **/
-    public function modifyValidator($validator){}
+    public function modifyFormValidator(ValidatorInterface $validator, SiteTreeNodeInterface $page){}
 
     /**
      * @brief This method is called after the form created its actions
@@ -91,17 +68,7 @@ class Plugin implements PluginInterface{
      * @param FormObject\FieldList $fields
      * @return void
      **/
-    public function modifyActions(FieldList $fields){}
-
-    /**
-     * @brief This method is called before the form is filled. If you need to fill
-     *        selects or add fields depending on its page this is the right place
-     *
-     * @param FormObject $form The page form
-     * @param SiteTreeNodeInterface $model
-     * @return void
-     **/
-    public function beforeFillForm(Form $form, $model){}
+    public function modifyFormActions(FieldList $actions, SiteTreeNodeInterface $page){}
 
     /**
      * @brief This method is called after the form is filled by SiteTreeController.
@@ -110,10 +77,10 @@ class Plugin implements PluginInterface{
      * @param SiteTreeNodeInterface $model
      * @return void
      **/
-    public function fillForm(Form $form, $model){}
+    public function fillForm(Form $form, SiteTreeNodeInterface $page){}
 
-    public function beforeSave(Form $form, $model){}
+    public function prepareSave(Form $form, SiteTreeNodeInterface $page){}
 
-    public function afterSave(Form $form, $model){}
+    public function finalizeSave(Form $form, SiteTreeNodeInterface $page){}
 
 }
