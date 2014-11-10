@@ -21,6 +21,22 @@ class SiteTreeUrlDispatcher extends UrlGenerator{
     }
 
     /**
+     * Get the URL to a named route.
+     *
+     * @param  string  $name
+     * @param  mixed   $parameters
+     * @param  bool  $absolute
+     * @param  \Illuminate\Routing\Route  $route
+     * @return string
+     *
+     * @throws \InvalidArgumentException
+     */
+    public function route($name, $parameters = array(), $absolute = true, $route = null)
+    {
+        return $this->forwarder()->route($name, $parameters, $absolute, $route);
+    }
+
+    /**
     * Get the URL to a controller action.
     *
     * @param  string  $action

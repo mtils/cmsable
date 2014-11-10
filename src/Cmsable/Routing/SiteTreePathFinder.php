@@ -58,7 +58,26 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
     }
 
     public function toRouteName($name, array $params=[], $searchMethod=self::NEAREST){
-    
+
+        $currentRoute = $this->currentRoute();
+
+        if($currentRoute->getName()){
+
+            $targetRoute = $this->router->getRoutes()->getByName($name);
+            $currentUri = $currentRoute->uri();
+            $targetUri = $targetRoute->uri();
+
+            if($this->hasSameHead($currentUri, $targetUri)){
+
+                if($page = $this->currentPage()){
+                    $targetPath = $this->urlGenerator->route($name, $params, false);
+                    return $this->replaceWithPagePath($targetPath);
+                }
+
+            }
+
+        }
+
     }
 
     public function toPageType($pageType, array $params=[], $searchMethod= self::NEAREST){
@@ -87,22 +106,17 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
     public function toControllerAction($action, array $params=[], $searchMethod= self::NEAREST){
 
-        $explicitControllerPassed = FALSE;
-
         $currentRoute = $this->currentRoute();
 
         $currentController = $this->getControllerClass($currentRoute);
 
         if(strpos($action,'@')){
             list($requestedController, $requestedAction) = explode('@', $action);
-            $explicitControllerPassed = TRUE;
         }
         else{
             $requestedController = $currentController;
             $requestedAction = $action;
         }
-
-//         Log::info("URL::action($requestedController@$requestedAction)");
 
         // If the current controller is the requested we will try to find the
         // action inside the current route (group)
@@ -114,11 +128,12 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
                 $actionController = $this->getControllerClass($actionRoute);
 
-                if($actionController == $currentController){
+                if($actionController == $currentController && $this->currentPage()){
+
                     $targetPath = $this->urlGenerator->route($actionRouteName, $params, FALSE);
-                    if($page = $this->currentPage()){
-                        return $this->replaceWithPagePath($targetPath);
-                    }
+
+                    return $this->replaceWithPagePath($targetPath);
+
                 }
 
             }
@@ -307,6 +322,21 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
     public function replacePathHead($oldHead, $newHead, $path){
         return preg_replace('#'.$oldHead.'#', $newHead, $path, 1);
+    }
+
+    public function hasSameHead($path1, $path2){
+
+        $path1 = explode('/',$path1);
+        $path2 = explode('/',$path2);
+
+        foreach($path1 as $idx=>$part){
+            if($path2[$idx] == $part){
+                return TRUE;
+            }
+        }
+
+        return FALSE;
+
     }
 
     protected function replaceAction($routeName, $newAction){
