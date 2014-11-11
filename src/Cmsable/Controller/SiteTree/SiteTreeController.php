@@ -203,7 +203,13 @@ class SiteTreeController extends Controller {
 
         try{
 
+            $oldPageTypeId = $page->getPageTypeId();
+
             $page->fill($this->form->getData(FALSE));
+
+            if($page->getPageTypeId() != $oldPageTypeId){
+                $this->events->fire("sitetree.page-type-leaving", [$page, $oldPageTypeId]);
+            }
 
             Session::flash('message',$this->getActionMessage('page-saved',$page));
             Session::flash('messageType','success');

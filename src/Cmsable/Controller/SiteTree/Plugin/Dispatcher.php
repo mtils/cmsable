@@ -28,6 +28,8 @@ class Dispatcher{
 
         $this->addGlobalSubscriptions($this->events);
 
+        $this->addPageTypeLeaveSubscription($this->events);
+
     }
 
     protected function addGlobalSubscriptions(LaravelDispatcher $dispatcher){
@@ -35,6 +37,20 @@ class Dispatcher{
         $dispatcher->listen("sitetree.edit", $this);
 
         $dispatcher->listen("sitetree.update", $this);
+
+    }
+
+    protected function addPageTypeLeaveSubscription(LaravelDispatcher $dispatcher){
+
+        $dispatcher->listen('sitetree.page-type-leaving', function($page, $oldPageTypeId){
+
+            if(!$plugin = $this->getFormPlugin($oldPageTypeId)){
+                return;
+            }
+
+            $plugin->processPageTypeLeave($page, $oldPageTypeId);
+
+        });
 
     }
 

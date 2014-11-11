@@ -83,4 +83,6 @@ abstract class Plugin implements PluginInterface{
 
     public function finalizeSave(Form $form, SiteTreeNodeInterface $page){}
 
+    public function processPageTypeLeave(SiteTreeNodeInterface $page, $oldPageTypeId){}
+
 }

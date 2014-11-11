@@ -34,7 +34,7 @@ class RedirectorPlugin extends Plugin{
     }
 
     public function fillForm(Form $form, SiteTreeNodeInterface $model){
-        switch($form['redirect_type']){
+        switch($form('redirect_type')->getValue()){
             case 'internal':
                 $form('redirect__redirect_target_i')->setValue($model->redirect_target);
                 $form('redirect__redirect_target_e')->setValue('');
@@ -67,6 +67,12 @@ class RedirectorPlugin extends Plugin{
             'redirect__redirect_target_i' => "required_if:redirect_type,internal|in:$allowedPageIds",
         ]);
 
+    }
+
+    public function processPageTypeLeave(SiteTreeNodeInterface $page, $oldPageTypeId){
+        $page->redirect_type = 'none';
+        $page->redirect_target = 0;
+        \Log::info('Setted Values...');
     }
 
     protected function getSiteTreeSelect(){
