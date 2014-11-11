@@ -63,17 +63,18 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
         if($currentRoute->getName()){
 
-            $targetRoute = $this->router->getRoutes()->getByName($name);
-            $currentUri = $currentRoute->uri();
-            $targetUri = $targetRoute->uri();
+            if($targetRoute = $this->router->getRoutes()->getByName($name)){
+                $currentUri = $currentRoute->uri();
+                $targetUri = $targetRoute->uri();
 
-            if($this->hasSameHead($currentUri, $targetUri)){
+                if($this->hasSameHead($currentUri, $targetUri)){
 
-                if($page = $this->currentPage()){
-                    $targetPath = $this->urlGenerator->route($name, $params, false);
-                    return $this->replaceWithPagePath($targetPath);
+                    if($page = $this->currentPage()){
+                        $targetPath = $this->urlGenerator->route($name, $params, false);
+                        return $this->replaceWithPagePath($targetPath);
+                    }
+
                 }
-
             }
 
         }
