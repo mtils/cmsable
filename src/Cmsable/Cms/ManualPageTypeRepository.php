@@ -97,7 +97,8 @@ class ManualPageTypeRepository implements PageTypeRepositoryInterface{
         }
 
         foreach(['singularName','pluralName','description','category',
-                 'formPluginClass','routeScope','targetPath'] as $key){
+                 'formPluginClass','routeScope','targetPath',
+                 'controllerCreatorClass'] as $key){
 
             if(isset($pageTypeData[$key])){
                 $method = 'set'.ucfirst($key);
