@@ -24,6 +24,7 @@ use Cmsable\Routing\SiteTreeUrlDispatcher;
 use Cmsable\Html\Breadcrumbs\SiteTreeCrumbsCreator;
 use Cmsable\Html\Breadcrumbs\Factory as BreadcrumbFactory;
 use Cmsable\Controller\SiteTree\Plugin\Dispatcher;
+use Cmsable\View\FallbackFileViewFinder;
 use Blade;
 use Log;
 
@@ -88,6 +89,8 @@ class CmsServiceProvider extends ServiceProvider{
         });
 
         $this->createMenuFilters();
+
+        $this->registerFileViewFinder();
 
         Blade::extend(function($view, $compiler){
             $pattern = $compiler->createMatcher('toJsTree');
@@ -519,6 +522,18 @@ class CmsServiceProvider extends ServiceProvider{
         $dispatcher = new Dispatcher($this->app['cmsable.pageTypes'],
                                      $this->app['events'],
                                      $this->app);
+
+    }
+
+    protected function registerFileViewFinder(){
+
+        $oldFinder = $this->app['view.finder'];
+
+        $this->app->bindShared('view.finder', function($app) use ($oldFinder)
+        {
+            return FallbackFileViewFinder::fromOther($oldFinder);
+
+        });
 
     }
 
