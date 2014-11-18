@@ -1,7 +1,7 @@
 <?php namespace Cmsable\Http;
 
 use Cmsable\Model\SiteTreeNodeInterface;
-use Cmsable\Cms\PageType;
+use Cmsable\PageType\PageType;
 
 class CmsPath{
 

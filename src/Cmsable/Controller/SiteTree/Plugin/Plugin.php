@@ -4,14 +4,14 @@ use FormObject\Form;
 use FormObject\FieldList;
 use FormObject\Validator\ValidatorInterface;
 
-use Cmsable\Cms\PageType;
+use Cmsable\PageType\PageType;
 use Cmsable\Model\SiteTreeNodeInterface;
 
 abstract class Plugin implements PluginInterface{
 
     /**
      * @brief The PageType of the matching Page
-     * @var Cmsable\Cms\PageType
+     * @var \Cmsable\PageType\PageType
      **/
     protected $pageType;
 
@@ -20,7 +20,7 @@ abstract class Plugin implements PluginInterface{
      *        immediatly after instanciation. If your plugin does anything depending on its
      *        PageType, you can ask by $this->getPageType()
      *
-     * @return Cmsable\Cms\PageType
+     * @return \Cmsable\PageType\PageType
      **/
     public function getPageType(){
         return $this->pageType;
@@ -30,8 +30,8 @@ abstract class Plugin implements PluginInterface{
      * @brief This method is immediatly called after instanciation
      *        of this Plugin.
      *
-     * @see Cmsable\Cms\PageType::getFormPlugin
-     * @return Cmsable\Cms\PageType
+     * @see \Cmsable\PageType\PageType::getFormPlugin
+     * @return \Cmsable\PageType\PageType
      **/
     public function setPageType(PageType $type){
         $this->pageType = $type;

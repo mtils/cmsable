@@ -6,7 +6,7 @@ use Cmsable\Cms\Action\Action;
 use Cmsable\Http\CurrentCmsPathProviderInterface;
 use Cmsable\Model\SiteTreeModelInterface;
 use Cmsable\Model\SiteTreeNodeInterface;
-use Cmsable\Cms\PageType;
+use Cmsable\PageType\PageType;
 use Cmsable\Http\CmsPath;
 use Illuminate\Routing\UrlGenerator;
 

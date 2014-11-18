@@ -5,7 +5,7 @@ use Illuminate\Foundation\Application;
 
 use FormObject\Form;
 
-use Cmsable\Cms\PageTypeRepositoryInterface;
+use Cmsable\PageType\RepositoryInterface as PageTypeRepository;
 use Cmsable\Model\SiteTreeNodeInterface;
 
 class Dispatcher{
@@ -16,7 +16,7 @@ class Dispatcher{
 
     protected $creator;
 
-    public function __construct(PageTypeRepositoryInterface $pageTypeRepo,
+    public function __construct(PageTypeRepository $pageTypeRepo,
                                 LaravelDispatcher $events,
                                 Application $creator){
 

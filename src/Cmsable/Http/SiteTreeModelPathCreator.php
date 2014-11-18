@@ -5,7 +5,7 @@ use Cmsable\Http\CmsRequest;
 
 use Cmsable\Model\SiteTreeNodeInterface;
 use Cmsable\Model\SiteTreeModelInterface;
-use Cmsable\Cms\PageTypeRepositoryInterface;
+use Cmsable\PageType\RepositoryInterface as PageTypeRepository;
 
 class SiteTreeModelPathCreator implements CmsPathCreatorInterface{
 
@@ -16,7 +16,7 @@ class SiteTreeModelPathCreator implements CmsPathCreatorInterface{
     protected $cmsPathPrefix = '';
 
     public function __construct(SiteTreeModelInterface $model,
-                                PageTypeRepositoryInterface $pageTypes,
+                                PageTypeRepository $pageTypes,
                                 $cmsPathPrefix=''){
 
         $this->siteTreeModel = $model;

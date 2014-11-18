@@ -1,8 +1,8 @@
-<?php namespace Cmsable\Cms;
+<?php namespace Cmsable\PageType;
 
 use Config;
 
-class PageTypeCategory{
+class Category{
 
     protected $name;
 

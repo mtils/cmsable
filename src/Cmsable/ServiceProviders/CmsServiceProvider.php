@@ -3,8 +3,8 @@
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Routing\UrlGenerator;
 use Cmsable\Model\AdjacencyListSiteTreeModel;
-use Cmsable\Cms\PageType;
-use Cmsable\Cms\ManualPageTypeRepository;
+use Cmsable\PageType\PageType;
+use Cmsable\PageType\ManualRepository;
 use Cmsable\Html\Menu;
 use Cmsable\Html\SiteTreeUrlGenerator;
 use Cmsable\Validators\CmsValidator;
@@ -104,7 +104,7 @@ class CmsServiceProvider extends ServiceProvider{
         $serviceProvider = $this;
 
         $this->app->singleton('cmsable.pageTypes', function($app){
-            return new ManualPageTypeRepository(new PageType, $app, $app['events']);
+            return new ManualRepository(new PageType, $app, $app['events']);
         });
 
         $this->app['events']->listen('cmsable.pageTypeLoadRequested', function($pageTypes) use ($serviceProvider){

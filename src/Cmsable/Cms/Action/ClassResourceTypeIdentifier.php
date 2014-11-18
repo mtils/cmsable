@@ -49,10 +49,11 @@ class ClassResourceTypeIdentifier implements ResourceTypeIdentifierInterface{
                 return $this->identifyItem($item);
             }
 
-            // empty result || Collection\Table\Table
-            if(is_object($resource) && isset($resource->itemClass)){
-                return $resource->itemClass;
-            }
+        }
+
+        // empty result || Collection\Table\Table
+        if(is_object($resource) && isset($resource->itemClass)){
+            return $resource->itemClass;
         }
 
         return gettype($resource);

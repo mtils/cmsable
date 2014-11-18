@@ -1,10 +1,10 @@
-<?php namespace Cmsable\Cms;
+<?php namespace Cmsable\PageType;
 
 use DomainException;
 use OutOfBoundsException;
 use Illuminate\Container\Container;
 
-class ManualPageTypeRepository implements PageTypeRepositoryInterface{
+class ManualRepository implements RepositoryInterface{
 
     public $loadEventName = 'cmsable.pageTypeLoadRequested';
 
@@ -136,7 +136,7 @@ class ManualPageTypeRepository implements PageTypeRepositoryInterface{
     }
 
     public function getCategory($name){
-        return new PageTypeCategory($name);
+        return new Category($name);
     }
 
     public function getCategories($routeScope='default'){

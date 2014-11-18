@@ -18,6 +18,9 @@
     "ems/formobject": "dev-master",
     "ems/beetree":"dev-master"
   },
+  "require-dev": {
+    "mockery/mockery": "~0.9"
+  },
   "autoload": {
     "psr-0": {
       "Cmsable": "src/"

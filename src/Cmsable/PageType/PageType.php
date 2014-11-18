@@ -1,4 +1,4 @@
-<?php namespace Cmsable\Cms;
+<?php namespace Cmsable\PageType;
 
 use App;
 

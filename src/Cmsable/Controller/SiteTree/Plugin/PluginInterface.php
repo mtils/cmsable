@@ -4,7 +4,7 @@ use FormObject\Form;
 use FormObject\FieldList;
 use FormObject\Validator\ValidatorInterface;
 
-use Cmsable\Cms\PageType;
+use Cmsable\PageType\PageType;
 use Cmsable\Model\SiteTreeNodeInterface;
 
 interface PluginInterface{

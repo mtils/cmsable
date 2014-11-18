@@ -16,6 +16,7 @@ use Cmsable\Http\CurrentCmsPathProviderInterface;
 use Cmsable\Support\EventSenderTrait;
 use Cmsable\Routing\ControllerDispatcher;
 use Cmsable\Routing\CurrentScopeProviderInterface;
+use Cmsable\PageType\RepositoryInterface as PageTypeRepository;
 
 class Application implements CurrentCmsPathProviderInterface, CurrentScopeProviderInterface{
 
@@ -39,7 +40,7 @@ class Application implements CurrentCmsPathProviderInterface, CurrentScopeProvid
 
     protected $scopeFilters = [];
 
-    public function __construct(PageTypeRepositoryInterface $pageTypes, $eventDispatcher)
+    public function __construct(PageTypeRepository $pageTypes, $eventDispatcher)
     {
         $this->pageTypes = $pageTypes;
         $this->setEventDispatcher($eventDispatcher);

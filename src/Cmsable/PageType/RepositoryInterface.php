@@ -1,12 +1,12 @@
-<?php namespace Cmsable\Cms;
+<?php namespace Cmsable\PageType;
 
-interface PageTypeRepositoryInterface{
+interface RepositoryInterface{
 
     /**
     * @brief Return PageType by id
     * 
     * @param string $id
-    * @return PageType
+    * @return \Cmsable\PageType\PageType
     */
     public function get($id);
 
@@ -39,7 +39,7 @@ interface PageTypeRepositoryInterface{
     * @brief Return PageType-Category by name
     * 
     * @param string $name
-    * @return PageTypeCategory
+    * @return \Cmsable\PageType\Category
     */
     public function getCategory($name);
 
