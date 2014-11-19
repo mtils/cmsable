@@ -25,6 +25,7 @@ use Cmsable\Html\Breadcrumbs\SiteTreeCrumbsCreator;
 use Cmsable\Html\Breadcrumbs\Factory as BreadcrumbFactory;
 use Cmsable\Controller\SiteTree\Plugin\Dispatcher;
 use Cmsable\View\FallbackFileViewFinder;
+use Cmsable\PageType\DBConfigRepository;
 use Blade;
 use Log;
 
@@ -47,6 +48,10 @@ class CmsServiceProvider extends ServiceProvider{
         $serviceProvider = $this;
 
         $this->registerPageTypeRepository();
+
+        $this->registerConfigTypeRepository();
+
+        $this->registerPageTypeConfigRepository();
 
         $this->registerCmsApplication();
 
@@ -110,6 +115,26 @@ class CmsServiceProvider extends ServiceProvider{
         $this->app['events']->listen('cmsable.pageTypeLoadRequested', function($pageTypes) use ($serviceProvider){
             $serviceProvider->fillPageTypeRepository($pageTypes);
         });
+    }
+
+    protected function registerConfigTypeRepository(){
+
+        $this->app->singleton('Cmsable\PageType\ConfigTypeRepositoryInterface', function($app){
+            return $app->make('Cmsable\PageType\ManualConfigTypeRepository');
+        });
+
+    }
+
+    protected function registerPageTypeConfigRepository(){
+
+        $this->app->singleton('Cmsable\PageType\ConfigRepositoryInterface', function($app){
+
+            DBConfigRepository::setConnectionResolver($app['db']);
+
+            return $app->make('Cmsable\PageType\DBConfigRepository');
+
+        });
+
     }
 
     protected function registerCmsApplication(){
