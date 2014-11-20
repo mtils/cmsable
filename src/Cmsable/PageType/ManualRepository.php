@@ -20,23 +20,37 @@ class ManualRepository implements RepositoryInterface{
 
     protected $app;
 
-    protected $currentPageConfig;
+    public function __construct(Container $container, $eventDispatcher=NULL){
 
-    public function __construct(PageType $prototype, Container $container, $eventDispatcher=NULL){
-
-        $this->prototype = $prototype;
         $this->app = $container;
+        $this->prototype = new PageType;
 
         if($eventDispatcher){
             $this->setEventDispatcher($eventDispatcher);
         }
     }
 
+    public function getPrototype(){
+        return $this->prototype;
+    }
+
+    public function setPrototype(PageType $prototype){
+        $this->prototype = $prototype;
+        return $this;
+    }
+
+    public function getEventDispatcher($dispatcher){
+        return $this->eventDispatcher;
+    }
+
     public function setEventDispatcher($dispatcher){
+
         if(!method_exists($dispatcher,'fire')){
             throw new DomainException('EventDispatcher has to have a fire method');
         }
+
         $this->eventDispatcher = $dispatcher;
+
         return $this;
     }
 

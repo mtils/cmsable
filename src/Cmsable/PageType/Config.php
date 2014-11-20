@@ -71,9 +71,7 @@ class Config implements ConfigInterface, ArrayAccess, Countable, IteratorAggrega
     }
 
     public function __isset($name){
-        if($type = $this->getConfigType()){
-            return isset($type[$name]);
-        }
+        return isset($this->original[$name]);
     }
 
     public function offsetGet($offset){

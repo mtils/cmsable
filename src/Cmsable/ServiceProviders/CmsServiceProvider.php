@@ -8,7 +8,6 @@ use Cmsable\PageType\ManualRepository;
 use Cmsable\Html\Menu;
 use Cmsable\Html\SiteTreeUrlGenerator;
 use Cmsable\Validators\CmsValidator;
-use ConfigurableClass\LaravelConfigModel;
 use DB;
 use Cmsable\Html\MenuFilterRegistry;
 use Cmsable\Cms\Action\Registry as ActionRegistry;
@@ -53,6 +52,8 @@ class CmsServiceProvider extends ServiceProvider{
 
         $this->registerPageTypeConfigRepository();
 
+        $this->registerPageTypeManager();
+
         $this->registerCmsApplication();
 
         $this->registerDefaultTreeModel();
@@ -62,12 +63,6 @@ class CmsServiceProvider extends ServiceProvider{
         $this->registerUserProvider();
 
         $this->registerActionRegistry();
-
-        $this->app->singleton('ConfigurableClass\ConfigModelInterface', function(){
-            $model = $this->app->make('ConfigurableClass\LaravelConfigModel');
-            $model->setTableName('controller_config');
-            return $model;
-        });
 
         $this->registerSiteTreeController();
 
@@ -108,8 +103,8 @@ class CmsServiceProvider extends ServiceProvider{
 
         $serviceProvider = $this;
 
-        $this->app->singleton('cmsable.pageTypes', function($app){
-            return new ManualRepository(new PageType, $app, $app['events']);
+        $this->app->singleton('Cmsable\PageType\RepositoryInterface', function($app){
+            return new ManualRepository($app, $app['events']);
         });
 
         $this->app['events']->listen('cmsable.pageTypeLoadRequested', function($pageTypes) use ($serviceProvider){
@@ -120,7 +115,7 @@ class CmsServiceProvider extends ServiceProvider{
     protected function registerConfigTypeRepository(){
 
         $this->app->singleton('Cmsable\PageType\ConfigTypeRepositoryInterface', function($app){
-            return $app->make('Cmsable\PageType\ManualConfigTypeRepository');
+            return $app->make('Cmsable\PageType\TemplateConfigTypeRepository');
         });
 
     }
@@ -137,16 +132,31 @@ class CmsServiceProvider extends ServiceProvider{
 
     }
 
+    protected function registerPageTypeManager(){
+
+        $this->app->singleton('cmsable.pageTypes', function($app){
+
+            $manager = $app->make('Cmsable\PageType\Manager');
+            return $manager;
+
+        });
+
+    }
+
     protected function registerCmsApplication(){
 
         $this->app->middleWare('Cmsable\Http\CmsRequestInjector');
 
         $this->app->singleton('cmsable.cms', function($app){
 
-            $cmsApp = new Application($app->make('cmsable.pageTypes'), $app['events']);
+            $cmsApp = new Application($app->make('Cmsable\PageType\RepositoryInterface'), $app['events']);
             $cmsApp->setEventDispatcher($app['events']);
             return $cmsApp;
 
+        });
+
+        $this->app->singleton('Cmsable\Http\CurrentCmsPathProviderInterface',function($app){
+            return $app->make('cmsable.cms');
         });
 
         $app = $this->app;
@@ -172,7 +182,12 @@ class CmsServiceProvider extends ServiceProvider{
     protected function fillPageTypeRepository($pageTypeLoader){
 
         if($pageTypeArray = $this->app['config']->get('cmsable::pagetypes')){
+
             $pageTypeLoader->fillByArray($pageTypeArray);
+
+            $configRepo = $this->app->make('Cmsable\PageType\ConfigTypeRepositoryInterface');
+
+            $configRepo->fillByArray($pageTypeArray,'id','configTemplate');
         }
 
     }
@@ -222,7 +237,7 @@ class CmsServiceProvider extends ServiceProvider{
 
         $pathCreator = new SiteTreeModelPathCreator(
             $this->app->make('cmsable.tree-default'),
-            $this->app->make('cmsable.pageTypes'),
+            $this->app->make('Cmsable\PageType\RepositoryInterface'),
             '/'
         );
 
@@ -236,7 +251,7 @@ class CmsServiceProvider extends ServiceProvider{
 
         $pathCreator = new SiteTreeModelPathCreator(
             $this->app->make('cmsable.tree-admin'),
-            $this->app->make('cmsable.pageTypes'),
+            $this->app->make('Cmsable\PageType\RepositoryInterface'),
             '/admin'
         );
 
@@ -544,7 +559,7 @@ class CmsServiceProvider extends ServiceProvider{
 
     protected function registerPluginDispatcher(){
 
-        $dispatcher = new Dispatcher($this->app['cmsable.pageTypes'],
+        $dispatcher = new Dispatcher($this->app['Cmsable\PageType\RepositoryInterface'],
                                      $this->app['events'],
                                      $this->app);
 

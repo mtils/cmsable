@@ -72,7 +72,6 @@ class RedirectorPlugin extends Plugin{
     public function processPageTypeLeave(SiteTreeNodeInterface $page, $oldPageTypeId){
         $page->redirect_type = 'none';
         $page->redirect_target = 0;
-        \Log::info('Setted Values...');
     }
 
     protected function getSiteTreeSelect(){
