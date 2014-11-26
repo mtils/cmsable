@@ -113,6 +113,7 @@ class SiteTreeController extends Controller {
     public function store(){
 
         $parent = $this->getParent();
+        $pageTypeId = NULL;
 
         try{
 
@@ -137,7 +138,7 @@ class SiteTreeController extends Controller {
 
         }
         catch(ValidationException $error){
-            return Redirect::action('create')->withInput()->withErrors($error);
+            return Redirect::to(URL::route('sitetree.create').'?page_type='.$pageTypeId)->withInput()->withErrors($error);
         }
     }
 
@@ -351,6 +352,10 @@ class SiteTreeController extends Controller {
 
         View::composer($templates, function($view){
             $view->with('routeScope',$this->getRouteScope());
+        });
+
+        View::composer($templates, function($view){
+            $view->with('sitetreeModel',$this->getModel());
         });
 
     }
