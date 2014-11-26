@@ -14,6 +14,8 @@ return array(
 
     'user_model' => 'User',
 
+    'default_scope_id' => 1,
+
     'user_provider' => 'Cmsable\Auth\LaravelCurrentUserProvider',
 
     'pagetype-categories' => array(

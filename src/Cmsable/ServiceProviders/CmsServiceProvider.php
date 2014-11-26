@@ -46,6 +46,8 @@ class CmsServiceProvider extends ServiceProvider{
 
         $serviceProvider = $this;
 
+        $this->registerTreeScopeProvider();
+
         $this->registerPageTypeRepository();
 
         $this->registerConfigTypeRepository();
@@ -97,6 +99,12 @@ class CmsServiceProvider extends ServiceProvider{
             return preg_replace($pattern, '$1<?php $f = new \BeeTree\Support\HtmlPrinter(); echo $f->toJsTree$2 ?>', $view);
         });
 
+    }
+
+    protected function registerTreeScopeProvider(){
+        $this->app->singleton('Cmsable\Routing\TreeScope\CurrentTreeScopeProviderInterface', function($app){
+            return $app->make('Cmsable\Routing\TreeScope\ConfigTreeScopeProvider');
+        });
     }
 
     protected function registerPageTypeRepository(){
@@ -210,7 +218,9 @@ class CmsServiceProvider extends ServiceProvider{
 
         $this->app->singleton('cmsable.tree-default', function($app) use ($pageClass){
 
-            return new AdjacencyListSiteTreeModel($pageClass,1);
+            $treeScopeProvider = $app->make('Cmsable\Routing\TreeScope\CurrentTreeScopeProviderInterface');
+            $rootId = $treeScopeProvider->getCurrentScope()->getModelRootId();
+            return new AdjacencyListSiteTreeModel($pageClass, $rootId);
 
         });
 
@@ -345,13 +355,19 @@ class CmsServiceProvider extends ServiceProvider{
             $treeModel = $app['cmsable.tree-default'];
             $scope = 'default';
 
-            if($cmsPath = $app['cmsable.cms']->getCurrentCmsPath()){
-                if($node = $cmsPath->getMatchedNode()){
-                    if($node->getPageTypeId() == 'cmsable.admin-sitetree-editor'){
-                        $treeModel = $app['cmsable.tree-admin'];
-                        $scope = 'admin';
-                    }
-                }
+            $currentPageType = $app['cmsable.pageTypes']->current();
+
+            if($currentPageType && ($currentPageType->getId() == 'cmsable.admin-sitetree-editor')){
+
+                $treeModel = $app['cmsable.tree-admin'];
+                $scope = 'admin';
+
+            }
+            elseif($config = $app['cmsable.pageTypes']->currentConfig()){
+                $rootId = $config->sitetree_root_id;
+                Log::info("switched to $rootId");
+                $treeModel = new AdjacencyListSiteTreeModel($treeModel->nodeClassName(), $rootId);
+//                 print_r($treeModel);
             }
 
             $c = new SiteTreeController($app['PageForm'], $treeModel, $app['events']);

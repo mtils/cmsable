@@ -1,6 +1,6 @@
 <?php namespace Cmsable\PageType;
 
-use Config;
+use Config as LaravelConfig;
 
 class Category{
 
@@ -21,7 +21,7 @@ class Category{
 
     public function getIcon(){
         $configPath = 'cmsable::pagetype-categories.'.$this->getName().'.icon';
-        return Config::get($configPath);
+        return LaravelConfig::get($configPath);
     }
 
     public function __get($name){

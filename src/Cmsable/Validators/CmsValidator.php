@@ -2,18 +2,25 @@
 
 use Cmsable\Model\SiteTreeModelInterface;
 use Cmsable\Model\SiteTreeNodeInterface;
+use Cmsable\Model\AdjacencyListSiteTreeModel;
 use Illuminate\Validation\Validator;
 use Illuminate\Routing\Router;
 use DomainException;
 use ReflectionClass;
 use ReflectionMethod;
 use UnexpectedValueException;
+use Config;
+use App;
 
 class CmsValidator extends Validator{
 
     protected $siteTreeLoaders;
 
+    protected $siteTreeModels = [];
+
     protected $router;
+
+    protected $pageModel;
 
     public function validateUrlSegment($attribute, $value, $parameters){
         return preg_match('/^[\pL\pN-]+$/u', $value);
@@ -31,17 +38,16 @@ class CmsValidator extends Validator{
 
     public function validateUniqueSegmentOf($attribute, $value, $parameters){
 
-        if(!$this->siteTreeLoaders){
-            throw new DomainException('Validating unique_segment_of requires a SiteTreeModelInterface instance');
-        }
-
         $this->requireParameterCount(2, $parameters, 'unique_segment_of');
 
         // Get Parent
-        $parentPath = NULL;
+
         if(!$parentId = $this->getValue($parameters[0])){
             throw new UnexpectedValueException('Missing parent_id parameter or value');
         }
+
+        // Find the corresponding sitetreeloader (admin/public)
+        $containingLoader = $this->getSiteTreeModel($parentId);
 
         // Get the id of the currently edited page
         $editedPageId = $this->getValue($parameters[1]);
@@ -51,15 +57,10 @@ class CmsValidator extends Validator{
             $editedPageId = (int)$editedPageId;
         }
 
-        // Find the corresponding sitetreeloader (admin/public)
+
         // And the parent path of this node
-        $containingLoader = NULL;
-        foreach($this->siteTreeLoaders as $loader){
-            if($parentPath = $loader->pathById($parentId)){
-                $containingLoader = $loader;
-                break;
-            }
-        }
+        $parentPath = $containingLoader->pathById($parentId);
+
         if(!$parentPath){
             throw new UnexpectedValueException('Can\'t find desired parent of node');
         }
@@ -88,27 +89,21 @@ class CmsValidator extends Validator{
         if(!$this->router){
             throw new DomainException('Validating no_manual_route requires a Router instance');
         }
-        if(!$this->siteTreeLoaders){
-            throw new DomainException('Validating no_manual_route requires a SiteTreeModelInterface instance');
-        }
 
         $this->requireParameterCount(1, $parameters, 'validate_no_manual_route');
 
         // Get Parent (to build parent path)
-        $parentPath = NULL;
         if(!$parentId = $this->getValue($parameters[0])){
             throw new UnexpectedValueException('Missing parent_id parameter or value');
         }
 
         // Find the corresponding sitetreeloader (admin/public)
+        $containingLoader = $this->getSiteTreeModel($parentId);
+
+        $parentPath = $containingLoader->pathById($parentId);
+
+        // Find the corresponding sitetreeloader (admin/public)
         // And the parent path of this node
-        $containingLoader = NULL;
-        foreach($this->siteTreeLoaders as $loader){
-            if($parentPath = $loader->pathById($parentId)){
-                $containingLoader = $loader;
-                break;
-            }
-        }
         if(!$parentPath){
             throw new UnexpectedValueException('Can\'t find desired parent of node');
         }
@@ -132,5 +127,40 @@ class CmsValidator extends Validator{
             }
         }
         return !in_array($path, $uris);
+    }
+
+    protected function getParentPath($parentId){
+
+        $parentNode = $this->getPageModel()->findOrFail($parentId);
+
+        $scopeId = $parentNode->getAttribute($parentNode->rootIdColumn);
+        $siteTreeModel = $this->getSiteTreeModel($scopeId);
+
+        return $siteTreeModel->pathById($parentId);
+
+    }
+
+    protected function getSiteTreeModel($parentId){
+
+        if(isset($this->siteTreeModels[$parentId])){
+            return $this->siteTreeModels[$parentId];
+        }
+
+        $parentNode = $this->getPageModel()->findOrFail($parentId);
+        $scopeId = $parentNode->getAttribute($parentNode->rootIdColumn);
+
+        $this->siteTreeModels[$parentId] = new AdjacencyListSiteTreeModel(get_class($this->getPageModel()), $scopeId);
+
+        return $this->siteTreeModels[$parentId];
+    }
+
+    protected function getPageModel(){
+
+        if(!$this->pageModel){
+            $this->pageModel = App::make(Config::get('cmsable::page_model'));
+        }
+
+        return $this->pageModel;
+
     }
 }
