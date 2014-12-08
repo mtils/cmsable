@@ -46,6 +46,8 @@ class CmsServiceProvider extends ServiceProvider{
 
         $serviceProvider = $this;
 
+        $this->injectControllerDispatcher();
+
         $this->registerTreeScopeProvider();
 
         $this->registerPageTypeRepository();
@@ -65,10 +67,6 @@ class CmsServiceProvider extends ServiceProvider{
         $this->registerUserProvider();
 
         $this->registerActionRegistry();
-
-        $this->registerSiteTreeController();
-
-        $this->registerRedirectController();
 
         $this->app->instance('url.original', $this->app['url']);
 
@@ -98,6 +96,13 @@ class CmsServiceProvider extends ServiceProvider{
             $pattern = $compiler->createMatcher('toJsTree');
             return preg_replace($pattern, '$1<?php $f = new \BeeTree\Support\HtmlPrinter(); echo $f->toJsTree$2 ?>', $view);
         });
+
+    }
+
+    protected function injectControllerDispatcher(){
+
+        $dispatcher = new ControllerDispatcher($this->app['router'], $this->app);
+        $this->app['router']->setControllerDispatcher($dispatcher);
 
     }
 
@@ -159,6 +164,13 @@ class CmsServiceProvider extends ServiceProvider{
 
             $cmsApp = new Application($app->make('Cmsable\PageType\RepositoryInterface'), $app['events']);
             $cmsApp->setEventDispatcher($app['events']);
+
+            $app['router']->filter('cmsable.scope-filter', function($route, $request) use ($cmsApp){
+                return $cmsApp->onRouterBefore($route, $request);
+            });
+
+            $cmsApp->setControllerDispatcher($app['router']->getControllerDispatcher());
+
             return $cmsApp;
 
         });
@@ -333,53 +345,6 @@ class CmsServiceProvider extends ServiceProvider{
 
     }
 
-    protected function registerSiteTreeController(){
-
-        $routePrefix = $this->app['config']->get('cmsable::sitetree-controller.routename-prefix');
-
-        $this->app['router']->get(
-            "$routePrefix/move/{id}",
-            ['as'=>"$routePrefix.move",'uses'=>'Cmsable\Controller\SiteTree\SiteTreeController@move']
-        );
-
-        $this->app['router']->get(
-            "$routePrefix/js-config",
-            ['as'=>"$routePrefix.jsconfig",'uses'=>'Cmsable\Controller\SiteTree\SiteTreeController@getJsConfig']
-        );
-
-        $this->app['router']->resource("$routePrefix",'Cmsable\Controller\SiteTree\SiteTreeController');
-
-
-        $this->app->bind('Cmsable\Controller\SiteTree\SiteTreeController', function($app){
-
-            $treeModel = $app['cmsable.tree-default'];
-            $scope = 'default';
-
-            $currentPageType = $app['cmsable.pageTypes']->current();
-
-            if($currentPageType && ($currentPageType->getId() == 'cmsable.admin-sitetree-editor')){
-
-                $treeModel = $app['cmsable.tree-admin'];
-                $scope = 'admin';
-
-            }
-            elseif($config = $app['cmsable.pageTypes']->currentConfig()){
-                $rootId = $config->sitetree_root_id;
-                Log::info("switched to $rootId");
-                $treeModel = new AdjacencyListSiteTreeModel($treeModel->nodeClassName(), $rootId);
-//                 print_r($treeModel);
-            }
-
-            $c = new SiteTreeController($app['PageForm'], $treeModel, $app['events']);
-            $c->setRouteScope($scope);
-
-            $this->registerPluginDispatcher();
-
-            return $c;
-
-        });
-    }
-
     protected function registerRedirectController(){
 
         $routePrefix = $this->app['config']->get('cmsable::redirect-controller.routename-prefix');
@@ -395,11 +360,13 @@ class CmsServiceProvider extends ServiceProvider{
 
         $this->registerPackageLang();
 
-        $this->injectControllerDispatcher();
-
         $this->registerDefaultUrlGenerator();
 
         $this->registerAdminUrlGenerator();
+
+        $this->registerSiteTreeControllerRoute();
+
+        $this->registerRedirectController();
 
         $app = $this->app;
 
@@ -413,6 +380,7 @@ class CmsServiceProvider extends ServiceProvider{
 
         $this->registerBreadcrumbs();
         $this->registerMenu();
+
 
     }
 
@@ -452,20 +420,6 @@ class CmsServiceProvider extends ServiceProvider{
         $this->app['url']->setForwarder('admin', $urlGenerator);
 
 
-
-    }
-
-    protected function injectControllerDispatcher(){
-
-        $dispatcher = new ControllerDispatcher($this->app['router'], $this->app);
-        $this->app['router']->setControllerDispatcher($dispatcher);
-        $this->app['cmsable.cms']->setControllerDispatcher($dispatcher);
-
-        $cmsApp = $this->app['cmsable.cms'];
-
-        $this->app['router']->filter('cmsable.scope-filter', function($route, $request) use ($cmsApp){
-            return $cmsApp->onRouterBefore($route, $request);
-        });
 
     }
 
@@ -570,6 +524,24 @@ class CmsServiceProvider extends ServiceProvider{
 
             return $menu;
         });
+
+    }
+
+    protected function registerSiteTreeControllerRoute(){
+
+        $routePrefix = $this->app['config']->get('cmsable::sitetree-controller.routename-prefix');
+
+        $this->app['router']->get(
+            "$routePrefix/move/{id}",
+            ['as'=>"$routePrefix.move",'uses'=>'Cmsable\Controller\SiteTree\SiteTreeController@move']
+        );
+
+        $this->app['router']->get(
+            "$routePrefix/js-config",
+            ['as'=>"$routePrefix.jsconfig",'uses'=>'Cmsable\Controller\SiteTree\SiteTreeController@getJsConfig']
+        );
+
+        $this->app['router']->resource("$routePrefix",'Cmsable\Controller\SiteTree\SiteTreeController');
 
     }
 
