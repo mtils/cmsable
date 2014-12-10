@@ -109,15 +109,18 @@ class Group implements Countable, IteratorAggregate, ArrayAccess{
         }
     }
 
-    public function indexOf(Action $action){
+    public function indexOf($action){
+
         $count = $this->count();
-        $found = FALSE;
+
+        $name = ($action instanceof Action) ? $action->name : $action;
+
         for($i=0; $i<$count; $i++){
-            if($action->name === $this->action[$i]->name){
+            if($name === $this->action[$i]->name){
                 return $i;
             }
         }
-        throw new OutOfBoundsException("Action $action->name not found");
+        throw new OutOfBoundsException("Action $name not found");
     }
 
     public function contains(Action $action){
@@ -148,7 +151,7 @@ class Group implements Countable, IteratorAggregate, ArrayAccess{
 
     public function offsetGet($offset){
         if(is_numeric($offset)){
-            return isset($this->actions[$offset]);
+            return $this->actions[$offset];
         }
         return $this->contains($offset);
     }
@@ -163,47 +166,71 @@ class Group implements Countable, IteratorAggregate, ArrayAccess{
 
     public function filtered($contexts){
 
-        $contexts = is_array($contexts) ? $contexts : [$contexts];
+        $contexts = func_num_args() > 1 ? func_get_args() : (array)$contexts;
 
-        if($contexts == 'default'){
+        if($contexts == ['default']){
             return clone $this;
         }
 
-        $onlyBlocked = TRUE;
+        list($blacklist, $whitelist) = $this->blacklistWhiteList($contexts);
 
-        foreach($contexts as $context){
-            if(strpos($context,'!') !== 0){
-                $onlyBlocked = FALSE;
-                break;
+        $filtered = $this->withoutBlacklist($blacklist);
+
+        $filteredGroup = new static('filtered');
+
+        if(!$whitelist){
+            return $filteredGroup->extend($filtered);
+        }
+
+        foreach($filtered as $action){
+
+            if($action->visibleIn($whitelist)){
+                $filteredGroup->push($action);
             }
         }
 
-        $filtered = new static('filtered');
+        return $filteredGroup;
+
+    }
+
+    protected function withoutBlacklist($blacklist){
+
+        if(!$blacklist){
+            return $this->actions;
+        }
+
+        $actions = [];
 
         foreach($this as $action){
 
-            foreach($contexts as $context){
-
-                if(strpos($context,'!') === 0){
-
-                    $ctx = substr($context,1);
-
-                    // If action contains blocked content, skip it
-                    if($action->contexts->contains($ctx)){
-                        continue;
-                    }
-                    elseif($onlyBlocked){
-                        $filtered->append($action);
-                    }
-                }
-                else{
-                    if($onlyBlocked || $action->contexts->contains($context)){
-                        $filtered->append($action);
-                    }
-                }
+            if(!$action->visibleIn($blacklist)){
+                $actions[] = $action;
             }
 
         }
-        return $filtered;
+
+        return $actions;
     }
+
+    protected function blacklistWhiteList($filterContexts){
+
+        $blacklist = [];
+        $whitelist = [];
+
+        foreach($filterContexts as $context){
+
+            if(strpos($context,'!') === 0){
+                $blacklist[] = substr($context,1);
+            }
+            else{
+                $whitelist[] = $context;
+            }
+
+        }
+
+        return [$blacklist, $whitelist];
+
+    }
+
+    
 }

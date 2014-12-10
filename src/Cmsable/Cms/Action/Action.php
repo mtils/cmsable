@@ -159,6 +159,16 @@ class Action{
         return $this;
     }
 
+    public function visibleIn($context){
+        $contexts = (array)$context;
+        foreach($contexts as $context){
+            if($this->getContexts()->contains($context)){
+                return true;
+            }
+        }
+        return false;
+    }
+
     public function __get($name){
         $method = "get$name";
         return $this->$method();
