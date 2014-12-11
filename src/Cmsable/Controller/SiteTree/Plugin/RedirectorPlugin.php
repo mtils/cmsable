@@ -1,5 +1,7 @@
 <?php namespace Cmsable\Controller\SiteTree\Plugin;
 
+use BeeTree\Helper;
+
 use FormObject\Form;
 use FormObject\FieldList;
 use FormObject\Field\TextField;
@@ -8,6 +10,7 @@ use FormObject\Field\SelectOneGroup;
 use FormObject\Validator\ValidatorInterface;
 
 use Cmsable\Model\SiteTreeNodeInterface;
+use Cmsable\Model\AdjacencyListSiteTreeModel;
 
 use Lang;
 use Menu;
@@ -25,7 +28,7 @@ class RedirectorPlugin extends Plugin{
 
         $selectGroup = SelectOneGroup::create('redirect_type', Lang::get('cmsable::models.page.fields.redirect_type'))->setSrc($linkTypes);
 
-        $selectGroup->push($this->getSiteTreeSelect());
+        $selectGroup->push($this->getSiteTreeSelect($page));
 
         $selectGroup->push(TextField::create('redirect__redirect_target_e', Lang::get('cmsable::forms.page-form.redirect_target_e')));
 
@@ -59,12 +62,9 @@ class RedirectorPlugin extends Plugin{
 
     public function modifyFormValidator(ValidatorInterface $validator, SiteTreeNodeInterface $page){
 
-        $allowedPageIds = implode(',',$this->getAllowedPageIDs());
-
         $validator->addRules([
             'redirect_type' => 'in:internal,external',
-            'redirect__redirect_target_e' => 'required_if:redirect_type,external|url',
-            'redirect__redirect_target_i' => "required_if:redirect_type,internal|in:$allowedPageIds",
+            'redirect__redirect_target_e' => 'required_if:redirect_type,external|url'
         ]);
 
     }
@@ -74,25 +74,31 @@ class RedirectorPlugin extends Plugin{
         $page->redirect_target = 0;
     }
 
-    protected function getSiteTreeSelect(){
+    protected function getSiteTreeSelect($page){
         $select = SelectOneField::create('redirect__redirect_target_i',Lang::get('cmsable::forms.page-form.redirect_target_i'));
-        $select->setSrc($this->getPageList());
+        $select->setSrc($this->getPageList($page));
         return $select;
     }
 
-    protected function getAllowedPageIDs(){
-        return array_keys($this->getPageList());
+    protected function getAllowedPageIDs($page){
+        return array_keys($this->getPageList($page));
     }
 
-    protected function getPageList(){
+    protected function getPageList($page){
 
         $list = array();
         $this->addFirstPageListEntry($list);
 
-        foreach(Menu::flat() as $page){
+        $treeModel = $this->createTreeModel($page);
+
+        foreach(Helper::flatify($treeModel->tree()) as $page){
             $list[$page->getIdentifier()] = $page->menu_title;
         }
         return $list;
+    }
+
+    protected function createTreeModel($page){
+        return new AdjacencyListSiteTreeModel(get_class($page), $page->{$page->rootIdColumn});
     }
 
     protected function addFirstPageListEntry(&$list){
