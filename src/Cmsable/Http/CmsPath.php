@@ -2,6 +2,7 @@
 
 use Cmsable\Model\SiteTreeNodeInterface;
 use Cmsable\PageType\PageType;
+use Cmsable\Routing\TreeScope\TreeScope;
 
 class CmsPath{
 
@@ -14,6 +15,8 @@ class CmsPath{
     protected $rewrittenPath = '';
 
     protected $cmsPathPrefix = '/';
+
+    protected $treeScope;
 
     protected $nodePath = '';
 
@@ -60,6 +63,15 @@ class CmsPath{
 
     public function setCmsPathPrefix($prefix){
         $this->cmsPathPrefix = $prefix;
+        return $this;
+    }
+
+    public function getTreeScope(){
+        return $this->treeScope;
+    }
+
+    public function setTreeScope(TreeScope $treeScope){
+        $this->treeScope = $treeScope;
         return $this;
     }
 

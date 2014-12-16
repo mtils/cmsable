@@ -1,10 +1,12 @@
 <?php namespace Cmsable\Routing;
 
 use App;
+
 use Cmsable\Model\SiteTreeNodeInterface;
 use Cmsable\Controller\SiteTree\SiteTreeController;
 use Cmsable\Model\AdjacencyListSiteTreeModel;
 use Cmsable\Controller\SiteTree\Plugin\Dispatcher;
+use Cmsable\Routing\TreeScope\TreeScope;
 
 class SiteTreeControllerCreator implements ControllerCreatorInterface{
 
@@ -45,15 +47,15 @@ class SiteTreeControllerCreator implements ControllerCreatorInterface{
     protected function getTreeModel(){
 
         if($this->isAdminPageType()){
-            return App::make('cmsable.tree-admin');
+            return $this->getAdminTreeModel();
         }
 
         if($config = $this->pageTypes()->currentConfig()){
-            return new AdjacencyListSiteTreeModel(App::make('cmsable.tree-default')->nodeClassName(),
-                                                  $config->sitetree_root_id);
+            $scope = $this->getScope($config->sitetree_root_id);
+            return $this->getTreeModelManager()->get($scope);
         }
 
-        return App::make('cmsable.tree-default');
+        return $this->getTreeModelManager()->get($this->getScopeRepository()->get(TreeScope::DEFAULT_NAME));
 
     }
 
@@ -77,6 +79,23 @@ class SiteTreeControllerCreator implements ControllerCreatorInterface{
 
     protected function currentPageType(){
         return $this->pageTypes()->current();
+    }
+
+    protected function getScope($modelRootId){
+        return $this->getScopeRepository()->getByModelRootId($modelRootId);
+    }
+
+    protected function getAdminTreeModel(){
+        $scope = $this->getScopeRepository()->get(TreeScope::ADMIN_NAME);
+        return $this->getTreeModelManager()->get($scope);
+    }
+
+    protected function getTreeModelManager(){
+        return App::make('Cmsable\Model\TreeModelManagerInterface');
+    }
+
+    protected function getScopeRepository(){
+        return App::make('Cmsable\Routing\TreeScope\RepositoryInterface');
     }
 
 }

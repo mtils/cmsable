@@ -3,20 +3,23 @@
 use InvalidArgumentException;
 use OutOfBoundsException;
 
+use Input;
+use App;
+
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\TerminableInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-use Input;
-
 use Cmsable\Http\CmsPathCreatorInterface;
 use Cmsable\Http\CmsRequest;
+use Cmsable\Http\CmsPath;
 use Cmsable\Http\CurrentCmsPathProviderInterface;
 use Cmsable\Support\EventSenderTrait;
 use Cmsable\Routing\ControllerDispatcher;
 use Cmsable\Routing\CurrentScopeProviderInterface;
 use Cmsable\PageType\RepositoryInterface as PageTypeRepository;
+use Cmsable\Routing\TreeScope\DetectorInterface;
 
 class Application implements CurrentCmsPathProviderInterface, CurrentScopeProviderInterface{
 
@@ -24,15 +27,13 @@ class Application implements CurrentCmsPathProviderInterface, CurrentScopeProvid
 
     protected $pathCreatorLoadEventName = 'cmsable::path-creators-requested';
 
+    protected $pathSettedEventName = 'cmsable::cms-path-setted';
+
+    protected $scopeChangedEventName = 'cmsable::treescope-changed';
+
     protected $app;
 
-    protected $pageTypes;
-
-    protected $pathCreators = [];
-
-    protected $pathSetter;
-
-    protected $pathsSetted = FALSE;
+    protected $pathCreator;
 
     protected $cmsRequest;
 
@@ -40,32 +41,21 @@ class Application implements CurrentCmsPathProviderInterface, CurrentScopeProvid
 
     protected $scopeFilters = [];
 
-    public function __construct(PageTypeRepository $pageTypes, $eventDispatcher)
-    {
-        $this->pageTypes = $pageTypes;
+    public function __construct(CmsPathCreatorInterface $pathCreator,
+                                $eventDispatcher){
+
+
+        $this->pathCreator = $pathCreator;
         $this->setEventDispatcher($eventDispatcher);
 
         $this->eventDispatcher->listen('router.matched', function($route, $request){
             $this->onRouterMatch($route, $request);
         });
-    }
 
-    public function pageTypes(){
-        return $this->pageTypes;
     }
 
     public function onRouterBefore($route, $request){
-
-        if($cmsPath = $this->getCmsPath()){
-            $scope = $this->pathPrefixToRouteScope($cmsPath->getCmsPathPrefix());
-            $page = $cmsPath->getMatchedNode();
-        }
-        else{
-            $scope = '';
-            $page = NULL;
-        }
-
-        return $this->callScopeFilters($scope, $route, $request, $page);
+        return $this->callScopeFilters($route, $request);
 
     }
 
@@ -79,138 +69,67 @@ class Application implements CurrentCmsPathProviderInterface, CurrentScopeProvid
 
     public function attachCmsPath(CmsRequest $request){
 
-        $matchedPath = null;
+        $cmsPath = $this->pathCreator->createFromRequest($request);
 
-        foreach($this->getPathCreators() as $pathParser){
+        $this->cmsRequest = $request;
 
-            $cmsPath = $pathParser->createFromRequest($request);
+        $request->setCmsPath($cmsPath);
 
-            if($cmsPath->isCmsPath()){
-                $request->setCmsPath($cmsPath);
-                $this->fireEvent('cmsable::cms-path-setted',[$cmsPath]);
-                $this->cmsRequest = $request;
-                $matchedPath = $cmsPath;
-            }
-
+        if($cmsPath->isCmsPath()){
+            $this->fireEvent($this->pathSettedEventName,[$cmsPath]);
         }
+
+        $this->fireEvent($this->scopeChangedEventName, [$cmsPath->getTreeScope()]);
 
         if($this->controllerDispatcher){
-
-            if($matchedPath){
-                if($node = $matchedPath->getMatchedNode()){
-                    $this->controllerDispatcher->setPage($node);
-                }
-
-                if($pageType = $matchedPath->getPageType()){
-
-                    if($creator = $pageType->getControllerCreator()){
-                        $this->controllerDispatcher->setCreator($creator);
-                    }
-                    else{
-                        $this->controllerDispatcher->resetCreator();
-                    }
-                }
-                else{
-                    $this->controllerDispatcher->resetCreator();
-                }
-            }
-            else{
-                $this->controllerDispatcher->resetCreator();
-                $this->controllerDispatcher->resetPage();
-            }
+            $this->configureControllerDispatcher($this->controllerDispatcher, $cmsPath);
         }
 
     }
 
-    public function getPathCreators(){
+    public function configureControllerDispatcher(ControllerDispatcher $dispatcher,
+                                                  CmsPath $cmsPath){
 
-        if(!$this->pathCreators){
-            $this->fireEvent($this->pathCreatorLoadEventName,[$this], $once=TRUE);
-        }
-
-        return $this->pathCreators;
-    }
-
-    public function setPathCreators(array $pathCreators){
-
-        $this->pathCreators = [];
-
-        foreach($pathCreators as $creator){
-            $this->addPathCreator($creator);
-        }
-
-        return $this;
-
-    }
-
-    public function addPathCreator(CmsPathCreatorInterface $creator){
-        $this->pathCreators[] = $creator;
-        return $this;
-    }
-
-    public function removePathCreator(CmsPathCreatorInterface $creator){
-
-        $i = 0;
-        $kill = -1;
-
-        foreach($this->pathCreators as $c){
-            if($c === $creator){
-                $kill = $i;
-                break;
-            }
-            $i++;
-        }
-
-        if($kill != -1){
-            unset($this->pathCreators[$kill]);
-            $this->pathCreators = array_values($this->pathCreators);
-            return $this;
-        }
-
-        throw new OutOfBoundsException('Cannot remove unadded CmsPathCreator');
-    }
-
-    public function getCmsPath($path=NULL){
-
-        if($path === NULL){
-            if($this->cmsRequest instanceof CmsRequest &&
-                $cmsPath = $this->cmsRequest->getCmsPath()){
-                return $cmsPath;
-            }
-
+        if(!$cmsPath->isCmsPath()){
+            $dispatcher->resetCreator();
+            $dispatcher->resetPage();
             return;
         }
 
-        foreach($this->getPathCreators() as $creator){
-            if($cmsPath = $creator->createFromPath($path)){
-                return $cmsPath;
-            }
+        if($node = $cmsPath->getMatchedNode()){
+            $dispatcher->setPage($node);
+        }
+
+        if(!$pageType = $cmsPath->getPageType()){
+            $dispatcher->resetCreator();
+            return;
+        }
+
+        if($creatorClass = $pageType->getControllerCreatorClass()){
+            $dispatcher->setCreator(App::make($creatorClass));
+            return;
+        }
+
+        $dispatcher->resetCreator();
+
+    }
+
+    // $path nie übergeben!
+    public function getCmsPath(){
+
+        if(!$this->cmsRequest instanceof CmsRequest){
+            return;
+        }
+
+        if($cmsPath = $this->cmsRequest->getCmsPath()){
+            return $cmsPath;
         }
 
     }
 
-    public function getCurrentCmsPath($routeScope=NULL){
+    public function getCurrentCmsPath(){
 
-        if($cmsPath = $this->getCmsPath()){
-
-            if($routeScope === NULL){
-                return $cmsPath;
-            }
-
-            $cmsPathPrefix = $this->routeScopeToPathPrefix($routeScope);
-
-            if($cmsPath->getCmsPathPrefix() == $cmsPathPrefix){
-                return $cmsPath;
-            }
-        }
-
-        if($routeScope === NULL){
-            $routeScope = 'default';
-        }
-
-        if($creator = $this->getPathCreator($routeScope)){
-            return $creator->createDeactivated('/');
-        }
+        return $this->getCmsPath();
 
     }
 
@@ -239,36 +158,12 @@ class Application implements CurrentCmsPathProviderInterface, CurrentScopeProvid
      **/
     public function currentScope(){
 
-        if($cmsPath = $this->getCmsPath()){
-            if($cmsPath->isCmsPath()){
-                return $this->pathPrefixToRouteScope($cmsPath->getCmsPathPrefix());
-            }
+        if(!$cmsPath = $this->getCmsPath()){
+            return;
         }
 
-    }
+        return $cmsPath->getTreeScope();
 
-    public function getPathCreator($routeScope){
-
-        $pathPrefix = $this->routeScopeToPathPrefix($routeScope);
-
-        foreach($this->getPathCreators() as $creator){
-
-            if($creator->getCmsPathPrefix() == $pathPrefix){
-                return $creator;
-            }
-        }
-
-    }
-
-    public function getFallbackPage(){
-
-        if(func_num_args() == 0){
-            $routeScope = $this->currentScope();
-        }
-        else{
-            $routeScope = func_get_arg(0);
-        }
-        return $this->getPathCreator($routeScope)->getFallbackNode();
     }
 
     public function getControllerDispatcher(){
@@ -280,44 +175,30 @@ class Application implements CurrentCmsPathProviderInterface, CurrentScopeProvid
         return $this;
     }
 
-    public function pathPrefixToRouteScope($pathPrefix){
-
-        if(trim($pathPrefix,'/ ') == ''){
-            return 'default';
-        }
-        return trim($pathPrefix,'/');
-    }
-
-    public function routeScopeToPathPrefix($routeScope){
-
-        if($routeScope == 'default' || !$routeScope){
-            return '/';
-        }
-
-        return $routeScope;
-    }
-
-    public function whenScope($scope, $callable){
+    public function whenScope($scopeName, $callable){
 
         if(!is_callable($callable)){
             throw new InvalidArgumentException("Scopefilter has to be callable");
         }
 
-        if(!isset($this->scopeFilters[$scope])){
-            $this->scopeFilters[$scope] = [];
+        if(!isset($this->scopeFilters[$scopeName])){
+            $this->scopeFilters[$scopeName] = [];
         }
 
-        $this->scopeFilters[$scope][] = $callable;
+        $this->scopeFilters[$scopeName][] = $callable;
 
         return $this;
     }
 
-    protected function callScopeFilters($scope, $route, $request, $page){
+    protected function callScopeFilters($route, $request){
+
+        $scope = $request->getCmsPath()->getTreeScope();
+        $scopeName = $scope->getName();
 
         foreach($this->scopeFilters as $scopePattern=>$filters){
-            if(fnmatch($scopePattern, $scope)){
+            if(fnmatch($scopePattern, $scopeName)){
                 foreach($filters as $filter){
-                    if($response = $filter($scope, $route, $request, $page)){
+                    if($response = $filter($scope, $route, $request, $request->getCmsPath()->getMatchedNode())){
                         return $response;
                     }
                 }

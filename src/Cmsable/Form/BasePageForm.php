@@ -13,6 +13,7 @@ use FormObject\Field\SelectOneField;
 use FormObject\Field\SelectFlagsField;
 use Collection\Map\Extractor;
 use CMS;
+use PageType;
 use Config;
 use ReflectionClass;
 use URL;
@@ -122,7 +123,7 @@ class BasePageForm extends Form{
     protected function createPageTypeField(){
         return SelectOneField::create('page_type')
                                ->setTitle(trans('cmsable::pagetypes.pagetype'))
-                               ->setSrc(CMS::pageTypes()->all($this->getRouteScope()),
+                               ->setSrc(PageType::all($this->getRouteScope()),
                                         new Extractor('getId()', 'singularName()'));
     }
 }

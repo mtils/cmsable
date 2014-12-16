@@ -39,11 +39,11 @@ trait ScopeDispatcherTrait{
 
     public function forwarder($scope = NULL){
         $scope = ($scope === NULL) ? $this->getScope() : $scope;
-        return $this->forwards[$scope];
+        return $this->forwards["$scope"];
     }
 
     public function setForwarder($scope, $forwarder){
-        $this->forwards[$scope] = $forwarder;
+        $this->forwards["$scope"] = $forwarder;
         return $this;
     }
 

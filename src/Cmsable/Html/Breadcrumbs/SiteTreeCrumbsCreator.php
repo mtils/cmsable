@@ -35,6 +35,7 @@ class SiteTreeCrumbsCreator implements CrumbsCreatorInterface{
             }
 
         }
+
         return new Crumbs($this->nodeCreator);
 
     }

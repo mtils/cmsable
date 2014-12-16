@@ -36,18 +36,10 @@ class SiteTreeControllerPlugin extends ConfigurablePlugin{
         $select = SelectOneField::create($this->fieldName('sitetree_root_id'),
                                          Lang::get('cmsable::forms.page-form.sitetree_root_id'));
 
-        $scopeColumn = $this->getScopeColumn();
-        $parentColumn = $this->getParentColumn();
-
-        $rootNodes = $this->getPageModel()
-                          ->whereNull($parentColumn)
-                          ->orderBy($scopeColumn)
-                          ->get();
-
         $entries = [];
 
-        foreach($rootNodes as $root){
-            $entries[$root->{$scopeColumn}] = $root->getMenuTitle();
+        foreach($this->getScopes() as $scope){
+            $entries[$scope->getModelRootId()] = $scope->getTitle();
         }
 
         $select->setSrc($entries);
@@ -55,16 +47,12 @@ class SiteTreeControllerPlugin extends ConfigurablePlugin{
         return $select;
     }
 
-    protected function getPageModel(){
-        return App::make('cmsable.tree-default')->makeNode();
+    protected function getScopes(){
+        return $this->getScopeRepository()->getAll();
     }
 
-    protected function getScopeColumn(){
-        return App::make('cmsable.tree-default')->rootCol();
-    }
-
-    protected function getParentColumn(){
-        return App::make('cmsable.tree-default')->parentCol();
+    protected function getScopeRepository(){
+        return App::make('Cmsable\Routing\TreeScope\RepositoryInterface');
     }
 
 }

@@ -26,11 +26,6 @@ class CmsValidator extends Validator{
         return preg_match('/^[\pL\pN-]+$/u', $value);
     }
 
-    public function addSiteTreeLoader(SiteTreeModelInterface $loader){
-        $this->siteTreeLoaders[] = $loader;
-        return $this;
-    }
-
     public function setRouter(Router $router){
         $this->router = $router;
         return $this;
@@ -67,6 +62,11 @@ class CmsValidator extends Validator{
 
         // Build the desired path
         $path = trim("$parentPath/$value",'/');
+
+        // Check Scopes
+        if($this->getScopeByPath($path)){
+            return false;
+        }
 
         // Look for pages with this path
         $pageWithThisPath = $containingLoader->pageByPath($path);
@@ -146,12 +146,30 @@ class CmsValidator extends Validator{
             return $this->siteTreeModels[$parentId];
         }
 
-        $parentNode = $this->getPageModel()->findOrFail($parentId);
-        $scopeId = $parentNode->getAttribute($parentNode->rootIdColumn);
+        $scope = $this->getScope($parentId);
 
-        $this->siteTreeModels[$parentId] = new AdjacencyListSiteTreeModel(get_class($this->getPageModel()), $scopeId);
+
+        $this->siteTreeModels[$parentId] = $this->getTreeManager()->get($scope);
 
         return $this->siteTreeModels[$parentId];
+
+    }
+
+    protected function getTreeManager(){
+        return App::make('Cmsable\Model\TreeModelManagerInterface');
+    }
+
+    protected function getScope($parentId){
+        $parentNode = $this->getPageModel()->findOrFail($parentId);
+        $scopeId = $parentNode->getAttribute($parentNode->rootIdColumn);
+        return App::make('Cmsable\Routing\TreeScope\RepositoryInterface')->getByModelRootId($scopeId);
+    }
+
+    protected function getScopeByPath($path){
+        try{
+            return App::make('Cmsable\Routing\TreeScope\RepositoryInterface')->getByPathPrefix($path);
+        }
+        catch(\OutOfBoundsException $e){}
     }
 
     protected function getPageModel(){

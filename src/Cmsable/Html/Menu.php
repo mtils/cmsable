@@ -5,11 +5,10 @@ use Cmsable\Model\SiteTreeModelInterface;
 use Cmsable\Http\CurrentCmsPathProviderInterface;
 use Cmsable\Routing\ScopeDispatcherTrait;
 use Cmsable\Html\Breadcrumbs\Factory as BreadcrumbFactory;
+use Cmsable\Model\TreeModelManagerInterface;
 use BeeTree\Helper;
 
 class Menu {
-
-    use ScopeDispatcherTrait;
 
     protected $_roots = [];
 
@@ -19,6 +18,10 @@ class Menu {
 
     protected $currentPathProvider;
 
+    protected $treeModel;
+
+    protected $treeManager;
+
     protected $currentCmsPath;
 
     protected $manualCurrentPage;
@@ -26,22 +29,27 @@ class Menu {
     protected $routeScope = 'default';
 
     public function __construct(CurrentCmsPathProviderInterface $currentPathProvider,
-                                BreadcrumbFactory $crumbFactory){
+                                BreadcrumbFactory $crumbFactory,
+                                TreeModelManagerInterface $treeManager){
 
         $this->currentPathProvider = $currentPathProvider;
         $this->crumbFactory = $crumbFactory;
+        $this->treeManager = $treeManager;
 
     }
 
     public function currentCmsPath(){
         if(!$this->currentCmsPath){
-            $this->currentCmsPath = $this->currentPathProvider->getCurrentCmsPath($this->getScope());
+            $this->currentCmsPath = $this->currentPathProvider->getCurrentCmsPath();
         }
         return $this->currentCmsPath;
     }
 
     public function treeLoader(){
-        return $this->forwarder();
+        if(!$this->treeModel){
+            $this->treeModel = $this->treeManager->get($this->currentCmsPath()->getTreeScope());
+        }
+        return $this->treeModel;
     }
 
     public function sub($level, $filter='default'){
@@ -56,11 +64,10 @@ class Menu {
     }
 
     public function root(){
-        $scope = $this->getScope(FALSE);
-        if(!isset($this->_roots[$scope])){
-            $this->_roots[$scope] = $this->treeLoader()->tree();
+        if(!isset($this->_roots["main"])){
+            $this->_roots["main"] = $this->treeLoader()->tree();
         }
-        return $this->_roots[$scope];
+        return $this->_roots["main"];
     }
 
     public function flat($filter='default'){
@@ -83,32 +90,6 @@ class Menu {
 
     public function setCurrent($pageOrMenuTitle, $title=NULL, $content=NULL){
         return;
-        if($pageOrMenuTitle instanceof SiteTreeNodeInterface){
-            $page = $pageOrMenuTitle;
-        }
-        else{
-
-            $page = $this->treeLoader()->makeNode();
-            $page->menu_title = $pageOrMenuTitle;
-            if(!$title !== NULL){
-                $page->title = $title;
-            }
-            if(!$content !== NULL){
-                $page->content = $content;
-            }
-        }
-
-        if(!$page->id){
-            $page->id = -1;
-        }
-
-        if($matchedNode = $this->currentCmsPath()->getMatchedNode()){
-            $page->setParentNode($matchedNode);
-        }
-
-        $this->manualCurrentPage = $page;
-
-        return $this;
     }
 
     public function inSubPath(){

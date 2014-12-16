@@ -6,49 +6,52 @@ use Cmsable\Http\CmsRequest;
 use Cmsable\Model\SiteTreeNodeInterface;
 use Cmsable\Model\SiteTreeModelInterface;
 use Cmsable\PageType\RepositoryInterface as PageTypeRepository;
+use Cmsable\Routing\TreeScope\TreeScope;
+use Cmsable\Routing\TreeScope\DetectorInterface;
+use Cmsable\Model\TreeModelManagerInterface;
 
 class SiteTreeModelPathCreator implements CmsPathCreatorInterface{
 
-    protected $siteTreeModel;
+    /**
+     * The tree manager, used to choose the right tree model
+     *
+     * @var \Cmsable\Model\TreeModelManagerInterface
+     **/
+    protected $treeManager;
 
+    /**
+     * The scope detector, used to detect the scope request
+     *
+     * @var \Cmsable\Routing\TreeScope\DetectorInterface
+     **/
+    protected $scopeDetector;
+
+    /**
+     *
+     * @var \Cmsable\PageType\RepositoryInterface
+     **/
     protected $pageTypes;
 
-    protected $cmsPathPrefix = '';
+    public function __construct(TreeModelManagerInterface $treeManager,
+                                DetectorInterface $scopeDetector,
+                                PageTypeRepository $pageTypes){
 
-    public function __construct(SiteTreeModelInterface $model,
-                                PageTypeRepository $pageTypes,
-                                $cmsPathPrefix=''){
-
-        $this->siteTreeModel = $model;
+        $this->treeManager = $treeManager;
+        $this->scopeDetector = $scopeDetector;
         $this->pageTypes = $pageTypes;
 
-        if(!$cmsPathPrefix){
-            $cmsPathPrefix = '/';
-        }
-
-        if($cmsPathPrefix == '/'){
-            $this->cmsPathPrefix = $cmsPathPrefix;
-            $model->setPathPrefix($cmsPathPrefix);
-        }
-        else{
-            $this->cmsPathPrefix = trim($cmsPathPrefix,'/');
-            $model->setPathPrefix('/' .ltrim($cmsPathPrefix,'/'));
-        }
     }
 
-    public function createFromPath($originalPath)
+    public function createFromRequest(Request $request)
     {
 
-        if(!$this->pathMatchesCmsPathPrefix($originalPath)){
-            return $this->createDeactivated($originalPath);
-        }
+        $originalPath = ($request instanceof CmsRequest) ? $request->originalPath() : $request->path();
 
-        $cleanedPath = $this->getTranslatedPath($originalPath);
-
+        $scope = $this->scopeDetector->detectScope($request);
 
         // Find matching page
-        if(!$node = $this->getFirstMatchingNode($cleanedPath)){
-            return $this->createDeactivated($originalPath);
+        if(!$node = $this->getFirstMatchingNode($scope, $originalPath)){
+            return $this->createDeactivated($scope, $originalPath);
         }
 
         $cmsPath = new CmsPath;
@@ -56,8 +59,9 @@ class SiteTreeModelPathCreator implements CmsPathCreatorInterface{
         $cmsPath->setOriginalPath($originalPath);
         $cmsPath->setIsCmsPath(TRUE);
         $cmsPath->setMatchedNode($node);
-        $cmsPath->setFallbackNode($this->getFallbackNode());
-        $cmsPath->setCmsPathPrefix($this->getCmsPathPrefix());
+        $cmsPath->setFallbackNode($this->getFallbackNode($scope));
+        $cmsPath->setCmsPathPrefix($this->cleanPathPrefix($scope->getPathPrefix()));
+        $cmsPath->setTreeScope($scope);
 
 
         $pageType = $this->getPageType($node);
@@ -85,34 +89,31 @@ class SiteTreeModelPathCreator implements CmsPathCreatorInterface{
 
     }
 
-    public function createFromRequest(Request $request)
-    {
-        if($request instanceof CmsRequest){
-            return $this->createFromPath($request->originalPath());
-        }
-        return $this->createFromPath($request->path());
-    }
-
-    public function createDeactivated($originalPath){
+    public function createDeactivated($scope, $originalPath){
 
         $cmsPath = new CmsPath();
         $cmsPath->setOriginalPath($originalPath);
         $cmsPath->setIsCmsPath(FALSE);
         $cmsPath->setRewrittenPath($originalPath);
         $cmsPath->setCmsPathPrefix('');
+        $cmsPath->setTreeScope($scope);
         $cmsPath->setNodePath('');
         $cmsPath->setRoutePath($originalPath);
         $cmsPath->setSubPath('');
-        $cmsPath->setFallbackNode($this->getFallbackNode());
+        $cmsPath->setFallbackNode($this->getFallbackNode($scope));
 
         return $cmsPath;
 
     }
 
-    public function getFirstMatchingNode($path){
+    public function getFirstMatchingNode(TreeScope $scope, $originalPath){
+
+        $pathPrefix = $this->cleanPathPrefix($scope->getPathPrefix());
+        $path = $this->getTranslatedPath($originalPath, $pathPrefix);
+        $treeModel = $this->treeManager->get($scope);
 
         // If $path matches a node path return it
-        if($node = $this->siteTreeModel->pageByPath($path)){
+        if($node = $treeModel->pageByPath($path)){
             return $node;
         }
 
@@ -127,10 +128,10 @@ class SiteTreeModelPathCreator implements CmsPathCreatorInterface{
                 $pathStack[] = $segment;
                 $currentPath = implode('/',$pathStack);
 
-                if(!$this->siteTreeModel->pathExists($currentPath)){
+                if(!$treeModel->pathExists($currentPath)){
                     array_pop($pathStack);
                     $parentPath = implode('/',$pathStack);
-                    return $this->siteTreeModel->pageByPath($parentPath);
+                    return $treeModel->pageByPath($parentPath);
                 }
             }
 
@@ -138,37 +139,13 @@ class SiteTreeModelPathCreator implements CmsPathCreatorInterface{
 
     }
 
-    public function pathMatchesCmsPathPrefix($originalPath){
+    public function getTranslatedPath($originalPath, $pathPrefix){
 
-        $prefix = $this->getCleanedPathPrefix();
-        $requestUri = trim($originalPath,'/');
-
-        if($prefix != ''){
-            if($requestUri != $prefix){
-                $requestTiles = explode('/', $requestUri);
-                $myTiles = explode('/', $prefix);
-                for($i=0; $i<count($requestTiles); $i++){
-                    if(isset($myTiles[$i])){
-                        if($requestTiles[$i] != $myTiles[$i]){
-                            return FALSE;
-                        }
-                    }
-                }
-            }
-        }
-
-        return TRUE;
-
-    }
-
-    public function getTranslatedPath($originalPath){
-
-        $prefix = $this->getCleanedPathPrefix();
         $normalized = trim($originalPath,'/');
 
-        if($prefix != ''){
-            if($prefix == $normalized){
-                $normalized = $prefix.'/'.CmsPath::$homeSegment;
+        if($pathPrefix != ''){
+            if($pathPrefix == $normalized){
+                $normalized = $pathPrefix.'/'.CmsPath::$homeSegment;
             }
         }
         else{
@@ -184,17 +161,14 @@ class SiteTreeModelPathCreator implements CmsPathCreatorInterface{
         return $this->pageTypes->get($node->getPageTypeId());
     }
 
-    public function getCmsPathPrefix(){
-        return $this->cmsPathPrefix;
+    public function cleanPathPrefix($pathPrefix){
+        return trim($pathPrefix, '/');
     }
 
-    public function getCleanedPathPrefix(){
-        return trim($this->getCmsPathPrefix(),'/');
-    }
+    public function getFallbackNode($scope){
 
-    public function getFallbackNode(){
-
-        $pathPrefix = $this->getCleanedPathPrefix();
+        $pathPrefix = $this->cleanPathPrefix($scope->getPathPrefix());
+        $treeModel = $this->treeManager->get($scope);
 
         if($pathPrefix){
             $path = implode('/', [$pathPrefix,CmsPath::$homeSegment]);
@@ -203,15 +177,11 @@ class SiteTreeModelPathCreator implements CmsPathCreatorInterface{
             $path = CmsPath::$homeSegment;
         }
 
-        return $this->siteTreeModel->pageByPath($path);
+        return $treeModel->pageByPath($path);
     }
 
     public function replacePathHead($oldHead, $newHead, $path){
         return preg_replace('#'.$oldHead.'#', $newHead, $path, 1);
-    }
-
-    public function getSiteTreeModel(){
-        return $this->siteTreeModel;
     }
 
     public function cleanHomeSegment($path){

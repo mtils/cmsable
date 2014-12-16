@@ -2,6 +2,6 @@
 
 interface CurrentCmsPathProviderInterface{
 
-    public function getCurrentCmsPath($routeScope=NULL);
+    public function getCurrentCmsPath();
 
 }

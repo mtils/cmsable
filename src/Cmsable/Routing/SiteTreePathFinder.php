@@ -142,7 +142,7 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
         }
 
         if(!mb_strpos($action,'@')){
-            if($cmsPath = $this->currentPathProvider->getCurrentCmsPath($this->routeScope)){
+            if($cmsPath = $this->currentCmsPath()){
 
                 if($page = $cmsPath->getMatchedNode()){
 
