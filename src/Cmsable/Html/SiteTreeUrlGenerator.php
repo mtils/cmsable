@@ -239,6 +239,10 @@ class SiteTreeUrlGenerator extends UrlGenerator{
         $generator->setCurrentCmsPathProvider($this->currentCmsPathProvider);
         $generator->setRouter($this->router);
 
+        if($this->forceSchema){
+            $generator->forceSchema($this->forceSchema);
+        }
+
         return $generator;
 
     }
