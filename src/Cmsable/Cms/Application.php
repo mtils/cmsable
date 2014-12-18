@@ -116,15 +116,7 @@ class Application implements CurrentCmsPathProviderInterface, CurrentScopeProvid
 
     // $path nie übergeben!
     public function getCmsPath(){
-
-        if(!$this->cmsRequest instanceof CmsRequest){
-            return;
-        }
-
-        if($cmsPath = $this->cmsRequest->getCmsPath()){
-            return $cmsPath;
-        }
-
+        return $this->getCmsRequest()->getCmsPath();
     }
 
     public function getCurrentCmsPath(){
@@ -204,6 +196,38 @@ class Application implements CurrentCmsPathProviderInterface, CurrentScopeProvid
                 }
             }
         }
+
+    }
+
+    public function _updateCmsRequest(Request $request){
+        $this->cmsRequest = $this->createCmsRequest($request);
+        return $this->cmsRequest;
+    }
+
+    public function getCmsRequest(){
+
+        if(!$this->cmsRequest){
+            $this->cmsRequest = $this->createCmsRequest();
+        }
+
+        return $this->cmsRequest;
+
+    }
+
+    public function createCmsRequest(Request $request=null){
+
+        $request = ($request === NULL) ? App::make('request') : $request;
+
+        $cmsRequest = (new CmsRequest)->duplicate(
+
+            $request->query->all(), $request->request->all(), $request->attributes->all(),
+
+            $request->cookies->all(), $request->files->all(), $request->server->all()
+        );
+
+        $cmsRequest->setEventDispatcher($this->eventDispatcher);
+
+        return $cmsRequest;
 
     }
 }

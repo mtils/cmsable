@@ -221,28 +221,40 @@ class CmsServiceProvider extends ServiceProvider{
 
     protected function registerCmsApplication(){
 
-        $this->app->middleWare('Cmsable\Http\CmsRequestInjector');
+        $cmsApp = new Application(
+            $this->app->make('Cmsable\Http\CmsPathCreatorInterface'),
+            $this->app['events']
+        );
 
-        $this->app->singleton('cmsable.cms', function($app){
-
-            $cmsApp = new Application(
-                $app->make('Cmsable\Http\CmsPathCreatorInterface'),
-                $app['events']
-            );
-
-            $app['router']->filter('cmsable.scope-filter', function($route, $request) use ($cmsApp){
-                return $cmsApp->onRouterBefore($route, $request);
-            });
-
-            $cmsApp->setControllerDispatcher($app['router']->getControllerDispatcher());
-
-            return $cmsApp;
-
+        $this->app['router']->filter('cmsable.scope-filter', function($route, $request) use ($cmsApp){
+            return $cmsApp->onRouterBefore($route, $request);
         });
 
-        $this->app->singleton('Cmsable\Http\CurrentCmsPathProviderInterface',function($app){
-            return $app->make('cmsable.cms');
-        });
+       $cmsApp->setControllerDispatcher($this->app['router']->getControllerDispatcher());
+
+       $this->app->instance('cmsable.cms', $cmsApp);
+
+
+        $this->app->middleWare('Cmsable\Http\CmsRequestInjector',[$cmsApp]);
+
+//         $this->app->singleton('cmsable.cms', function($app){
+// 
+//             $cmsApp = new Application(
+//                 $app->make('Cmsable\Http\CmsPathCreatorInterface'),
+//                 $app['events']
+//             );
+// 
+//             $app['router']->filter('cmsable.scope-filter', function($route, $request) use ($cmsApp){
+//                 return $cmsApp->onRouterBefore($route, $request);
+//             });
+// 
+//             $cmsApp->setControllerDispatcher($app['router']->getControllerDispatcher());
+// 
+//             return $cmsApp;
+// 
+//         });
+
+        $this->app->instance('Cmsable\Http\CurrentCmsPathProviderInterface', $cmsApp);
 
         $app = $this->app;
 

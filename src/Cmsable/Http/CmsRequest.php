@@ -37,6 +37,9 @@ class CmsRequest extends Request implements CmsRequestInterface{
 
     public function getCmsPath()
     {
+        if(!$this->cmsPath){
+            $this->path();
+        }
         return $this->cmsPath;
     }
 

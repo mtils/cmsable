@@ -5,15 +5,20 @@ use Symfony\Component\HttpKernel\TerminableInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+use Cmsable\Cms\Application AS CmsApplication;
+
 class CmsRequestInjector implements HttpKernelInterface, TerminableInterface{
 
     public $requestEventName = 'cmsable::request-replaced';
 
     protected $app;
 
-    public function __construct(HttpKernelInterface $app)
+    protected $cmsApplication;
+
+    public function __construct(HttpKernelInterface $app, CmsApplication $cmsApplication)
     {
         $this->app = $app;
+        $this->cmsApplication = $cmsApplication;
     }
 
     /**
@@ -34,7 +39,7 @@ class CmsRequestInjector implements HttpKernelInterface, TerminableInterface{
     {
 
         if(!$this->app->runningInConsole()){
-            $request = $this->toCmsRequest($request);
+            $request = $this->cmsApplication->_updateCmsRequest($request);
             $this->app['events']->fire($this->requestEventName,[$request, $this]);
         }
 
