@@ -256,6 +256,8 @@ class SiteTreeUrlGenerator extends UrlGenerator{
             $this->getOriginalUrlGenerator()
         );
 
+        $finder->routeScope = $treeScope->getName();
+
         return $finder;
 
     }

@@ -75,7 +75,7 @@ class Application implements CurrentCmsPathProviderInterface, CurrentScopeProvid
 
         $request->setCmsPath($cmsPath);
 
-        if($cmsPath->isCmsPath()){
+        if($request->originalPath() != $request->path()){
             $this->fireEvent($this->pathSettedEventName,[$cmsPath]);
         }
 

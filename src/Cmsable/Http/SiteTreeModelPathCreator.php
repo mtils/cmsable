@@ -94,7 +94,7 @@ class SiteTreeModelPathCreator implements CmsPathCreatorInterface{
         $cmsPath = new CmsPath();
         $cmsPath->setOriginalPath($originalPath);
         $cmsPath->setIsCmsPath(FALSE);
-        $cmsPath->setRewrittenPath($originalPath);
+        $cmsPath->setRewrittenPath($this->removeScope($originalPath, $scope));
         $cmsPath->setCmsPathPrefix('');
         $cmsPath->setTreeScope($scope);
         $cmsPath->setNodePath('');
@@ -123,35 +123,55 @@ class SiteTreeModelPathCreator implements CmsPathCreatorInterface{
             $requestSegments = explode('/', $path);
             $pathStack = array();
 
+            $i = 0;
+
             foreach($requestSegments as $segment){
 
                 $pathStack[] = $segment;
                 $currentPath = implode('/',$pathStack);
 
-                if(!$treeModel->pathExists($currentPath)){
+                if($this->isPathPrefix($segment, $pathPrefix, $i)){
+                    continue;
+                }
+
+                $pathExists = $treeModel->pathExists($currentPath);
+
+                if(!$pathExists && $i == 0){
+                    return;
+                }
+
+                // if the first segment
+                if( !$treeModel->pathExists($currentPath)){
+
                     array_pop($pathStack);
                     $parentPath = implode('/',$pathStack);
+
                     return $treeModel->pageByPath($parentPath);
+
                 }
+
+                $i++;
+
             }
 
         }
 
     }
 
+    protected function isPathPrefix($segment, $pathPrefix, $segmentIndex){
+        return (($segmentIndex == 0) && ($segment == $pathPrefix));
+    }
+
     public function getTranslatedPath($originalPath, $pathPrefix){
 
         $normalized = trim($originalPath,'/');
 
-        if($pathPrefix != ''){
-            if($pathPrefix == $normalized){
-                $normalized = $pathPrefix.'/'.CmsPath::$homeSegment;
-            }
+        if( ($pathPrefix != '') && ($pathPrefix == $normalized) ){
+            return $pathPrefix.'/'.CmsPath::$homeSegment;
         }
-        else{
-            if($normalized == ''){
-                $normalized = CmsPath::$homeSegment;
-            }
+
+        if($normalized == ''){
+            return CmsPath::$homeSegment;
         }
 
         return $normalized;
@@ -178,6 +198,13 @@ class SiteTreeModelPathCreator implements CmsPathCreatorInterface{
         }
 
         return $treeModel->pageByPath($path);
+    }
+
+    public function removeScope($originalPath, $scope){
+        if(trim($scope->getPathPrefix(),'/') == ''){
+            return $originalPath;
+        }
+        return trim($this->replacePathHead($scope->getPathPrefix(), '', $originalPath),'/');
     }
 
     public function replacePathHead($oldHead, $newHead, $path){

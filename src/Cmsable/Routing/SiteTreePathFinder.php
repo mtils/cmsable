@@ -62,26 +62,33 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
     public function toRouteName($name, array $params=[], $searchMethod=self::NEAREST){
 
-        if($currentRoute = $this->currentRoute()){
-
-            if($currentRoute->getName()){
-
-                if($targetRoute = $this->router->getRoutes()->getByName($name)){
-                    $currentUri = $currentRoute->uri();
-                    $targetUri = $targetRoute->uri();
-
-                    if($this->hasSameHead($currentUri, $targetUri)){
-
-                        if($page = $this->currentPage()){
-                            $targetPath = $this->urlGenerator->route($name, $params, false);
-                            return $this->replaceWithPagePath($targetPath);
-                        }
-
-                    }
-                }
-
-            }
+        if(!$currentRoute = $this->currentRoute()){
+            return;
         }
+
+        // I doubt this is usefull
+        // if(!$currentRoute->getName()){
+        //     return;
+        // }
+
+        if(!$targetRoute = $this->router->getRoutes()->getByName($name)){
+            return;
+        }
+
+        $currentUri = $currentRoute->uri();
+        $targetUri = $targetRoute->uri();
+
+        if($this->hasSameHead($currentUri, $targetUri) && $page = $this->currentPage()){
+            $targetPath = $this->urlGenerator->route($name, $params, false);
+            return $this->replaceWithPagePath($targetPath);
+        }
+
+        if($cmsPath = $this->currentCmsPath()){
+            $target = $this->urlGenerator->route($name, $params, false);
+            $scope = $this->scopeRepository()->get($this->routeScope);
+            return ltrim($scope->getPathPrefix() . '/' . trim($target, '/'),'/');
+        }
+
 
     }
 
@@ -349,7 +356,7 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
         $path2 = explode('/',$path2);
 
         foreach($path1 as $idx=>$part){
-            if($path2[$idx] == $part){
+            if(isset($path2[$idx]) && $path2[$idx] == $part){
                 return TRUE;
             }
         }
