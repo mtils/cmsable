@@ -11,6 +11,7 @@ use Cmsable\Http\CmsPath;
 use Illuminate\Routing\UrlGenerator;
 
 use Log;
+use App;
 
 class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
@@ -23,6 +24,10 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
     protected $urlGenerator;
 
     public $routeScope = 'default';
+
+    protected $scopeRepo = null;
+
+    protected $treeModelManager = null;
 
     public function __construct(SiteTreeModelInterface $siteTreeModel,
                                 CurrentCmsPathProviderInterface $provider,
@@ -40,16 +45,14 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
         $page = ($pageOrId instanceof SiteTreeNodeInterface) ? $pageOrId : $this->siteTreeModel->pageById($pageOrId);
 
-        if($page->getRedirectType() == SiteTreeNodeInterface::NONE){
-            if($path = $page->getPath()){
-                if(ends_with($path, CmsPath::$homeSegment)){
-                    return substr($path, 0, strlen($path)-strlen(CmsPath::$homeSegment));
-                }
-                return $path;
-            }
+        if($page->getRedirectType() != SiteTreeNodeInterface::NONE){
+            return $this->recalculatePagePath($page);
         }
 
-        return $this->recalculatePagePath($page);
+
+        if($path = $page->getPath()){
+            return $this->cleanHomePath($page->getPath());
+        }
 
     }
 
@@ -271,11 +274,22 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
             if(is_numeric($target)){
                 if($targetPage = $this->siteTreeModel->pageById((int)$target)){
                     if($targetPage->getRedirectType() == SiteTreeNodeInterface::NONE){
-                        return $targetPage->getPath();
+                        return $this->cleanHomePath($targetPage->getPath());
                     }
                     else{
                         return '_error_';
                     }
+                }
+                elseif($targetPage = $this->siteTreeModel->newNode()->find((int)$target)){
+
+                    if(!$treeModel = $this->modelForPage($targetPage)){
+                        return '_error_';
+                    }
+
+                    if(!$assignedPage = $treeModel->pageById((int)$target)){
+                        return;
+                    }
+                    return $this->cleanHomePath($assignedPage->getPath());
                 }
             }
             elseif($target == SiteTreeNodeInterface::FIRST_CHILD){
@@ -291,6 +305,9 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
             }
         }
+
+        return '_error_';
+
     }
 
     protected function findFirstNonRedirectChild($childNodes, $filter='default'){
@@ -382,6 +399,39 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
                 return $route;
             }
         }
+    }
+
+    protected function modelForPage($page){
+        $scope = $this->scopeRepository()->getByModelRootId($page->{$page->rootIdColumn});
+        return $this->treeModelManager()->get($scope);
+    }
+
+    protected function scopeRepository(){
+
+        if(!$this->scopeRepo){
+            $this->scopeRepo = App::make('Cmsable\Routing\TreeScope\RepositoryInterface');
+        }
+        return $this->scopeRepo;
+
+    }
+
+    protected function treeModelManager(){
+
+        if(!$this->treeModelManager){
+            $this->treeModelManager = App::make('Cmsable\Model\TreeModelManagerInterface');
+        }
+
+        return $this->treeModelManager;
+
+    }
+
+    protected function cleanHomePath($path){
+
+        if(ends_with($path, CmsPath::$homeSegment)){
+            return substr($path, 0, strlen($path)-strlen(CmsPath::$homeSegment));
+        }
+        return $path;
+
     }
 
 }
