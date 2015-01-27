@@ -54,6 +54,8 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
             return $this->cleanHomePath($page->getPath());
         }
 
+        return $this->recalculatePagePath($page);
+
     }
 
     public function toRoutePath($path, array $params=[], $searchMethod=self::NEAREST){
@@ -242,18 +244,6 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
             return $action;
         }
 
-    }
-
-    protected function currentPageTypeControllerClass(){
-
-        if($route = $this->currentRoute()){
-            $currentControllerAction = $route->getActionName();
-            if(strpos($currentControllerAction,'@')){
-                list($controller, $currentAction) = explode('@',$currentControllerAction);
-                return $controller;
-            }
-        }
-        return $this->toPage($page) . '/' . ltrim($action,'/');
     }
 
     protected function recalculatePagePath(SiteTreeNodeInterface $page){
