@@ -14,8 +14,13 @@
   "require": {
     "php": ">=5.3.0",
     "laravel/framework": "4.2.*",
-    "ems/formobject": "dev-master",
-    "ems/beetree":"dev-master"
+    "symfony/http-foundation": "2.5.*",
+    "symfony/http-kernel": "2.5.*",
+    "ems/collection": "0.1.*",
+    "ems/xtype": "0.1.*",
+    "ems/beetree":"0.1.*",
+    "ems/formobject": "0.1.*"
+
   },
   "require-dev": {
     "mockery/mockery": "~0.9"

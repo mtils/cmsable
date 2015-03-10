@@ -2,7 +2,6 @@
 
 use Cmsable\Model\SiteTreeNodeInterface;
 use Cmsable\Auth\CurrentUserProviderInterface;
-use Cmsable\Auth\PermissionableInterface;
 use DomainException;
 
 class MenuFilter{
