@@ -111,7 +111,7 @@ class CmsServiceProvider extends ServiceProvider{
 
     protected function registerSiteTreeModel(){
 
-        $pageClass = $this->app['config']->get('cmsable::page_model');
+        $pageClass = $this->app['config']->get('cmsable.page_model');
 
         $this->app->bind('Cmsable\Model\SiteTreeModelInterface', function($app) use ($pageClass){
 
@@ -163,8 +163,10 @@ class CmsServiceProvider extends ServiceProvider{
 
     protected function injectControllerDispatcher(){
 
-        $dispatcher = new ControllerDispatcher($this->app['router'], $this->app);
-        $this->app['router']->setControllerDispatcher($dispatcher);
+        $this->app->singleton('illuminate.route.dispatcher', function($app)
+        {
+            return new ControllerDispatcher($app['router'], $app);
+        });
 
     }
 
@@ -230,12 +232,17 @@ class CmsServiceProvider extends ServiceProvider{
             return $cmsApp->onRouterBefore($route, $request);
         });
 
-       $cmsApp->setControllerDispatcher($this->app['router']->getControllerDispatcher());
+       $cmsApp->setControllerDispatcher($this->app['illuminate.route.dispatcher']);
 
        $this->app->instance('cmsable.cms', $cmsApp);
+       $this->app->instance('Cmsable\Cms\Application', $cmsApp);
 
-
-        $this->app->middleWare('Cmsable\Http\CmsRequestInjector',[$cmsApp]);
+       if(!$this->app->runningInConsole()) {
+           $this->app['Illuminate\Contracts\Http\Kernel']->prependMiddleWare(
+                'Cmsable\Http\CmsRequestInjector'
+           );
+       }
+//         $this->app->middleWare('Cmsable\Http\CmsRequestInjector',[$cmsApp]);
 
 //         $this->app->singleton('cmsable.cms', function($app){
 // 
@@ -258,7 +265,7 @@ class CmsServiceProvider extends ServiceProvider{
 
         $app = $this->app;
 
-        if($app['config']['app.debug']){
+        if ($app->isLocal()) {
             $app['events']->listen('cmsable::cms-path-setted', function($cmsPath){
                 Log::debug($cmsPath->getOriginalPath() . ' => ' . $cmsPath->getRewrittenPath());
             });
@@ -274,7 +281,7 @@ class CmsServiceProvider extends ServiceProvider{
 
     protected function fillPageTypeRepository($pageTypeLoader){
 
-        if($pageTypeArray = $this->app['config']->get('cmsable::pagetypes')){
+        if($pageTypeArray = $this->app['config']->get('pagetypes')){
 
             $pageTypeLoader->fillByArray($pageTypeArray);
 
@@ -301,8 +308,8 @@ class CmsServiceProvider extends ServiceProvider{
 
         $this->app->singleton('Cmsable\Auth\CurrentUserProviderInterface', function($app){
 
-            $userModel = $app['config']->get('cmsable::user_model');
-            $providerClass = $app['config']->get('cmsable::user_provider');
+            $userModel = $app['config']->get('cmsable.user_model');
+            $providerClass = $app['config']->get('cmsable.user_provider');
             return $app->make($providerClass, [$userModel]);
 
         });
@@ -315,7 +322,7 @@ class CmsServiceProvider extends ServiceProvider{
             return new MenuFilterRegistry($app['events']);
         });
 
-        if($filterConfig = $this->app['config']->get('cmsable::menu-filters')){
+        if($filterConfig = $this->app['config']->get('cmsable.menu-filters')){
             $filterPath = app_path().'/'.ltrim($filterConfig,'/');
             if(is_string($filterConfig) && file_exists($filterPath)){
                 include $filterPath;
@@ -361,7 +368,7 @@ class CmsServiceProvider extends ServiceProvider{
 
     protected function registerRedirectController(){
 
-        $routePrefix = $this->app['config']->get('cmsable::redirect-controller.routename-prefix');
+        $routePrefix = $this->app['config']->get('cmsable.redirect-controller.routename-prefix');
 
         $this->app['router']->get(
             "$routePrefix",
@@ -416,7 +423,7 @@ class CmsServiceProvider extends ServiceProvider{
 
     protected function loadBreadCrumbRules($factory){
 
-        $filePath = $this->app['config']->get('cmsable::breadcrumbs.file');
+        $filePath = $this->app['config']->get('cmsable.breadcrumbs.file');
 
         if(file_exists($filePath)){
             include_once $filePath;
@@ -427,7 +434,7 @@ class CmsServiceProvider extends ServiceProvider{
 
     protected function appendBreadcrumbsForSiteTreeControllers($factory){
 
-        $routePrefix = $this->app['config']->get('cmsable::sitetree-controller.routename-prefix');
+        $routePrefix = $this->app['config']->get('cmsable.sitetree-controller.routename-prefix');
 
         $app = $this->app;
 
@@ -497,7 +504,7 @@ class CmsServiceProvider extends ServiceProvider{
 
     protected function registerSiteTreeControllerRoute(){
 
-        $routePrefix = $this->app['config']->get('cmsable::sitetree-controller.routename-prefix');
+        $routePrefix = $this->app['config']->get('cmsable.sitetree-controller.routename-prefix');
 
         $this->app['router']->get(
             "$routePrefix/move/{id}",
@@ -541,10 +548,21 @@ class CmsServiceProvider extends ServiceProvider{
 
         $configPath = $this->getCmsPackagePath().'/config';
 
-        if ($this->app['files']->isDirectory($configPath))
-        {
-            $this->app['config']->package($this->cmsQualifier, $configPath, $this->cmsNamespace);
+        $configFiles = [
+            'cmsable.php',
+            'pagetype-categories.php',
+            'pagetypes.php'
+        ];
+
+        $publishes = [];
+
+        foreach ($configFiles as $configFile) {
+            $publishes["$configPath/$configFile"] = config_path($configFile);
         }
+
+        $this->publishes($publishes);
+
+
     }
 
     /**
@@ -564,7 +582,7 @@ class CmsServiceProvider extends ServiceProvider{
     protected function getCmsPackagePath(){
 
         if(!$this->cmsPackagePath){
-            $this->cmsPackagePath = realpath(__DIR__.'/../../../src');
+            $this->cmsPackagePath = realpath(__DIR__.'/../../..');
         }
         return $this->cmsPackagePath;
 

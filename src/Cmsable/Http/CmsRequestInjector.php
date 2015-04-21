@@ -1,13 +1,16 @@
 <?php namespace Cmsable\Http;
 
-use Symfony\Component\HttpKernel\HttpKernelInterface;
-use Symfony\Component\HttpKernel\TerminableInterface;
+use Closure;
+
+use Illuminate\Foundation\Application;
+use Illuminate\Contracts\Routing\Middleware;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 use Cmsable\Cms\Application AS CmsApplication;
 
-class CmsRequestInjector implements HttpKernelInterface, TerminableInterface{
+class CmsRequestInjector implements Middleware
+{
 
     public $requestEventName = 'cmsable::request-replaced';
 
@@ -15,7 +18,7 @@ class CmsRequestInjector implements HttpKernelInterface, TerminableInterface{
 
     protected $cmsApplication;
 
-    public function __construct(HttpKernelInterface $app, CmsApplication $cmsApplication)
+    public function __construct(Application $app, CmsApplication $cmsApplication)
     {
         $this->app = $app;
         $this->cmsApplication = $cmsApplication;
@@ -29,13 +32,9 @@ class CmsRequestInjector implements HttpKernelInterface, TerminableInterface{
      * @implements HttpKernelInterface::handle
      *
      * @param  \Symfony\Component\HttpFoundation\Request  $request
-     * @param  int   $type
-     * @param  bool  $catch
-     * @return \Symfony\Component\HttpFoundation\Response
-     *
-     * @throws \Exception
+     * @return mixed
      */
-    public function handle(Request $request, $type = HttpKernelInterface::MASTER_REQUEST, $catch = true)
+    public function handle($request, Closure $next)
     {
 
         if(!$this->app->runningInConsole()){
@@ -43,13 +42,8 @@ class CmsRequestInjector implements HttpKernelInterface, TerminableInterface{
             $this->app['events']->fire($this->requestEventName,[$request, $this]);
         }
 
-        return $this->app->handle($request, $type, $catch);
+        return $next($request);
 
-    }
-
-    public function terminate(Request $request, Response $response)
-    {
-        $this->app->terminate($request, $response);
     }
 
     protected function toCmsRequest(Request $request){

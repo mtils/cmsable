@@ -1,6 +1,7 @@
 <?php
 
-return array(
+return [
+
     /*
     |--------------------------------------------------------------------------
     | Default Page classname
@@ -12,15 +13,20 @@ return array(
     */
     'page_model' => 'Cmsable\Model\Page',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Your User Model
+    |--------------------------------------------------------------------------
+    |
+    | Say cmsable what is your user model
+    |
+    |
+    */
     'user_model' => 'User',
 
     'default_scope_id' => 1,
 
     'user_provider' => 'Cmsable\Auth\LaravelCurrentUserProvider',
-
-    'pagetype-categories' => array(
-        'default'    => array('icon'    => 'fa-file-text-o')
-    ),
 
     'cms-editor-css' => '/css/editor.css',
 
@@ -31,7 +37,8 @@ return array(
     'redirect-controller' => ['routename-prefix' => 'cms-redirect'],
     'menu-filters' => '',
 
-    'breadcrumbs' => array(
+    'breadcrumbs' => [
         'file' => app_path() . '/breadcrumbs.php'
-     )
-);
+     ]
+
+];

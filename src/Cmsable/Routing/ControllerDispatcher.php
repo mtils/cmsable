@@ -23,7 +23,7 @@ class ControllerDispatcher extends IlluminateDispatcher{
 
         if($this->creator){
 
-            Controller::setFilterer($this->filterer);
+            Controller::setRouter($this->router);
             return $this->creator->createController($controller, $this->getPage());
 
         }

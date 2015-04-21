@@ -17,7 +17,7 @@ use PageForm;
 use Lang;
 use Response;
 use Config;
-use Controller;
+use Illuminate\Routing\Controller;
 use BadMethodCallException;
 
 class SiteTreeController extends Controller {
@@ -362,14 +362,14 @@ class SiteTreeController extends Controller {
 
     protected function getMainTemplate(){
         if(!$this->mainTemplate){
-            $this->mainTemplate = Config::get('cmsable::sitetree-controller.main-template');
+            $this->mainTemplate = Config::get('cmsable.sitetree-controller.main-template');
         }
         return $this->mainTemplate;
     }
 
     protected function getNewPageTemplate(){
         if(!$this->newPageTemplate){
-            $this->newPageTemplate = Config::get('cmsable::sitetree-controller.new-page-template');
+            $this->newPageTemplate = Config::get('cmsable.sitetree-controller.new-page-template');
         }
         return $this->newPageTemplate;
     }
