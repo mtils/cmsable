@@ -12,14 +12,12 @@
     }
   ],
   "require": {
-    "php": ">=5.3.0",
-    "laravel/framework": "4.2.*",
-    "symfony/http-foundation": "2.5.*",
-    "symfony/http-kernel": "2.5.*",
+    "php": ">=5.4.0",
+    "laravel/framework": "5.0.*",
     "ems/collection": "0.1.*",
     "ems/xtype": "0.1.*",
     "ems/beetree":"0.1.*",
-    "ems/formobject": "0.1.*"
+    "ems/formobject": "0.2.*"
 
   },
   "require-dev": {
