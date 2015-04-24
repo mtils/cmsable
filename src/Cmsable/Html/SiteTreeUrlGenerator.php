@@ -1,12 +1,9 @@
 <?php namespace Cmsable\Html;
 
-use Route;
-use CMS;
-use PageType;
-
 use Illuminate\Routing\UrlGenerator;
 use Illuminate\Routing\Router;
 
+use Cmsable\PageType\RepositoryInterface as PageTypes;
 use Cmsable\Model\TreeModelManagerInterface;
 use Cmsable\Routing\SiteTreePathFinderInterface;
 use Cmsable\Routing\SiteTreePathFinder;
@@ -30,6 +27,11 @@ class SiteTreeUrlGenerator extends UrlGenerator{
     protected $currentCmsPathProvider;
 
     protected $router;
+
+    /**
+     * @var Cmsable\PageType\RepositoryInterface
+     **/
+    protected $pageTypes;
 
     protected static $generators = [];
 
@@ -57,12 +59,16 @@ class SiteTreeUrlGenerator extends UrlGenerator{
         }
 
         // PageTypeId passed
-        elseif(is_string($path) && PageType::has($path)){
+        elseif (is_string($path) && $this->pageTypes->has($path)) {
+
             $path = $this->getPathFinder()->toPageType($path);
+
         }
 
         // Path passed inside CMS-SiteTree
-        elseif(is_string($path) && CMS::inSiteTree()){
+        elseif (is_string($path) && $this->currentCmsPathProvider->
+                                        getCurrentCmsPath()
+                                            ->isCmsPath()) {
             if($extra && !isset($extra[0])){
                 $extra = array_values($extra);
                 $extraPath = implode('/',$extra);
@@ -123,7 +129,7 @@ class SiteTreeUrlGenerator extends UrlGenerator{
     public function page($page=NULL, $extra = array(), $secure = null){
 
         if($page === NULL){
-            $page = CMS::getMatchedNode();
+            $page = $this->currentCmsPathProvider->getCmsPath()->getMatchedNode();
         }
 
         if($page instanceof SiteTreeNodeInterface){
@@ -134,7 +140,7 @@ class SiteTreeUrlGenerator extends UrlGenerator{
 
     public function currentPage($extra=[], $secure = null){
 
-        return $this->to(CMS::getMatchedNode(), $extra, $secure);
+        return $this->to($this->currentCmsPathProvider->getCmsPath()->getMatchedNode(), $extra, $secure);
 
     }
 
@@ -213,6 +219,17 @@ class SiteTreeUrlGenerator extends UrlGenerator{
     public function scope($scope){
         $scopeName = ($scope instanceof TreeScope) ? $scope->getName() : $scope;
         return $this->getSubGenerator($scopeName);
+    }
+
+    public function getPageTypes()
+    {
+        return $this->pageTypes;
+    }
+
+    public function setPageTypes(PageTypes $repository)
+    {
+        $this->pageTypes = $repository;
+        return $this;
     }
 
     protected function getSubGenerator($scopeName){
