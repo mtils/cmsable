@@ -309,9 +309,7 @@ class CmsServiceProvider extends ServiceProvider{
 
             $providerClass = $app['config']->get('cmsable.user_provider');
 
-            $userModel = $app['config']['auth.model'];
-
-            return $app->make($providerClass, [$userModel]);
+            return $app->make($providerClass);
 
         });
 

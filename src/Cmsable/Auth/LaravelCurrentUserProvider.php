@@ -2,6 +2,7 @@
 
 use Auth;
 use App;
+use Config;
 
 class LaravelCurrentUserProvider implements CurrentUserProviderInterface{
 
@@ -11,8 +12,8 @@ class LaravelCurrentUserProvider implements CurrentUserProviderInterface{
 
     protected $fallBackUser;
 
-    public function __construct($userModel){
-        $this->userModel = $userModel;
+    public function __construct(){
+        $this->userModel = Config::get('auth.model');
     }
 
     public function current(){

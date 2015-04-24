@@ -1,14 +1,13 @@
 <?php namespace Cmsable\Model;
 
 use Eloquent;
-use Cmsable\Auth\PermissionableInterface;
-use Cmsable\Auth\UserPermissionInterface;
 use Cmsable\Html\FilteredChildIterator;
 use BeeTree\Eloquent\BeeTreeNode;
 use Cmsable\Model\SiteTreeNodeInterface;
 use App;
 
-class Page extends BeeTreeNode implements SiteTreeNodeInterface,PermissionableInterface{
+class Page extends BeeTreeNode implements SiteTreeNodeInterface
+{
 
     protected $_path = '';
 
@@ -29,9 +28,7 @@ class Page extends BeeTreeNode implements SiteTreeNodeInterface,PermissionableIn
         'parent_id',
         'position',
         'view_permission',
-        'edit_permission',
-        'delete_permission',
-        'add_child_permission'
+        'edit_permission'
     );
 
     public function filteredChildren($filter='default'){
@@ -84,18 +81,6 @@ class Page extends BeeTreeNode implements SiteTreeNodeInterface,PermissionableIn
     public function setPageTypeId($id){
         $this->page_type = $id;
         return $this;
-    }
-
-    public function isAllowed($perm, UserPermissionInterface $user){
-        if($perm == 'view'){
-            if($this->view_permission == 'page.public-view'){
-                return TRUE;
-            }
-            if($user->canAccess("{$this->view_permission}")){
-                return TRUE;
-            }
-        }
-        return FALSE;
     }
 
     /**
