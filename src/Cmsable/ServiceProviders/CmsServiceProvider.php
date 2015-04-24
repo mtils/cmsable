@@ -74,29 +74,7 @@ class CmsServiceProvider extends ServiceProvider{
 
         $this->registerActionRegistry();
 
-        $this->app->instance('url.original', $this->app['url']);
-
-        $this->app['url'] = $this->app->share(function($app)
-        {
-
-            // The URL generator needs the route collection that exists on the router.
-            // Keep in mind this is an object, so we're passing by references here
-            // and all the registered routes will be available to the generator.
-            $routes = $app['router']->getRoutes();
-
-            $urlGenerator = new SiteTreeUrlGenerator($routes, $app->rebinding('request', function($app, $request){
-                $app['url']->setRequest($request);
-
-            }));
-
-            $urlGenerator->setTreeModelManager($app->make('Cmsable\Model\TreeModelManagerInterface'));
-            $urlGenerator->setTreeScopeRepository($app->make('Cmsable\Routing\TreeScope\RepositoryInterface'));
-            $urlGenerator->setOriginalUrlGenerator($app['url.original']);
-            $urlGenerator->setCurrentCmsPathProvider($app->make('Cmsable\Http\CurrentCmsPathProviderInterface'));
-            $urlGenerator->setRouter($app['router']);
-
-            return $urlGenerator;
-        });
+        $this->registerUrlGenerator();
 
         $this->createMenuFilters();
 
@@ -112,6 +90,8 @@ class CmsServiceProvider extends ServiceProvider{
     protected function registerSiteTreeModel(){
 
         $pageClass = $this->app['config']->get('cmsable.page_model');
+
+        $pageClass = $pageClass ?: 'Cmsable\Model\Page';
 
         $this->app->bind('Cmsable\Model\SiteTreeModelInterface', function($app) use ($pageClass){
 
@@ -242,24 +222,6 @@ class CmsServiceProvider extends ServiceProvider{
                 'Cmsable\Http\CmsRequestInjector'
            );
        }
-//         $this->app->middleWare('Cmsable\Http\CmsRequestInjector',[$cmsApp]);
-
-//         $this->app->singleton('cmsable.cms', function($app){
-// 
-//             $cmsApp = new Application(
-//                 $app->make('Cmsable\Http\CmsPathCreatorInterface'),
-//                 $app['events']
-//             );
-// 
-//             $app['router']->filter('cmsable.scope-filter', function($route, $request) use ($cmsApp){
-//                 return $cmsApp->onRouterBefore($route, $request);
-//             });
-// 
-//             $cmsApp->setControllerDispatcher($app['router']->getControllerDispatcher());
-// 
-//             return $cmsApp;
-// 
-//         });
 
         $this->app->instance('Cmsable\Http\CurrentCmsPathProviderInterface', $cmsApp);
 
@@ -279,6 +241,36 @@ class CmsServiceProvider extends ServiceProvider{
 
     }
 
+    protected function registerUrlGenerator()
+    {
+
+        $this->app->instance('url.original', $this->app['url']);
+
+        $this->app['url'] = $this->app->share(function($app)
+        {
+
+            // The URL generator needs the route collection that exists on the router.
+            // Keep in mind this is an object, so we're passing by references here
+            // and all the registered routes will be available to the generator.
+            $routes = $app['router']->getRoutes();
+
+            $urlGenerator = new SiteTreeUrlGenerator($routes, $app->rebinding('request', function($app, $request){
+                $app['url']->setRequest($request);
+
+            }));
+
+            $urlGenerator->setTreeModelManager($app->make('Cmsable\Model\TreeModelManagerInterface'));
+            $urlGenerator->setTreeScopeRepository($app->make('Cmsable\Routing\TreeScope\RepositoryInterface'));
+            $urlGenerator->setOriginalUrlGenerator($app['url.original']);
+            $urlGenerator->setCurrentCmsPathProvider($app->make('Cmsable\Http\CurrentCmsPathProviderInterface'));
+            $urlGenerator->setPageTypes($app['Cmsable\PageType\RepositoryInterface']);
+            $urlGenerator->setRouter($app['router']);
+
+            return $urlGenerator;
+        });
+
+    }
+
     protected function fillPageTypeRepository($pageTypeLoader){
 
         if($pageTypeArray = $this->app['config']->get('pagetypes')){
@@ -295,11 +287,18 @@ class CmsServiceProvider extends ServiceProvider{
     protected function registerActionRegistry(){
 
         $this->app->singleton('cmsable.actions', function($app){
-            return new ActionRegistry(
+
+            $class = 'Cmsable\Cms\Action\Registry';
+
+            return $app->make($class,[
                 new NamedGroupCreator,
-                new ClassResourceTypeIdentifier,
-                $app->make('Cmsable\Auth\CurrentUserProviderInterface')
-            );
+                new ClassResourceTypeIdentifier
+            ]);
+//             return new ActionRegistry(
+//                 new NamedGroupCreator,
+//                 new ClassResourceTypeIdentifier,
+//                 $app->make('Cmsable\Auth\CurrentUserProviderInterface')
+//             );
         });
 
     }
@@ -308,8 +307,10 @@ class CmsServiceProvider extends ServiceProvider{
 
         $this->app->singleton('Cmsable\Auth\CurrentUserProviderInterface', function($app){
 
-            $userModel = $app['config']->get('cmsable.user_model');
             $providerClass = $app['config']->get('cmsable.user_provider');
+
+            $userModel = $app['config']['auth.model'];
+
             return $app->make($providerClass, [$userModel]);
 
         });
@@ -319,50 +320,36 @@ class CmsServiceProvider extends ServiceProvider{
     protected function createMenuFilters(){
 
         $this->app->singleton('Cmsable\Html\MenuFilterRegistry', function($app){
-            return new MenuFilterRegistry($app['events']);
+            return new MenuFilterRegistry;
         });
 
-        if($filterConfig = $this->app['config']->get('cmsable.menu-filters')){
-            $filterPath = app_path().'/'.ltrim($filterConfig,'/');
-            if(is_string($filterConfig) && file_exists($filterPath)){
-                include $filterPath;
-            }
-            return;
-        }
+        $this->app->afterResolving('Cmsable\Html\MenuFilterRegistry', function($registry){
 
-        $this->app['events']->listen('cmsable::menu-filter.create.default', function($filter){
-
-            $filter->add('show_in_menu',function($page){
+            $registry->filter('default',function($page){
                 return (bool)$page->show_in_menu;
             });
 
-        },$priority=1);
-
-        $this->app['events']->listen('cmsable::menu-filter.create.asidemenu', function($filter){
-
-            $filter->add('show_in_aside_menu',function($page){
+            $registry->filter('asidemenu',function($page){
                 return (bool)$page->show_in_aside_menu;
             });
 
-        },$priority=1);
-
-        $provider = $this->app->make('Cmsable\Auth\CurrentUserProviderInterface');
-
-        $this->app['events']->listen('cmsable::menu-filter.create.*', function($filter) use ($provider){
-
-            $filter->add('auth',function($page) use ($provider){
-                return $page->isAllowed('view', $provider->current());
+            $registry->filter('*',function($page){
+                  return (bool)$page->exists;
             });
 
-        },$priority=1);
+            // Check if permit is installed, if it is add its access checker
+            if (!$this->app->bound('Permit\Access\CheckerInterface')) {
+                return;
+            }
 
-         $this->app['events']->listen('cmsable::menu-filter.create.*', function($filter){
+            $provider = $this->app['Cmsable\Auth\CurrentUserProviderInterface'];
+            $checker = $this->app['Permit\Access\CheckerInterface'];
 
-            $filter->add('page_exists',function($page){
-                return (bool)$page->exists;
+            $registry->filter('*', function($page) use ($provider, $checker){
+                return $checker->hasAccess($provider->current(), $page->view_permission);
             });
 
-        },$priority=1);
+        });
 
     }
 

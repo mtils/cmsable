@@ -1,43 +1,86 @@
 <?php namespace Cmsable\Html;
 
-use ArrayIterator;
-use OutOfBoundsException;
 
-class MenuFilterRegistry{
+use Cmsable\Model\SiteTreeNodeInterface;
 
-    protected $filters = array();
+class MenuFilterRegistry
+{
 
-    protected $dispatcher;
+    /**
+     * Filters with a name
+     *
+     * @var array
+     **/
+    protected $namedFilters = [];
 
-    public function __construct($eventDispatcher){
-        $this->dispatcher = $eventDispatcher;
+    /**
+     * Filters which will be triggered every time
+     *
+     * @var array
+     **/
+    protected $globalFilters = [];
+
+    /**
+     * Adds a filter named $name to the menu.
+     * The filter has to be callable. If youre filtered should be triggered all
+     * all the time (e.g. auth checks) pass '*' as a name
+     *
+     * @param string $name
+     * @param callable $filter
+     **/
+    public function filter($name, callable $filter)
+    {
+
+        if ($name == '*') {
+            $this->globalFilters[] = $filter;
+            return $this;
+        }
+
+        $this->namedFilters[$name][] = $filter;
+
+        return $this;
+
+    }
+
+    public function clear($name)
+    {
+        $this->namedFilters[$name] = [];
     }
 
     public function filteredChildren($childNodes, $filterName='default'){
-        
-        $filter = $this->getFilter($filterName);
-        
-        $newArray = array();
+
+        $filtered = array();
+
         foreach($childNodes as $node){
-            if($filter->isVisible($node)){
-                $newArray[] = $node;
+            if($this->isVisible($node, $filterName)){
+                $filtered[] = $node;
             }
         }
-        return $newArray;
-        return new ArrayIterator($newArray);
+
+        return $filtered;
+
     }
 
-    public function getFilter($name){
-        if(!isset($this->filters[$name])){
-            $this->filters[$name] = new MenuFilter();
-            $this->dispatcher->fire("cmsable::menu-filter.create.$name", array($this->filters[$name]));
+    public function isVisible(SiteTreeNodeInterface $page, $filterName='default')
+    {
+
+        foreach ($this->getFilters($filterName) as $filter) {
+            if (!$filter($page)) {
+                return false;
+            }
         }
-        return $this->filters[$name];
+
+        return true;
     }
 
-    public function setFilter($name, MenuFilter $filter){
-        $this->filters[$name] = $filter;
-        return $this;
+    public function getFilters($name)
+    {
+        $namedFilters = isset($this->namedFilters[$name])
+                        ? $this->namedFilters[$name]
+                        : [];
+
+        return array_merge($namedFilters, $this->globalFilters);
+
     }
 
 }
