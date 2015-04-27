@@ -1,5 +1,6 @@
 <?php namespace Cmsable\ServiceProviders;
 
+use FormObject\RequestCaster\FlagsToIntCaster;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Routing\UrlGenerator;
 use Cmsable\Model\AdjacencyListSiteTreeModel;
@@ -92,6 +93,12 @@ class CmsServiceProvider extends ServiceProvider{
         $pageClass = $this->app['config']->get('cmsable.page_model');
 
         $pageClass = $pageClass ?: 'Cmsable\Model\Page';
+
+        if ($visibilityFlags = $this->app['config']['cmsable.visibility-flags']) {
+            $caster = new FlagsToIntCaster();
+            $caster->setPossibleFlags($visibilityFlags);
+            call_user_func([$pageClass,'setVisibilityCaster'], $caster);
+        }
 
         $this->app->bind('Cmsable\Model\SiteTreeModelInterface', function($app) use ($pageClass){
 
@@ -324,11 +331,11 @@ class CmsServiceProvider extends ServiceProvider{
         $this->app->afterResolving('Cmsable\Html\MenuFilterRegistry', function($registry){
 
             $registry->filter('default',function($page){
-                return (bool)$page->show_in_menu;
+                return (bool)$page->isVisibleIn('menu');
             });
 
             $registry->filter('asidemenu',function($page){
-                return (bool)$page->show_in_aside_menu;
+                return (bool)$page->isVisibleIn('aside_menu');
             });
 
             $registry->filter('*',function($page){
