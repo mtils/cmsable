@@ -4,7 +4,7 @@ use Config;
 
 class ConfigTreeScopeProvider{
 
-    public $configKey = 'cmsable::default_scope_id';
+    public $configKey = 'cmsable.default_scope_id';
 
     protected $currentScope;
 

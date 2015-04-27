@@ -109,7 +109,7 @@ class BasePageForm extends Form{
     }
 
     protected function hasVisibilityField(){
-        $pageClass = Config::get('cmsable::page_model');
+        $pageClass = Config::get('cmsable.page_model');
         return (strpos($pageClass,'Prodis') === false);
     }
 

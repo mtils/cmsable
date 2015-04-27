@@ -20,7 +20,7 @@ class Category{
     }
 
     public function getIcon(){
-        $configPath = 'cmsable::pagetype-categories.'.$this->getName().'.icon';
+        $configPath = 'pagetype-categories.'.$this->getName().'.icon';
         return LaravelConfig::get($configPath);
     }
 

@@ -172,13 +172,11 @@ class CmsValidator extends Validator{
         catch(\OutOfBoundsException $e){}
     }
 
-    protected function getPageModel(){
-
+    protected function getPageModel()
+    {
         if(!$this->pageModel){
-            $this->pageModel = App::make(Config::get('cmsable::page_model'));
+            $this->pageModel = App::make(Config::get('cmsable.page_model'));
         }
-
         return $this->pageModel;
-
     }
 }

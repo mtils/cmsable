@@ -289,7 +289,7 @@ class SiteTreeController extends Controller {
 
     public function getJsConfig(){
 
-        $content = 'window.cmsEditorCss = "' . Config::get('cmsable::cms-editor-css') . '";';
+        $content = 'window.cmsEditorCss = "' . Config::get('cmsable.cms-editor-css') . '";';
         $content .= "\nwindow.cmsMessages = ";
 
         $content .= json_encode(Lang::get('cmsable::messages')) . ';';
