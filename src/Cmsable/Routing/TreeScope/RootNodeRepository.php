@@ -15,6 +15,13 @@ class RootNodeRepository implements RepositoryInterface{
     protected $scopes;
 
     /**
+     * Manuall added scopes
+     *
+     * @var array
+     **/
+    protected $manualScopes = [];
+
+    /**
      * Scopes by name
      *
      * @var array
@@ -116,6 +123,16 @@ class RootNodeRepository implements RepositoryInterface{
     }
 
     /**
+     * Add a manual scope. This has to be done prior fillScopes
+     *
+     * @param \Cmsable\Routing\TreeScope\TreeScope $scope
+     **/
+    public function addManualScope(TreeScope $scope)
+    {
+        $this->manualScopes[] = $scope;
+    }
+
+    /**
      * Fills the scope array for fast lookups
      *
      * @return void
@@ -130,15 +147,29 @@ class RootNodeRepository implements RepositoryInterface{
 
         foreach($this->treeModel->rootNodes() as $rootNode){
 
-            $scope = $this->node2Scope($rootNode);
+            $this->addToScopes($this->node2Scope($rootNode));
 
-            $this->scopes[] = $scope;
-            $this->scopeByName[$scope->getName()] = $scope;
-            $this->scopeByModelRootId[$scope->getModelRootId()] = $scope;
-            $this->scopeByPathPrefix[$scope->getPathPrefix()] = $scope;
 
         }
 
+        foreach ($this->manualScopes as $scope) {
+            $this->addToScopes($scope);
+        }
+
+    }
+
+    /**
+     * Adds the passed scope to the scope array
+     *
+     * @param \Cmsable\Routing\TreeScope\TreeScope $treeScope
+     * @return void
+     **/
+    protected function addToScopes(TreeScope $scope)
+    {
+        $this->scopes[] = $scope;
+        $this->scopeByName[$scope->getName()] = $scope;
+        $this->scopeByModelRootId[$scope->getModelRootId()] = $scope;
+        $this->scopeByPathPrefix[$scope->getPathPrefix()] = $scope;
     }
 
     /**
