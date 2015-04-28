@@ -29,6 +29,10 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
     protected $treeModelManager = null;
 
+    protected $pageTypes;
+
+    protected $pageTypeToUriCache = [];
+
     public function __construct(SiteTreeModelInterface $siteTreeModel,
                                 CurrentCmsPathProviderInterface $provider,
                                 Router $router,
@@ -85,11 +89,19 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
             return $this->replaceWithPagePath($targetPath);
         }
 
-        if($cmsPath = $this->currentCmsPath()){
-            $target = $this->urlGenerator->route($name, $params, false);
-            $scope = $this->scopeRepository()->get($this->routeScope);
-            return ltrim($scope->getPathPrefix() . '/' . trim($target, '/'),'/');
+        if(!$cmsPath = $this->currentCmsPath()){
+            return '';
         }
+
+
+        $target = $this->urlGenerator->route($name, $params, false);
+        $scope = $this->scopeRepository()->get($this->routeScope);
+
+        if ($pageType = $this->pageTypeOfUri($targetUri)) {
+            return $this->toPageType($pageType);
+        }
+
+        return ltrim($scope->getPathPrefix() . '/' . trim($target, '/'),'/');
 
 
     }
@@ -429,6 +441,34 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
         }
         return $path;
 
+    }
+
+    protected function pageTypeOfUri($uri)
+    {
+        if (!isset($this->pageTypeToUriCache[$uri])) {
+            $this->pageTypeToUriCache[$uri] = $this->findPageTypeOfUri($uri);
+        }
+
+        return $this->pageTypeToUriCache[$uri];
+
+    }
+
+    protected function findPageTypeOfUri($uri)
+    {
+        foreach ($this->pageTypes()->all() as $pageType) {
+            if ($pageType->getTargetPath() == $uri) {
+                return $pageType;
+            }
+        }
+        return '';
+    }
+
+    protected function pageTypes()
+    {
+        if (!$this->pageTypes) {
+            $this->pageTypes = App::make('Cmsable\PageType\RepositoryInterface');
+        }
+        return $this->pageTypes;
     }
 
 }
