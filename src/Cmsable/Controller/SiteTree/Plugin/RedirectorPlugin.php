@@ -26,11 +26,19 @@ class RedirectorPlugin extends Plugin{
             'external' => Lang::get('cmsable::models.page.enums.redirect_type.external')
         );
 
-        $selectGroup = SelectOneGroup::create('redirect_type', Lang::get('cmsable::models.page.fields.redirect_type'))->setSrc($linkTypes);
+        $selectGroup = SelectOneGroup::create(
+            'redirect_type',
+            Lang::get('cmsable::models.page.fields.redirect_type')
+        )->setSrc($linkTypes);
 
         $selectGroup->push($this->getSiteTreeSelect($page));
 
-        $selectGroup->push(TextField::create('redirect__redirect_target_e', Lang::get('cmsable::forms.page-form.redirect_target_e')));
+        $selectGroup->push(
+            TextField::create(
+                'redirect__redirect_target_e',
+                Lang::get('cmsable::forms.page-form.redirect_target_e')
+            )
+        );
 
         $fields('main')->push($selectGroup);
 
