@@ -13,6 +13,8 @@ class Factory{
 
     public static $loadCallbacksEvent = 'cmsable::breadcrumbs-load';
 
+    public $sessionKey = 'cmsable_breacrumbs';
+
     protected $crumbsCreator;
 
     protected $router;
@@ -23,11 +25,14 @@ class Factory{
 
     protected $compiledCrumbs = [];
 
+
     public function __construct(CrumbsCreatorInterface $creator,
-                                Router $router){
+                                Router $router,
+                                StoreInterface $store){
 
         $this->crumbsCreator = $creator;
         $this->router = $router;
+        $this->store = $store;
 
     }
 
@@ -61,6 +66,8 @@ class Factory{
             $factoryParams = array_merge([$name, $crumbs], $params);
             call_user_func_array([$this,'fill'],$factoryParams);
         }
+
+        $this->store->syncStoredCrumbs($crumbs, $name);
 
         $this->compiledCrumbs[$indexName] = $crumbs;
 
@@ -100,6 +107,11 @@ class Factory{
     public function getRouteCallbacks(){
         $this->fireEvent(static::$loadCallbacksEvent, [$this], $once=true);
         return $this->routeCallbacks;
+    }
+
+    public function getStoredCrumbs($routeName)
+    {
+        return $this->store->getStoredCrumbs($routeName);
     }
 
     protected function currentRoute()
