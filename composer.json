@@ -17,8 +17,9 @@
     "ems/collection": "0.1.*",
     "ems/xtype": "0.1.*",
     "ems/beetree":"0.1.*",
-    "ems/formobject": "0.2.*"
-
+    "ems/formobject": "0.2.*",
+    "ems/versatile": "dev-master",
+    "edvinaskrucas/notification": "5.0.*"
   },
   "require-dev": {
     "mockery/mockery": "~0.9"

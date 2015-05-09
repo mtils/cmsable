@@ -1,5 +1,8 @@
 <?php namespace Cmsable\ServiceProviders;
 
+use Cmsable\Lang\OptionalTranslator;
+use Versatile\Attributes\BitMaskAttribute;
+use Versatile\Attributes\Dispatcher as AttributeDispatcher;
 use FormObject\RequestCaster\FlagsToIntCaster;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Routing\UrlGenerator;
@@ -14,6 +17,7 @@ use Cmsable\Html\MenuFilterRegistry;
 use Cmsable\Cms\Action\Registry as ActionRegistry;
 use Cmsable\Cms\Action\NamedGroupCreator;
 use Cmsable\Cms\Action\ClassResourceTypeIdentifier;
+use FormObject\Form;
 
 use Cmsable\Controller\SiteTree\SiteTreeController;
 use Cmsable\Http\SiteTreeModelPathCreator;
@@ -26,6 +30,7 @@ use Cmsable\Html\Breadcrumbs\Factory as BreadcrumbFactory;
 use Cmsable\Controller\SiteTree\Plugin\Dispatcher;
 use Cmsable\View\FallbackFileViewFinder;
 use Cmsable\PageType\DBConfigRepository;
+use Cmsable\Routing\TreeScope\TreeScope;
 use Blade;
 use Log;
 
@@ -40,6 +45,12 @@ class CmsServiceProvider extends ServiceProvider{
     protected $defaultScopeId = 1;
 
     protected $adminScopeId = 2;
+
+    protected $adminTreeModelFile;
+
+    protected $adminArrayScope;
+
+    protected $adminViewPath;
 
     public function register(){
 
@@ -86,19 +97,23 @@ class CmsServiceProvider extends ServiceProvider{
             return preg_replace($pattern, '$1<?php $f = new \BeeTree\Support\HtmlPrinter(); echo $f->toJsTree$2 ?>', $view);
         });
 
+        Blade::extend(function($view, $compiler){
+            $pattern = $compiler->createMatcher('guessTrans');
+            return preg_replace($pattern, '$1<?php echo \Cmsable\Lang\OptionalTranslator::guess$2 ?>', $view);
+        });
+
     }
 
     protected function registerSiteTreeModel(){
 
         $pageClass = $this->app['config']->get('cmsable.page_model');
 
-        $pageClass = $pageClass ?: 'Cmsable\Model\Page';
+        AttributeDispatcher::extend('bitmask', function($bitKey, $bitName){
+            return new BitMaskAttribute($bitKey, $bitName);
+        });
 
-        if ($visibilityFlags = $this->app['config']['cmsable.visibility-flags']) {
-            $caster = new FlagsToIntCaster();
-            $caster->setPossibleFlags($visibilityFlags);
-            call_user_func([$pageClass,'setVisibilityCaster'], $caster);
-        }
+
+        $pageClass = $pageClass ?: 'Cmsable\Model\Page';
 
         $this->app->bind('Cmsable\Model\SiteTreeModelInterface', function($app) use ($pageClass){
 
@@ -110,9 +125,41 @@ class CmsServiceProvider extends ServiceProvider{
 
     protected function registerTreeModelManager(){
 
-        $this->app->singleton('Cmsable\Model\TreeModelManagerInterface', function($app){
+        $interface = 'Cmsable\Model\TreeModelManagerInterface';
+
+        $this->app->singleton($interface, function($app){
 
             return $app->make('Cmsable\Model\TreeModelManager');
+
+        });
+
+        $this->app->afterResolving($interface, function($manager, $app) use ($interface){
+
+            if ($app->resolved($interface)) {
+                return;
+            }
+
+            if (!$this->hasArrayAdminModel()) {
+                return;
+            }
+
+            $adminScope = $this->getAdminArrayScope();
+
+            $adminModel = $app->make(
+                'Cmsable\Model\ArraySiteTreeModel',[
+                    'Cmsable\Model\GenericPage',
+                    $adminScope->getModelRootId()
+            ]);
+
+            $adminModel->setPathPrefix($adminScope->getPathPrefix());
+
+            $adminModel->setSourceArray(include $this->getAdminTreeModelFile());
+
+            OptionalTranslator::provideTranslator(function() use ($app) {
+                return $app['translator'];
+            });
+
+            $manager->set($adminScope, $adminModel);
 
         });
 
@@ -120,9 +167,25 @@ class CmsServiceProvider extends ServiceProvider{
 
     protected function registerTreeScopeRepository(){
 
-        $this->app->singleton('Cmsable\Routing\TreeScope\RepositoryInterface', function($app){
+        $interface = 'Cmsable\Routing\TreeScope\RepositoryInterface';
+
+        $this->app->singleton($interface, function($app){
 
             return $app->make('Cmsable\Routing\TreeScope\RootNodeRepository');
+
+        });
+
+        $this->app->afterResolving($interface, function($repo, $app) use ($interface){
+
+            if ($app->resolved($interface)) {
+                return;
+            }
+
+            if (!$this->hasArrayAdminModel()) {
+                return;
+            }
+
+            $repo->addManualScope($this->getAdminArrayScope());
 
         });
 
@@ -197,6 +260,8 @@ class CmsServiceProvider extends ServiceProvider{
     }
 
     protected function registerPageTypeManager(){
+
+        $this->app->alias('cmsable.pageTypes','Cmsable\PageType\CurrentPageTypeProviderInterface');
 
         $this->app->singleton('cmsable.pageTypes', function($app){
 
@@ -301,11 +366,7 @@ class CmsServiceProvider extends ServiceProvider{
                 new NamedGroupCreator,
                 new ClassResourceTypeIdentifier
             ]);
-//             return new ActionRegistry(
-//                 new NamedGroupCreator,
-//                 new ClassResourceTypeIdentifier,
-//                 $app->make('Cmsable\Auth\CurrentUserProviderInterface')
-//             );
+
         });
 
     }
@@ -331,16 +392,17 @@ class CmsServiceProvider extends ServiceProvider{
         $this->app->afterResolving('Cmsable\Html\MenuFilterRegistry', function($registry){
 
             $registry->filter('default',function($page){
-                return (bool)$page->isVisibleIn('menu');
+                return (bool)$page->show_in_menu;
             });
 
-            $registry->filter('asidemenu',function($page){
-                return (bool)$page->isVisibleIn('aside_menu');
+            $registry->filter('aside_menu',function($page){
+                return (bool)$page->show_in_aside_menu;
             });
 
             $registry->filter('*',function($page){
                   return (bool)$page->exists;
             });
+
 
             // Check if permit is installed, if it is add its access checker
             if (!$this->app->bound('Permit\Access\CheckerInterface')) {
@@ -351,7 +413,25 @@ class CmsServiceProvider extends ServiceProvider{
             $checker = $this->app['Permit\Access\CheckerInterface'];
 
             $registry->filter('*', function($page) use ($provider, $checker){
+                if ($page->view_permission == 'page.public-view') {
+                    return true;
+                }
                 return $checker->hasAccess($provider->current(), $page->view_permission);
+            });
+
+            if (!$visibilityFlags = $this->app['config']['cmsable']['visibility-flags']) {
+                return;
+            }
+
+            if (!in_array('show_when_authorized', $visibilityFlags)) {
+                return;
+            }
+
+            $registry->filter('*', function($page) use ($provider, $checker){
+                if (!$page->show_when_authorized && !$provider->current()->isGuest()) {
+                    return false;
+                }
+                return true;
             });
 
         });
@@ -388,19 +468,86 @@ class CmsServiceProvider extends ServiceProvider{
         $this->registerBreadcrumbs();
         $this->registerMenu();
 
+        $this->registerAdminViewPaths();
+
+        $this->app['cmsable.cms']->whenScope('*', function ($scope, $route, $request, $page)
+        {
+            return;
+            if ($page && ! $this->app['auth']->allowed($page->view_permission)) {
+
+                $intendedUrl = $this->app['url']->full();
+                if (!str_contains($intendedUrl, '_debugbar')) {
+                    $this->app['session']->set('url.intended', $intendedUrl);
+                }
+
+                return $this->app['redirect']->to('/session/create')->withErrors([
+                    $this->app['translator']->get('user.noaccess')
+                ]);
+            }
+        });
+
 
     }
 
+    protected function registerAdminViewPaths()
+    {
+
+        $this->app['cmsable.cms']->whenScope('admin', function ()
+        {
+
+            $this->app['auth']->forceActual(true);
+
+            $adminThemePath = $this->getAdminViewPath();
+
+            $formRenderer = Form::getRenderer();
+            $formRenderer->addPath("$adminThemePath/forms");
+
+            $this->app['view']->getFinder()->prependLocation($adminThemePath);
+        });
+
+    }
+
+    protected function registerBreadcrumbNodeCreator()
+    {
+
+        $interface = 'Cmsable\Html\Breadcrumbs\NodeCreatorInterface';
+
+        $this->app->singleton($interface, function($app){
+            return $app['Cmsable\Model\SiteTreeModelInterface'];
+        });
+    }
+
+    protected function registerBreadcrumbStore()
+    {
+
+        $interface = 'Cmsable\Html\Breadcrumbs\StoreInterface';
+        $this->app->singleton($interface, function($app){
+            return $app->make('Cmsable\Html\Breadcrumbs\SessionStore');
+        });
+
+    }
+
+    protected function registerCrumbsCreator()
+    {
+        $interface = 'Cmsable\Html\Breadcrumbs\CrumbsCreatorInterface';
+        $this->app->singleton($interface, function($app){
+            return $app->make('Cmsable\Html\Breadcrumbs\SiteTreeCrumbsCreator');
+        });
+    }
+
     protected function registerBreadcrumbs(){
+
+        $this->registerBreadcrumbNodeCreator();
+
+        $this->registerBreadcrumbStore();
+
+        $this->registerCrumbsCreator();
 
         $serviceProvider = $this;
 
         $this->app->singleton('cmsable.breadcrumbs', function($app) use ($serviceProvider){
 
-            $crumbsCreator = new SiteTreeCrumbsCreator($app['Cmsable\Model\SiteTreeModelInterface'],
-                                                       $app['cmsable.cms']);
-
-            $factory = new BreadcrumbFactory($crumbsCreator, $app['router']);
+            $factory = $app->make('Cmsable\Html\Breadcrumbs\Factory');
             $factory->setEventDispatcher($app['events']);
 
             return $factory;
@@ -510,13 +657,19 @@ class CmsServiceProvider extends ServiceProvider{
 
         $this->app['router']->resource("$routePrefix",'Cmsable\Controller\SiteTree\SiteTreeController');
 
+        $this->registerPluginDispatcher();
+
     }
 
     protected function registerPluginDispatcher(){
 
-        $dispatcher = new Dispatcher($this->app['Cmsable\PageType\RepositoryInterface'],
-                                     $this->app['events'],
-                                     $this->app);
+        $this->app->resolving('Cmsable\Controller\SiteTree\SiteTreeController', function(){
+
+            $dispatcher = new Dispatcher($this->app['Cmsable\PageType\RepositoryInterface'],
+                                         $this->app['events'],
+                                         $this->app);
+        });
+
 
     }
 
@@ -554,6 +707,62 @@ class CmsServiceProvider extends ServiceProvider{
 
         $this->publishes($publishes);
 
+
+    }
+
+    protected function hasArrayAdminModel()
+    {
+        return (bool)$this->getAdminTreeModelFile();
+    }
+
+    protected function getAdminArrayScope()
+    {
+        if ($this->adminArrayScope) {
+            return $this->adminArrayScope;
+        }
+
+        $this->adminArrayScope = new TreeScope();
+        $this->adminArrayScope->setModelRootId(0);
+        $this->adminArrayScope->setName('admin');
+        $this->adminArrayScope->setPathPrefix('admin');
+
+        return $this->adminArrayScope;
+    }
+
+    protected function getAdminTreeModelFile()
+    {
+
+        if ($this->adminTreeModelFile !== null) {
+            return $this->adminTreeModelFile;
+        }
+
+        $treeConfig = $this->app['config']['cmsable.admintree'];
+
+        if ($treeConfig == 'db') {
+            $this->adminTreeModelFile = '';
+            return $this->adminTreeModelFile;
+        }
+
+        if ($treeConfig == 'default') {
+            $this->adminTreeModelFile = $this->getCmsPackagePath().'/resources/sitetrees/admintree.php';
+            return $this->adminTreeModelFile;
+        }
+
+        $this->adminTreeModelFile = $treeConfig;
+
+        return $this->adminTreeModelFile;
+
+    }
+
+    protected function getAdminViewPath()
+    {
+        if ($this->adminViewPath) {
+            return $this->adminViewPath;
+        }
+
+        $this->adminViewPath = $this->getCmsPackagePath().'/resources/views/admin';
+
+        return $this->adminViewPath;
 
     }
 

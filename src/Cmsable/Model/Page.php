@@ -1,6 +1,7 @@
 <?php namespace Cmsable\Model;
 
 use Eloquent;
+use Versatile\Attributes\UsesVirtualAttributes;
 use Cmsable\Html\FilteredChildIterator;
 use BeeTree\Eloquent\BeeTreeNode;
 use Cmsable\Model\SiteTreeNodeInterface;
@@ -9,7 +10,7 @@ use App;
 class Page extends BeeTreeNode implements SiteTreeNodeInterface
 {
 
-    static protected $visibilityCaster;
+    use UsesVirtualAttributes;
 
     protected $_path = '';
 
@@ -32,6 +33,17 @@ class Page extends BeeTreeNode implements SiteTreeNodeInterface
         'view_permission',
         'edit_permission'
     );
+
+    protected $attributes = [
+        'visibility' => 9
+    ];
+
+    protected $virtualAttributes = [
+        'show_in_menu'          => 'bitmask:visibility,1',
+        'show_in_aside_menu'    => 'bitmask:visibility,2',
+        'show_in_search'        => 'bitmask:visibility,4',
+        'show_when_authorized'  => 'bitmask:visibility,8'
+    ];
 
     public function filteredChildren($filter='default'){
         return App::make('Cmsable\Html\MenuFilterRegistry')->filteredChildren($this->childNodes(), $filter);
@@ -62,19 +74,6 @@ class Page extends BeeTreeNode implements SiteTreeNodeInterface
                 )->pluck('content');
         }
         return parent::getAttributeFromArray('content');
-    }
-
-    public function isVisibleIn($menuName)
-    {
-        $key = "show_in_$menuName";
-        if (array_key_exists($key, $this->attributes)) {
-            return (bool)$this->attributes[$key];
-        }
-
-        if (static::$visibilityCaster) {
-            return static::$visibilityCaster->isFlagSelected($key,
-                                                             $this->visibility);
-        }
     }
 
     /**
@@ -147,16 +146,6 @@ class Page extends BeeTreeNode implements SiteTreeNodeInterface
         $this->content = $content;
         return $this;
 
-    }
-
-    public static function getVisibilityCaster()
-    {
-        return static::$visibilityCaster;
-    }
-
-    public static function setVisibilityCaster($caster)
-    {
-        static::$visibilityCaster = $caster;
     }
 
 }

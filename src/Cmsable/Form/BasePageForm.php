@@ -51,6 +51,8 @@ class BasePageForm extends Form{
 
         $parentFields = parent::createFields();
 
+//         $parentFields->setSwitchable(true);
+
         $mainFields = new FieldList('main',trans('cmsable::forms.page-form.main'));
         $mainFields->setSwitchable(TRUE);
         $mainFields->push(TextField::create('menu_title')
@@ -87,7 +89,8 @@ class BasePageForm extends Form{
             $options = [
                 trans('cmsable::models.page.enums.visibility.show_in_menu'),
                 trans('cmsable::models.page.enums.visibility.show_in_aside_menu'),
-                trans('cmsable::models.page.enums.visibility.show_in_search')
+                trans('cmsable::models.page.enums.visibility.show_in_search'),
+                trans('cmsable::models.page.enums.visibility.show_when_authorized')
             ];
 
             $settingFields->push(

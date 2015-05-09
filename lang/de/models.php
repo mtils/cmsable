@@ -30,6 +30,7 @@ return array(
                 'show_in_menu'          => 'In Hauptmenü anzeigen?',
                 'show_in_aside_menu'    => 'In Fußmenü anzeigen?',
                 'show_in_search'        => 'In Suche anzeigen?',
+                'show_when_authorized'  => 'Auch anzeigen wenn Benutzer angemeldet ist?',
             )
         )
     )

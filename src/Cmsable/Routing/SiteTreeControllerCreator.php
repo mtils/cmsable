@@ -24,7 +24,7 @@ class SiteTreeControllerCreator implements ControllerCreatorInterface{
      **/
     public function createController($name, SiteTreeNodeInterface $page=NULL){
 
-        $controller = App::make($name, [App::make('PageForm'),$this->getTreeModel(), App::make('events')]);
+        $controller = App::make($name, [App::make('Cmsable\Form\PermissionablePageForm'),$this->getTreeModel(), App::make('events')]);
 
         $controller->setRouteScope($this->isAdminPageType() ? 'admin' : 'default');
 
