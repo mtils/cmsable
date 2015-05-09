@@ -10,6 +10,8 @@ class Crumbs extends OrderedList{
 
     protected $nodeCreator;
 
+    protected $autoIncrementor = 0;
+
     public function __construct(NodeCreatorInterface $creator){
         $this->nodeCreator = $creator;
     }
@@ -34,6 +36,11 @@ class Crumbs extends OrderedList{
         if($content){
             $crumb->setContent($content);
         }
+
+        // Produce some custom Ids to prevent false parent/child relations
+        $crumb->id = 'custom-id-'.$this->autoIncrementor;
+        $crumb->parent_id = 'parent-'.$crumb->id;
+        $this->autoIncrementor++;
 
         return $crumb;
 
@@ -64,7 +71,9 @@ class Crumbs extends OrderedList{
         }
 
         if($node = $this->current()){
-            if($value->getParentIdentifier() != $node->getIdentifier()){
+
+            if($value->getParentIdentifier() != $node->getIdentifier())
+            {
                  $node->addChildNode($value);
                  $value->setParentNode($node);
             }
