@@ -1,5 +1,6 @@
 <?php namespace Cmsable\Controller\SiteTree;
 
+use Notification;
 use Illuminate\Events\Dispatcher;
 use FormObject\Field\HiddenField;
 use FormObject\Support\Laravel\Validator\ValidationException;
@@ -8,12 +9,11 @@ use Cmsable\Model\SiteTreeModelInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use View;
 use Input;
-use Session;
 use URL;
 use Redirect;
 use RuntimeException;
 use CMS;
-use PageForm;
+use Cmsable\Form\PermissionablePageForm as PageForm;
 use Lang;
 use Response;
 use Config;
@@ -131,8 +131,7 @@ class SiteTreeController extends Controller {
 
             $this->events->fire("sitetree.$pageTypeId.created", [$this->form, $page]);
 
-            Session::flash('message', $this->getActionMessage('page-created', $page));
-            Session::flash('messageType','success');
+            Notification::info($this->getActionMessage('page-created', $page));
 
             return Redirect::action('edit', [$page->id]);
 
@@ -212,8 +211,7 @@ class SiteTreeController extends Controller {
                 $this->events->fire("sitetree.page-type-leaving", [$page, $oldPageTypeId]);
             }
 
-            Session::flash('message',$this->getActionMessage('page-saved',$page));
-            Session::flash('messageType','success');
+            Notification::success($this->getActionMessage('page-saved',$page));
 
             $this->events->fire("sitetree.$pageTypeId.updating", [$this->form, $page]);
 
@@ -242,8 +240,7 @@ class SiteTreeController extends Controller {
 
         $this->events->fire("sitetree.$pageTypeId.destroyed", [$page]);
 
-        Session::flash('message',$this->getActionMessage('page-deleted', $page));
-        Session::flash('messageType','success');
+        Notification::success($this->getActionMessage('page-deleted', $page));
 
         return Redirect::to(URL::currentPage());
     }
@@ -271,8 +268,7 @@ class SiteTreeController extends Controller {
             // If there is no anchestor, simply add it as the first child
             if((int)$position == 1){
                 $this->model->makeChildOf($movedNode, $parentNode);
-                Session::flash('message',$this->getActionMessage('page-moved', $movedNode));
-                Session::flash('messageType','success');
+                Notification::success($this->getActionMessage('page-moved', $movedNode));
             }
             else{
                 throw new NotFoundHttpException();
@@ -280,8 +276,7 @@ class SiteTreeController extends Controller {
         }
         else{
             $this->model->insertBefore($movedNode, $newAnchestor);
-            Session::flash('message',$this->getActionMessage('page-moved', $movedNode));
-            Session::flash('messageType','success');
+            Notification::success($this->getActionMessage('page-moved', $movedNode));
         }
 
         return Redirect::to(URL::currentPage());
