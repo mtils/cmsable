@@ -6,6 +6,7 @@ use Cmsable\Http\CurrentCmsPathProviderInterface;
 use Cmsable\Routing\ScopeDispatcherTrait;
 use Cmsable\Html\Breadcrumbs\Factory as BreadcrumbFactory;
 use Cmsable\Model\TreeModelManagerInterface;
+use Collection\StringList;
 use BeeTree\Helper;
 
 class Menu {
@@ -86,6 +87,21 @@ class Menu {
 
     public function current(){
         return $this->crumbFactory->get()->last();
+    }
+
+    public function cssClasses($page)
+    {
+
+        $cssClasses = new StringList();
+
+        if (!$page instanceof SiteTreeNodeInterface) {
+            return $cssClasses;
+        }
+
+        $pageTypeClass = basename(str_replace('.','/', $page->getPageTypeId()));
+        $cssClasses->append($pageTypeClass);
+
+        return $cssClasses;
     }
 
     public function setCurrent($pageOrMenuTitle, $title=NULL, $content=NULL){
