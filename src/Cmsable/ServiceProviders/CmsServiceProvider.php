@@ -646,7 +646,7 @@ class CmsServiceProvider extends ServiceProvider{
         $routePrefix = $this->app['config']->get('cmsable.sitetree-controller.routename-prefix');
 
         $this->app['router']->get(
-            "$routePrefix/move/{id}",
+            "$routePrefix/move/{sitetree}",
             ['as'=>"$routePrefix.move",'uses'=>'Cmsable\Controller\SiteTree\SiteTreeController@move']
         );
 
