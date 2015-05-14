@@ -119,11 +119,11 @@ class SiteTreeController extends Controller {
 
             $page = $this->model->makeNode();
 
-            $this->events->fire("sitetree.store", [$page]);
-
             $pageTypeId = $page->getPageTypeId();
 
             $page->fill($this->form->getData());
+
+            $this->events->fire("sitetree.store", [$page]);
 
             $this->events->fire("sitetree.$pageTypeId.creating", [$this->form, $page]);
 
