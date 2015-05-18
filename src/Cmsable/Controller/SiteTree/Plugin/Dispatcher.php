@@ -16,6 +16,8 @@ class Dispatcher{
 
     protected $creator;
 
+    protected static $pluginCache = [];
+
     public function __construct(PageTypeRepository $pageTypeRepo,
                                 LaravelDispatcher $events,
                                 Application $creator){
@@ -56,6 +58,10 @@ class Dispatcher{
 
     public function __invoke(SiteTreeNodeInterface $page){
 
+        if ($this->hasPluginForDispatcher($page->getPageTypeId())) {
+            return;
+        }
+
         $this->bootPlugin($page->getPageTypeId());
 
     }
@@ -67,6 +73,8 @@ class Dispatcher{
         }
 
         $events = $this->events;
+
+        $this->assureOneInstancePerDispatcher($plugin, $pageTypeId);
 
         $this->events->listen(
 
@@ -124,6 +132,35 @@ class Dispatcher{
             }
         );
 
+
+    }
+
+    protected function hasPluginForDispatcher($pageTypeId)
+    {
+
+        $dispatcherId = spl_object_hash($this->events);
+
+        if (!isset(static::$pluginCache[$dispatcherId])) {
+            return false;
+        }
+
+        if (!isset(static::$pluginCache[$dispatcherId][$pageTypeId])) {
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function assureOneInstancePerDispatcher(Plugin $plugin, $pageTypeId)
+    {
+
+        $dispatcherId = spl_object_hash($this->events);
+
+        if (!isset(static::$pluginCache[$dispatcherId])) {
+            static::$pluginCache[$dispatcherId] = [];
+        }
+
+        static::$pluginCache[$dispatcherId][$pageTypeId] = $plugin;
 
     }
 

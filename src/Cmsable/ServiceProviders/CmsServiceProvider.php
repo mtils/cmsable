@@ -503,6 +503,7 @@ class CmsServiceProvider extends ServiceProvider{
             $formRenderer->addPath("$adminThemePath/forms");
 
             $this->app['view']->getFinder()->prependLocation($adminThemePath);
+
         });
 
     }
@@ -663,7 +664,7 @@ class CmsServiceProvider extends ServiceProvider{
 
     protected function registerPluginDispatcher(){
 
-        $this->app->resolving('Cmsable\Controller\SiteTree\SiteTreeController', function(){
+        $this->app->afterResolving('Cmsable\Controller\SiteTree\SiteTreeController', function($controller, $app){
 
             $dispatcher = new Dispatcher($this->app['Cmsable\PageType\RepositoryInterface'],
                                          $this->app['events'],
