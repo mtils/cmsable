@@ -254,6 +254,7 @@ class SiteTreeUrlGenerator extends UrlGenerator{
         $generator->setTreeScopeRepository($this->treeScopeRepository);
         $generator->setOriginalUrlGenerator($this->originalUrlGenerator);
         $generator->setCurrentCmsPathProvider($this->currentCmsPathProvider);
+        $generator->setPageTypes($this->pageTypes);
         $generator->setRouter($this->router);
 
         if($this->forceSchema){
