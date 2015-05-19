@@ -1,10 +1,13 @@
 <?php namespace Cmsable\Model;
 
+use Signal\NamedEvent\BusHolderTrait;
 use BeeTree\Eloquent\OrderedAdjacencyListModel;
 use BadMethodCallException;
 use Cmsable\Html\Breadcrumbs\NodeCreatorInterface;
 
 class ArraySiteTreeModel implements SiteTreeModelInterface, NodeCreatorInterface{
+
+    use BusHolderTrait;
 
     protected $_pathPrefix = '';
 
@@ -21,6 +24,8 @@ class ArraySiteTreeModel implements SiteTreeModelInterface, NodeCreatorInterface
     protected $nodeClassName;
 
     protected $sourceArray;
+
+    protected $arrayProvider;
 
     protected $_idLookup;
 
@@ -43,12 +48,18 @@ class ArraySiteTreeModel implements SiteTreeModelInterface, NodeCreatorInterface
 
     public function getSourceArray()
     {
+        if ($this->sourceArray === null && $provider = $this->arrayProvider) {
+            $this->sourceArray = [];
+            $this->setSourceArray($provider($this));
+        }
         return $this->sourceArray;
     }
 
     public function setSourceArray(array $array)
     {
+
         $this->sourceArray = $array;
+        $this->fire('sitetree.filled',[&$this->sourceArray]);
         return $this;
     }
 
@@ -180,7 +191,7 @@ class ArraySiteTreeModel implements SiteTreeModelInterface, NodeCreatorInterface
         if( $childs=== NULL && $currentStack === NULL ){
             $currentStack = $this->getEmptyPathStack();
             $this->rootNode = $this->newNode();
-            $this->rootNode->fill($this->sourceArray, true);
+            $this->rootNode->fill($this->getSourceArray(), true);
             $childs = $this->rootNode->childNodes();
             $this->pathMap = [];
             $this->id2Path = [];
@@ -242,6 +253,12 @@ class ArraySiteTreeModel implements SiteTreeModelInterface, NodeCreatorInterface
 
     public function newNode(){
         return static::makeNode();
+    }
+
+    public function provideArray(callable $provider)
+    {
+        $this->arrayProvider = $provider;
+        return $this;
     }
 
 }

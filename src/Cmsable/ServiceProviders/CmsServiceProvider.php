@@ -1,5 +1,6 @@
 <?php namespace Cmsable\ServiceProviders;
 
+use Signal\Support\Laravel\IlluminateBus;
 use Cmsable\Lang\OptionalTranslator;
 use Versatile\Attributes\BitMaskAttribute;
 use Versatile\Attributes\Dispatcher as AttributeDispatcher;
@@ -150,10 +151,13 @@ class CmsServiceProvider extends ServiceProvider{
                     'Cmsable\Model\GenericPage',
                     $adminScope->getModelRootId()
             ]);
+            $adminModel->setEventBus(new IlluminateBus($app['events']));
 
             $adminModel->setPathPrefix($adminScope->getPathPrefix());
 
-            $adminModel->setSourceArray(include $this->getAdminTreeModelFile());
+            $adminModel->provideArray(function($model){
+                return include $this->getAdminTreeModelFile();
+            });
 
             OptionalTranslator::provideTranslator(function() use ($app) {
                 return $app['translator'];
