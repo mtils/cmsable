@@ -43,6 +43,10 @@ class CmsServiceProvider extends ServiceProvider{
 
     protected $cmsNamespace = 'cmsable';
 
+    protected $pageClass;
+
+    protected $pageModel;
+
     protected $defaultScopeId = 1;
 
     protected $adminScopeId = 2;
@@ -461,6 +465,8 @@ class CmsServiceProvider extends ServiceProvider{
 
         $this->registerRedirectController();
 
+        $this->registerPageQueryFactory();
+
         $app = $this->app;
 
         $this->app->validator->resolver(function($translator, $data, $rules, $messages) use ($app){
@@ -491,6 +497,20 @@ class CmsServiceProvider extends ServiceProvider{
         });
 
 
+    }
+
+    protected function registerPageQueryFactory()
+    {
+        $class = 'Cmsable\Model\PageQueryFactory';
+        $this->app->alias('cmsable.pagequery-factory', $class);
+
+        $this->app->singleton('cmsable.pagequery-factory', function($app) use ($class){
+            return new $class(
+                $app['Cmsable\Model\SiteTreeModelInterface']->makeNode(),
+                $app['Cmsable\PageType\ConfigRepositoryInterface'],
+                $app['Cmsable\Html\MenuFilterRegistry']
+            );
+        });
     }
 
     protected function registerAdminViewPaths()

@@ -236,13 +236,17 @@ class DBConfigRepository implements ConfigRepositoryInterface{
 
     }
 
-    protected function getColumnOfXType(AbstractType $type){
+    public function getColumnOfXType(AbstractType $type){
 
         return $this->getColumn($this->getTypeNameOfXType($type));
 
     }
 
-    protected function getTypeNameOfXType(AbstractType $type){
+    public function getConfigType($pageTypeId) {
+        return $this->typeRepository->getConfigType($pageTypeId);
+    }
+
+    public function getTypeNameOfXType(AbstractType $type){
 
         switch($type->getGroup()){
 
