@@ -29,6 +29,8 @@ class Menu {
 
     protected $routeScope = 'default';
 
+    protected $cssClassProvider;
+
     public function __construct(CurrentCmsPathProviderInterface $currentPathProvider,
                                 BreadcrumbFactory $crumbFactory,
                                 TreeModelManagerInterface $treeManager){
@@ -101,7 +103,17 @@ class Menu {
         $pageTypeClass = basename(str_replace('.','/', $page->getPageTypeId()));
         $cssClasses->append($pageTypeClass);
 
+        if ($provider = $this->cssClassProvider) {
+            $provider($page, $cssClasses);
+        }
+
         return $cssClasses;
+    }
+
+    public function provideCssClasses(callable $provider)
+    {
+        $this->cssClassProvider = $provider;
+        return $this;
     }
 
     public function setCurrent($pageOrMenuTitle, $title=NULL, $content=NULL){
