@@ -28,8 +28,6 @@ class ArraySiteTreeModelTest extends BaseTest
 
         $model->setSourceArray($srcArray);
 
-        print_r($model->tree());
-
     }
 
     protected function getCompleteSourceArray()

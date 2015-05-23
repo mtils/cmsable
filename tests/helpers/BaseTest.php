@@ -3,6 +3,7 @@
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\SQLiteConnection;
 use Illuminate\Database\ConnectionResolver;
+use Illuminate\Database\Eloquent\Model;
 
 include_once __DIR__.'/Migration.php';
 
@@ -116,8 +117,15 @@ class BaseTest extends PHPUnit_Framework_TestCase {
 
     }
 
+    public function newTestModel()
+    {
+        return new TestModel;
+    }
+
     public function tearDown(){
         Mockery::close();
     }
 
 }
+
+class TestModel extends Model{}
