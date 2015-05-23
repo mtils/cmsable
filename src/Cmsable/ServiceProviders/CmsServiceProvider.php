@@ -496,6 +496,11 @@ class CmsServiceProvider extends ServiceProvider{
             }
         });
 
+        $this->registerTextParser();
+
+        $this->registerMailer();
+
+        $this->registerTranslator();
 
     }
 
@@ -708,6 +713,40 @@ class CmsServiceProvider extends ServiceProvider{
 
         });
 
+    }
+
+    protected function registerTextParser()
+    {
+
+        $this->app->bind('Cmsable\View\TextParserInterface', function($app){
+            $queue = $app->make('Cmsable\View\TextParserQueue');
+            $queue->setEventBus(new IlluminateBus($app['events']));
+            return $queue;
+        });
+
+        $this->registerAssignedDataParser();
+
+    }
+
+    protected function registerAssignedDataParser()
+    {
+        $this->app['events']->listen('cmsable.text-parser-load', function($queue){
+            $queue->add($this->app->make('Cmsable\View\AssignedDataParser'));
+        });
+    }
+
+    protected function registerMailer()
+    {
+        $this->app->bind('Cmsable\Mail\MailerInterface', function($app){
+            return $app->make('Cmsable\Mail\Mailer');
+        });
+    }
+
+    protected function registerTranslator()
+    {
+        $this->app->bind('Cmsable\Translation\TranslatorInterface', function($app){
+            return $app->make('Cmsable\Translation\Translator');
+        });
     }
 
     /**

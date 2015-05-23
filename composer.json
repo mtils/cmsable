@@ -15,6 +15,7 @@
     "php": ">=5.4.0",
     "laravel/framework": "5.0.*",
     "ems/collection": "0.1.*",
+    "ems/signal": "0.1.*",
     "ems/xtype": "0.1.*",
     "ems/beetree":"0.1.*",
     "ems/formobject": "0.2.*",
