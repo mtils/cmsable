@@ -1,4 +1,4 @@
-<?php namespace Cmsable\Controller\SiteTree\Plugin;;
+<?php namespace Cmsable\Controller\SiteTree\Plugin;
 
 use FormObject\Form;
 use FormObject\FieldList;
