@@ -73,7 +73,7 @@ class CmsServiceProvider extends ServiceProvider{
 
         $this->registerPathCreator();
 
-        $this->injectControllerDispatcher();
+//         $this->injectControllerDispatcher();
 
         $this->registerTreeScopeProvider();
 
@@ -221,10 +221,19 @@ class CmsServiceProvider extends ServiceProvider{
 
     protected function injectControllerDispatcher(){
 
-        $this->app->singleton('illuminate.route.dispatcher', function($app)
-        {
-            return new ControllerDispatcher($app['router'], $app);
-        });
+        // The controller dispatcher has to be instantiated to listen to
+        // router.matched
+
+        $dispatcher = new ControllerDispatcher($this->app['router'], $this->app);
+
+        $this->app->instance('illuminate.route.dispatcher', $dispatcher);
+
+        // Caution: If the priority of this listener is lower than
+        // PageTypeRouter, the controllerDispatcher wont geht useful
+        // information if no page was found
+        $this->app['events']->listen('router.matched', function($route, $request) use ($dispatcher) {
+            $dispatcher->configure($route, $request);
+        }, 10);
 
     }
 
@@ -240,6 +249,11 @@ class CmsServiceProvider extends ServiceProvider{
 
         $this->app->singleton('Cmsable\PageType\RepositoryInterface', function($app){
             return new ManualRepository($app, $app['events']);
+        });
+
+        PageType::setViewBootstrap(function(){
+            $repo = $this->app->make('Cmsable\PageType\RepositoryInterface');
+            $this->app['events']->fire('cmsable.pagetype-views-requested', [$repo]);
         });
 
         $this->app['events']->listen('cmsable.pageTypeLoadRequested', function($pageTypes) use ($serviceProvider){
@@ -292,8 +306,6 @@ class CmsServiceProvider extends ServiceProvider{
             return $cmsApp->onRouterBefore($route, $request);
         });
 
-       $cmsApp->setControllerDispatcher($this->app['illuminate.route.dispatcher']);
-
        $this->app->instance('cmsable.cms', $cmsApp);
        $this->app->instance('Cmsable\Cms\Application', $cmsApp);
 
@@ -318,6 +330,13 @@ class CmsServiceProvider extends ServiceProvider{
         });
 
         $serviceProvider = $this;
+
+        // Setup inverse pagetype routing
+        $this->app['events']->listen(
+            'router.matched',
+            'Cmsable\Routing\PageTypeRouter@setPageType',
+            20
+        );
 
     }
 
@@ -459,6 +478,8 @@ class CmsServiceProvider extends ServiceProvider{
 
     public function boot(){
 
+        $this->injectControllerDispatcher();
+
         $this->registerPackageLang();
 
         $this->registerSiteTreeControllerRoute();
@@ -501,6 +522,8 @@ class CmsServiceProvider extends ServiceProvider{
         $this->registerMailer();
 
         $this->registerTranslator();
+
+        $this->registerPageTypeNamer();
 
     }
 
@@ -575,9 +598,18 @@ class CmsServiceProvider extends ServiceProvider{
 
         $serviceProvider = $this;
 
+        $this->app->alias('cmsable.breadcrumbs','Cmsable\Html\Breadcrumbs\Factory');
+
         $this->app->singleton('cmsable.breadcrumbs', function($app) use ($serviceProvider){
 
-            $factory = $app->make('Cmsable\Html\Breadcrumbs\Factory');
+//             $factory = $app->make('Cmsable\Html\Breadcrumbs\Factory');
+
+            $factory = new BreadcrumbFactory(
+                $app->make('Cmsable\Html\Breadcrumbs\CrumbsCreatorInterface'),
+                $app->make('router'),
+                $app->make('Cmsable\Html\Breadcrumbs\StoreInterface')
+            );
+
             $factory->setEventDispatcher($app['events']);
 
             return $factory;
@@ -744,9 +776,17 @@ class CmsServiceProvider extends ServiceProvider{
 
     protected function registerTranslator()
     {
-        $this->app->bind('Cmsable\Translation\TranslatorInterface', function($app){
+        $this->app->singleton('Cmsable\Translation\TranslatorInterface', function($app){
             return $app->make('Cmsable\Translation\Translator');
         });
+    }
+
+    protected function registerPageTypeNamer()
+    {
+        $this->app['events']->listen(
+            'cmsable.pagetype-views-requested',
+            'Cmsable\PageType\TranslationNamer@setNames'
+        );
     }
 
     /**

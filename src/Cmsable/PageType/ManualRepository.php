@@ -8,7 +8,9 @@ class ManualRepository implements RepositoryInterface{
 
     public $loadEventName = 'cmsable.pageTypeLoadRequested';
 
-    protected $pageTypes = array();
+    protected $pageTypes = [];
+
+    protected $pageTypesByRouteName = [];
 
     protected $pageTypesLoaded = FALSE;
 
@@ -74,8 +76,32 @@ class ManualRepository implements RepositoryInterface{
         }
     }
 
-    public function add(PageType $info){
-        $this->pageTypes[$info->getId()] = $info;
+    /**
+     * {@inheritdoc}
+     *
+     * @param string
+     * @return PageType|null
+     **/
+    public function getByRouteName($routeName)
+    {
+        $this->fireLoadEvent();
+        if (isset($this->pageTypesByRouteName[$routeName])) {
+            return $this->pageTypesByRouteName[$routeName];
+        }
+    }
+
+    public function add(PageType $pageType){
+
+        $this->pageTypes[$pageType->getId()] = $pageType;
+
+        if (!$routeNames = $pageType->getRouteNames()) {
+            return $this;
+        }
+
+        foreach ($routeNames as $routeName) {
+            $this->pageTypesByRouteName[$routeName] = $pageType;
+        }
+
         return $this;
     }
 

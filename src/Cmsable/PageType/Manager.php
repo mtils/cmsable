@@ -4,6 +4,8 @@ use BadMethodCallException;
 
 use Cmsable\Support\MultipleProxyTrait;
 use Cmsable\Http\CurrentCmsPathProviderInterface;
+use Cmsable\Model\SiteTreeModelInterface as TreeModel;
+use Cmsable\Model\TreeModelManagerInterface as TreeManager;
 
 class Manager implements CurrentPageTypeProviderInterface{
 
@@ -15,17 +17,21 @@ class Manager implements CurrentPageTypeProviderInterface{
 
     protected $currentPathProvider;
 
+    protected $treeManager;
+
     protected $currentPageType = false;
 
     protected $currentConfig = false;
 
     public function __construct(RepositoryInterface $repo,
                                 ConfigRepositoryInterface $configRepo,
-                                CurrentCmsPathProviderInterface $pathProvider){
+                                CurrentCmsPathProviderInterface $pathProvider,
+                                TreeManager $treeManager){
 
         $this->repository = $repo;
         $this->configRepository = $configRepo;
         $this->pathProvider = $pathProvider;
+        $this->treeManager = $treeManager;
 
         $this->addTarget($this->repository);
         $this->addTarget($this->configRepository);
@@ -76,7 +82,7 @@ class Manager implements CurrentPageTypeProviderInterface{
 
         $pageId = null;
 
-        if($page = $this->getCurrentPage()){
+        if ($page = $this->getBestMatchingPage($pageType)) {
             $pageId = $page->getIdentifier();
         }
 
@@ -96,6 +102,33 @@ class Manager implements CurrentPageTypeProviderInterface{
         }
 
         return $page;
+
+    }
+
+    protected function getBestMatchingPage($pageType) {
+
+        if ($page = $this->getCurrentPage()) {
+            return $page;
+        }
+
+        return $this->getPageByPageType($pageType);
+    }
+
+    protected function getPageByPageType($pageType)
+    {
+
+        $scope = $this->pathProvider->getCurrentCmsPath()->getTreeScope();
+        $treeModel = $this->treeManager->get($scope);
+
+        if (!$pages = $treeModel->pagesByTypeId($pageType->getId())){
+            return;
+        }
+
+        if (count($pages) > 1) {
+            return;
+        }
+
+        return $pages[0];
 
     }
 

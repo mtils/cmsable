@@ -19,6 +19,16 @@ interface RepositoryInterface{
     public function has($id);
 
     /**
+     * Return a pagetype by route name (if exists). The repository has to
+     * add all PageType::getRouteNames() to an array and return the pagetypes
+     * which registered itself for that route name
+     *
+     * @param string
+     * @return PageType|null
+     **/
+    public function getByRouteName($routeName);
+
+    /**
     * @brief Returns all PageType Instances within routeScope $routeScope
     * 
     * @param string $routeScope (optional)
