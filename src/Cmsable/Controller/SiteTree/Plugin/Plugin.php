@@ -16,6 +16,11 @@ abstract class Plugin implements PluginInterface{
     protected $pageType;
 
     /**
+     * @var string
+     **/
+    protected $name;
+
+    /**
      * @brief Returns the PageType of its Page instance. The pagetype is
      *        immediatly after instanciation. If your plugin does anything depending on its
      *        PageType, you can ask by $this->getPageType()
@@ -84,5 +89,10 @@ abstract class Plugin implements PluginInterface{
     public function finalizeSave(Form $form, SiteTreeNodeInterface $page){}
 
     public function processPageTypeLeave(SiteTreeNodeInterface $page, $oldPageTypeId){}
+
+    public function getName()
+    {
+        return strtolower(preg_replace('/(?<=[a-z])([A-Z])/', '-$1', class_basename(get_called_class())));
+    }
 
 }
