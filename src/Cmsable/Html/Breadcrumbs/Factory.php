@@ -126,11 +126,6 @@ class Factory{
 
         $name = $route->getName();
 
-//         if (is_null($name)) {
-//             $uri = head($route->methods()) . ' ' . $route->uri();
-//             throw new UnderflowException("The current route ($uri) is not named - please check routes.php for an \"as\" parameter");
-//         }
-
         $params = $route->parameters();
 
         return $this->currentRoute = array($name, $params);
