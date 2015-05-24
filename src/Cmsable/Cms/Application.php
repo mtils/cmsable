@@ -37,8 +37,6 @@ class Application implements CurrentCmsPathProviderInterface, CurrentScopeProvid
 
     protected $cmsRequest;
 
-    protected $controllerDispatcher;
-
     protected $scopeFilters = [];
 
     public function __construct(CmsPathCreatorInterface $pathCreator,
@@ -49,7 +47,7 @@ class Application implements CurrentCmsPathProviderInterface, CurrentScopeProvid
         $this->setEventDispatcher($eventDispatcher);
 
         $this->eventDispatcher->listen('router.matched', function($route, $request){
-            $this->onRouterMatch($route, $request);
+            $this->registerScopeFilters($route, $request);
         });
 
     }
@@ -59,7 +57,7 @@ class Application implements CurrentCmsPathProviderInterface, CurrentScopeProvid
 
     }
 
-    protected function onRouterMatch($route, $request){
+    protected function registerScopeFilters($route, $request){
 
         if(count($this->scopeFilters)){
             $route->before('cmsable.scope-filter');
@@ -80,37 +78,6 @@ class Application implements CurrentCmsPathProviderInterface, CurrentScopeProvid
         }
 
         $this->fireEvent($this->scopeChangedEventName, [$cmsPath->getTreeScope()]);
-
-        if($this->controllerDispatcher){
-            $this->configureControllerDispatcher($this->controllerDispatcher, $cmsPath);
-        }
-
-    }
-
-    public function configureControllerDispatcher(ControllerDispatcher $dispatcher,
-                                                  CmsPath $cmsPath){
-
-        if(!$cmsPath->isCmsPath()){
-            $dispatcher->resetCreator();
-            $dispatcher->resetPage();
-            return;
-        }
-
-        if($node = $cmsPath->getMatchedNode()){
-            $dispatcher->setPage($node);
-        }
-
-        if(!$pageType = $cmsPath->getPageType()){
-            $dispatcher->resetCreator();
-            return;
-        }
-
-        if($creatorClass = $pageType->getControllerCreatorClass()){
-            $dispatcher->setCreator(App::make($creatorClass));
-            return;
-        }
-
-        $dispatcher->resetCreator();
 
     }
 
@@ -156,15 +123,6 @@ class Application implements CurrentCmsPathProviderInterface, CurrentScopeProvid
 
         return $cmsPath->getTreeScope();
 
-    }
-
-    public function getControllerDispatcher(){
-        return $this->controllerDispatcher;
-    }
-
-    public function setControllerDispatcher(ControllerDispatcher $dispatcher){
-        $this->controllerDispatcher = $dispatcher;
-        return $this;
     }
 
     public function whenScope($scopeName, $callable){

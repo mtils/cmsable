@@ -2,15 +2,44 @@
 
 use Illuminate\Routing\ControllerDispatcher as IlluminateDispatcher;
 use Illuminate\Routing\Controller;
+use Illuminate\Routing\Route;
 
+use Cmsable\Http\CmsRequestInterface;
 use Cmsable\Model\SiteTreeNodeInterface;
 
 
-class ControllerDispatcher extends IlluminateDispatcher{
+class ControllerDispatcher extends IlluminateDispatcher
+{
 
     protected $creator;
 
     protected $page;
+
+    public function configure(Route $route, CmsRequestInterface $request)
+    {
+
+        $cmsPath = $request->getCmsPath();
+
+        if (!$pageType = $cmsPath->getPageType()) {
+            $this->resetCreator();
+            $this->resetPage();
+            return;
+        }
+
+        if ($node = $cmsPath->getMatchedNode()) {
+            $this->setPage($node);
+        } else {
+            $this->resetPage();
+        }
+
+        if(!$creatorClass = $pageType->getControllerCreatorClass()){
+            $this->resetCreator();
+            return;
+        }
+
+        $this->setCreator($this->container->make($creatorClass));
+
+    }
 
     /**
      * Make a controller instance via the IoC container.
