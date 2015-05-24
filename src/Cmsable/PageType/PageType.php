@@ -1,8 +1,18 @@
 <?php namespace Cmsable\PageType;
 
 use App;
+use Closure;
+use Versatile\Introspection\Contracts\DescriptionIntrospector as Namer;
 
-class PageType{
+class PageType
+{
+
+    /**
+     * @var \Closure
+     **/
+    protected static $viewBootstrap;
+
+    protected static $bootstrapCalled = false;
 
     protected $id;
 
@@ -35,6 +45,8 @@ class PageType{
     protected $_routeScope = 'default';
 
     protected $_targetPath = '';
+
+    protected $_routeNames = [];
 
     public function __construct($id=NULL){
         $this->id = $id;
@@ -72,6 +84,7 @@ class PageType{
     }
 
     public function singularName(){
+        static::callBootstrap();
         return $this->_singularName;
     }
 
@@ -81,6 +94,7 @@ class PageType{
     }
 
     public function pluralName(){
+        static::callBootstrap();
         return $this->_pluralName;
     }
 
@@ -90,6 +104,7 @@ class PageType{
     }
 
     public function description(){
+        static::callBootstrap();
         return $this->_description;
     }
 
@@ -197,5 +212,50 @@ class PageType{
     public function setFormPluginClass($className){
         $this->_formPluginClass = $className;
         return $this;
+    }
+
+    public function getRouteNames()
+    {
+        return $this->_routeNames;
+    }
+
+    public function setRouteNames($routeNames)
+    {
+        $this->_routeNames = (array)$routeNames;
+        return $this;
+    }
+
+    public static function getViewBootstrap()
+    {
+        return static::$viewBootstrap;
+    }
+
+    /**
+     * Naming of pagetypes it deferred to the point where someone asks for
+     * a title, description or icon of a pagetype. Otherwise the whole stuff
+     * would be done on every request.
+     * So the first time some title, icon or description is asked for this
+     * closure will be called one time.
+     *
+     * @param \Closure $bootstrap
+     * @return void
+     **/
+    public static function setViewBootstrap(Closure $bootstrap)
+    {
+        static::$viewBootstrap = $bootstrap;
+    }
+
+    protected static function callBootstrap()
+    {
+        if (static::$bootstrapCalled) {
+            return;
+        }
+
+        static::$bootstrapCalled = true;
+
+        if ($bootstrap = static::$viewBootstrap) {
+            $bootstrap();
+        }
+
     }
 }
