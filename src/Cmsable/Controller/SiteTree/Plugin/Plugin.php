@@ -1,13 +1,14 @@
 <?php namespace Cmsable\Controller\SiteTree\Plugin;
 
 use FormObject\Form;
+use FormObject\Factory as FormFactory;
 use FormObject\FieldList;
 use FormObject\Validator\ValidatorInterface;
 
 use Cmsable\PageType\PageType;
 use Cmsable\Model\SiteTreeNodeInterface;
 
-abstract class Plugin implements PluginInterface{
+abstract class Plugin{
 
     /**
      * @brief The PageType of the matching Page
@@ -19,6 +20,11 @@ abstract class Plugin implements PluginInterface{
      * @var string
      **/
     protected $name;
+
+    /**
+     * @var \FormObject\Factory
+     **/
+    protected $formFactory;
 
     /**
      * @brief Returns the PageType of its Page instance. The pagetype is
@@ -92,7 +98,45 @@ abstract class Plugin implements PluginInterface{
 
     public function getName()
     {
-        return strtolower(preg_replace('/(?<=[a-z])([A-Z])/', '-$1', class_basename(get_called_class())));
+        if (!$this->name) {
+            $this->name = $this->calculatePluginName();
+        }
+        return $this->name;
+    }
+
+    /**
+     * Forward any calls to the form factory to allow easy field creation
+     * via $this->textField() or $this->selectOneField()
+     *
+     * @param $method
+     * @param array $params (optional)
+     * @return \FormObject\Field
+     **/
+    public function __call($fieldName, array $params=[])
+    {
+        return $this->formFactory->__call($fieldName, $params);
+    }
+
+    public function getFormFactory()
+    {
+        return $this->formFactory;
+    }
+
+    public function setFormFactory(FormFactory $factory)
+    {
+        $this->formFactory = $factory;
+        return $this;
+    }
+
+    protected function calculatePluginName()
+    {
+        $name = strtolower(preg_replace('/(?<=[a-z])([A-Z])/', '-$1', class_basename(get_called_class())));
+
+        if (!ends_with($name, '-plugin')){
+            return $name;
+        }
+
+        return substr($name,0, strlen($name)-7);
     }
 
 }

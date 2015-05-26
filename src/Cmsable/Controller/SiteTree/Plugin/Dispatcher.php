@@ -4,6 +4,7 @@ use Illuminate\Events\Dispatcher as LaravelDispatcher;
 use Illuminate\Foundation\Application;
 
 use FormObject\Form;
+use FormObject\Factory as FormFactory;
 
 use Cmsable\PageType\RepositoryInterface as PageTypeRepository;
 use Cmsable\Model\SiteTreeNodeInterface;
@@ -16,17 +17,24 @@ class Dispatcher{
 
     protected $creator;
 
+    protected $formFactory;
+
     protected static $pluginCache = [];
+
+    protected $langGroup = 'sitetree-plugins';
 
     public function __construct(PageTypeRepository $pageTypeRepo,
                                 LaravelDispatcher $events,
-                                Application $creator){
+                                Application $creator,
+                                FormFactory $formFactory){
 
         $this->pageTypeRepo = $pageTypeRepo;
 
         $this->events = $events;
 
         $this->creator = $creator;
+
+        $this->formFactory = $formFactory;
 
         $this->addGlobalSubscriptions($this->events);
 
@@ -76,6 +84,8 @@ class Dispatcher{
 
         $this->assureOneInstancePerDispatcher($plugin, $pageTypeId);
 
+        $plugin->setFormFactory($this->formFactory);
+
         $this->events->listen(
 
             "sitetree.$pageTypeId.form-created",
@@ -84,16 +94,24 @@ class Dispatcher{
 
                 $formName = $form->getName();
 
-                $events->listen("form.fields-setted.$formName", function($fields) use ($page, $plugin){
-                    $plugin->modifyFormFields($fields, $page);
+                $formFactory = $this->formFactory;
+
+                $events->listen("form.fields-setted.$formName", function($fields) use ($page, $plugin, $formFactory){
+                    $formFactory->group(['langGroup'=>$this->langGroup, 'owner'=>$plugin], function() use ($fields, $page, $plugin){
+                        $plugin->modifyFormFields($fields, $page);
+                    });
                 });
 
-                $events->listen("form.validator-setted.$formName", function($validator) use ($page, $plugin){
-                    $plugin->modifyFormValidator($validator, $page);
+                $events->listen("form.validator-setted.$formName", function($validator) use ($page, $plugin, $formFactory){
+                    $formFactory->group(['langGroup'=>$this->langGroup, 'owner'=>$plugin], function() use ($validator, $page, $plugin){
+                        $plugin->modifyFormValidator($validator, $page);
+                    });
                 });
 
-                $events->listen("form.actions-setted.$formName", function($actions) use ($page, $plugin){
-                    $plugin->modifyFormActions($actions, $page);
+                $events->listen("form.actions-setted.$formName", function($actions) use ($page, $plugin, $formFactory){
+                    $formFactory->group(['langGroup'=>$this->langGroup, 'owner'=>$plugin], function() use ($actions, $page, $plugin){
+                        $plugin->modifyFormActions($actions, $page);
+                    });
                 });
 
             }

@@ -97,6 +97,8 @@ class CmsServiceProvider extends ServiceProvider{
 
         $this->registerFileViewFinder();
 
+        $this->registerResourceMapper();
+
         Blade::extend(function($view, $compiler){
             $pattern = $compiler->createMatcher('toJsTree');
             return preg_replace($pattern, '$1<?php $f = new \BeeTree\Support\HtmlPrinter(); echo $f->toJsTree$2 ?>', $view);
@@ -499,7 +501,7 @@ class CmsServiceProvider extends ServiceProvider{
         $this->registerBreadcrumbs();
         $this->registerMenu();
 
-        $this->registerAdminViewPaths();
+        $this->setAdminAuthSettings();
 
         $this->app['cmsable.cms']->whenScope('*', function ($scope, $route, $request, $page)
         {
@@ -541,23 +543,11 @@ class CmsServiceProvider extends ServiceProvider{
         });
     }
 
-    protected function registerAdminViewPaths()
+    protected function setAdminAuthSettings()
     {
-
-        $this->app['cmsable.cms']->whenScope('admin', function ()
-        {
-
+        $this->app['cmsable.cms']->whenScope('admin', function (){
             $this->app['auth']->forceActual(true);
-
-            $adminThemePath = $this->getAdminViewPath();
-
-            $formRenderer = Form::getRenderer();
-            $formRenderer->addPath("$adminThemePath/forms");
-
-            $this->app['view']->getFinder()->prependLocation($adminThemePath);
-
         });
-
     }
 
     protected function registerBreadcrumbNodeCreator()
@@ -729,7 +719,8 @@ class CmsServiceProvider extends ServiceProvider{
 
             $dispatcher = new Dispatcher($this->app['Cmsable\PageType\RepositoryInterface'],
                                          $this->app['events'],
-                                         $this->app);
+                                         $this->app,
+                                         $app['formobject.factory']);
         });
 
 
@@ -745,6 +736,13 @@ class CmsServiceProvider extends ServiceProvider{
 
         });
 
+    }
+
+    protected function registerResourceMapper()
+    {
+        $this->app->singleton('Cmsable\Model\ResourceMapperInterface', function($app){
+            return $app->make('Cmsable\Model\ResourceMapper');
+        });
     }
 
     protected function registerTextParser()
