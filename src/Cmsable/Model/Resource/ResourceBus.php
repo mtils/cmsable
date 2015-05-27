@@ -7,6 +7,8 @@ trait ResourceBus
 
     use BusHolderTrait;
 
+    protected $eventNamespace = 'resource::';
+
     /**
      * Return the single instance of resource bus
      *
@@ -18,6 +20,11 @@ trait ResourceBus
             $this->eventBus = Bus::instance();
         }
         return $this->eventBus;
+    }
+
+    protected function eventName($name)
+    {
+        return $this->eventNamespace . $name;
     }
 
 }

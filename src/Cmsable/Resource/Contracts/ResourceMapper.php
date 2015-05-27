@@ -1,8 +1,8 @@
-<?php namespace Cmsable\Model;
+<?php namespace Cmsable\Resource\Contracts;
 
 use Illuminate\Http\Request;
 
-interface ResourceMapperInterface
+interface ResourceMapper
 {
 
     /**

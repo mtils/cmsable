@@ -1,12 +1,13 @@
 <?php namespace Cmsable\Http\Resource;
 
-use Illuminate\Foundation\Http\FormRequest;
-use Cmsable\Model\Resource\ResourceBus;
+use Cmsable\Http\Contracts\DecoratesRequest;
+use Cmsable\Http\ReplicateRequest;
+use Cmsable\Resource\Contracts\ReceivesResourceMapper;
+use Illuminate\Foundation\Http\FormRequest as BaseFormRequest;
 
-abstract class Request extends FormRequest
+abstract class FormRequest extends BaseFormRequest implements ReceivesResourceMapper
 {
-
-    use ResourceBus;
+    // use UsesCurrentResource // Use this trait to use this class;
 
     protected function getValidatorInstance()
     {
@@ -34,21 +35,9 @@ abstract class Request extends FormRequest
 
     protected function getRulesByCall()
     {
-
         $rules = $this->container->call([$this, 'rules']);
-
-        $resource = $this->getResourceName();
-
-        $this->fire("$resource.rules-setted", [&$rules]);
-
+        $this->fireAction("rules-setted", [&$rules]);
         return $rules;
-    }
-
-
-    protected function getResourceName()
-    {
-        $mapper = $this->container->make('Cmsable\Resource\Contracts\ResourceMapper');
-        return $mapper->resourceByRequest($this);
     }
 
 }

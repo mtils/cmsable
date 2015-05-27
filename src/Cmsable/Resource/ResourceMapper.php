@@ -1,5 +1,6 @@
-<?php namespace Cmsable\Model;
+<?php namespace Cmsable\Resource;
 
+use Cmsable\Resource\Contracts\ResourceMapper as ResourceMapperInterface;
 use OutOfBoundsException;
 use Illuminate\Http\Request;
 
@@ -59,6 +60,18 @@ class ResourceMapper implements ResourceMapperInterface
                 return $class;
             }
         }
+
+        $class = ucfirst(camel_case($resource));
+        $class = substr($class, 0, strlen($class)-1);
+        $class = "App\\$class";
+
+        if (!class_exists($class)) {
+            throw new OutOfBoundsException("Cannot found model of resource $resource");
+        }
+
+        $this->mapToModel($resource, $class);
+
+        return $class;
 
     }
 

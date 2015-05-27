@@ -1,19 +1,14 @@
 <?php namespace Cmsable\Model\Resource;
 
+use Cmsable\Resource\Contracts\ModelFinder;
+
 /** 
  * A Manager is something like a repository specialized to edit RESTful
  * resources. Always throw exceptions and handle resource level validation
  * inside a manager
  **/
-interface ManagerInterface
+interface ManagerInterface extends ModelFinder
 {
-
-    /**
-     * Return the resource with id $id. Throw an exception if resource not found
-     *
-     * @return mixed The resource
-     **/
-    public function findOrFail($id);
 
     /**
      * Instantiate a new resource  and fill it with the attributes
@@ -35,18 +30,18 @@ interface ManagerInterface
      * Update the resource with id $id with new attributes $attributes
      * Return the resource after updating it. Must throw an exception if not found
      *
-     * @param mixed $id
+     * @param mixed $model
      * @param array $newAttributes
      * @return mixed The updated resource
      **/
-    public function update($id, array $newAttributes);
+    public function update($model, array $newAttributes);
 
     /**
      * Delete the resource with id $id. Throw an exception if not found.
      *
-     * @param mixed $id
+     * @param mixed $model
      * @return mixed The deleted resource
      **/
-    public function delete($id);
+    public function delete($model);
 
 }

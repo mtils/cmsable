@@ -32,6 +32,10 @@ use Cmsable\Controller\SiteTree\Plugin\Dispatcher;
 use Cmsable\View\FallbackFileViewFinder;
 use Cmsable\PageType\DBConfigRepository;
 use Cmsable\Routing\TreeScope\TreeScope;
+use Cmsable\Resource\Contracts\ReceivesResourceMapper;
+use Cmsable\Resource\Contracts\ResourceForm;
+use Cmsable\Http\Contracts\DecoratesRequest;
+use Cmsable\Resource\Distributor;
 use Blade;
 use Log;
 
@@ -740,8 +744,63 @@ class CmsServiceProvider extends ServiceProvider{
 
     protected function registerResourceMapper()
     {
-        $this->app->singleton('Cmsable\Model\ResourceMapperInterface', function($app){
-            return $app->make('Cmsable\Model\ResourceMapper');
+
+        $this->app->alias('cmsable.resourcemapper', 'Cmsable\Resource\Contracts\ResourceMapper');
+
+        $this->app->singleton('cmsable.resourcemapper', function($app){
+            return $app->make('Cmsable\Resource\ResourceMapper');
+        });
+
+        $this->registerResourceMapperHook();
+
+        $this->registerResourceDistributor();
+        $this->registerRequestDecoratorHook();
+        $this->registerModelFinder();
+        $this->registerResourceFormHook();
+        $this->registerInputCaster();
+    }
+
+    protected function registerResourceDistributor()
+    {
+        $this->app->singleton('Cmsable\Resource\Distributor', function($app){
+            return new Distributor(\Cmsable\Model\Resource\Bus::instance(),
+                                   $app->make('cmsable.resourcemapper'));
+        });
+    }
+
+    protected function registerResourceMapperHook()
+    {
+        $this->app->resolving(function(ReceivesResourceMapper $mapperUser, $app){
+            $mapperUser->setResourceMapper($app->make('cmsable.resourcemapper'));
+        });
+    }
+
+    protected function registerRequestDecoratorHook()
+    {
+        $this->app->resolving(function(DecoratesRequest $decorator, $app){
+            $decorator->decorate($app['request']);
+        });
+    }
+
+    protected function registerModelFinder()
+    {
+        $this->app->bind('Cmsable\Resource\Contracts\ModelFinder', function($app){
+            return $app->make('Cmsable\Resource\EloquentModelFinder');
+        });
+    }
+
+    protected function registerResourceFormHook()
+    {
+        $this->app->resolving(function(ResourceForm $form, $app){
+            $app->make('Cmsable\Resource\Distributor')->forwardResourceForm($form);
+        });
+    }
+
+    protected function registerInputCaster()
+    {
+
+        $this->app->bind('XType\Casting\Contracts\InputCaster', function($app){
+            return $app->make('FormObject\Support\Laravel\Http\InputCaster');
         });
     }
 

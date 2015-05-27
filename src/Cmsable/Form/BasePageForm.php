@@ -17,12 +17,14 @@ use PageType;
 use Config;
 use ReflectionClass;
 use URL;
+use Cmsable\Resource\Contracts\ResourceForm;
 
 class UrlSegmentField extends TextField{
     public $pathPrefix = '/';
 }
 
-class BasePageForm extends Form{
+class BasePageForm extends Form implements ResourceForm
+{
 
     public $validationRules = [
         'menu_title' => 'required|min:3|max:255',
@@ -36,6 +38,11 @@ class BasePageForm extends Form{
 
     public function getName(){
         return 'page-form';
+    }
+
+    public function resourceName()
+    {
+        return 'sitetree';
     }
 
     public function getRouteScope(){
