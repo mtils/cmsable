@@ -1,4 +1,4 @@
-<?php namespace Cmsable\Model\Resource;
+<?php namespace Cmsable\Resource;
 
 use Signal\Support\Laravel\IlluminateBus;
 use App;

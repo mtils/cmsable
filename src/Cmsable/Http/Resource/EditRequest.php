@@ -4,7 +4,6 @@ use Illuminate\Http\Request;
 use Cmsable\Http\Contracts\DecoratesRequest;
 use Cmsable\Http\ReplicateRequest;
 use Cmsable\Resource\Contracts\ReceivesResourceMapper;
-use Cmsable\Model\Resource\ResourceBus;
 
 class EditRequest extends Request implements DecoratesRequest, ReceivesResourceMapper
 {

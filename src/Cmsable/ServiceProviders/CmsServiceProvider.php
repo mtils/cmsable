@@ -763,7 +763,7 @@ class CmsServiceProvider extends ServiceProvider{
     protected function registerResourceDistributor()
     {
         $this->app->singleton('Cmsable\Resource\Distributor', function($app){
-            return new Distributor(\Cmsable\Model\Resource\Bus::instance(),
+            return new Distributor(\Cmsable\Resource\Bus::instance(),
                                    $app->make('cmsable.resourcemapper'));
         });
     }

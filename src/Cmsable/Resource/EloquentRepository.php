@@ -1,10 +1,11 @@
-<?php namespace Cmsable\Model\Resource;
+<?php namespace Cmsable\Resource;
 
+use Cmsable\Resource\Contracts\Repository;
 use Signal\NamedEvent\BusHolderTrait;
 use Illuminate\Database\Eloquent\Model;
 use FormObject\Form;
 
-abstract class EloquentResourceManager implements ManagerInterface
+abstract class EloquentRepository implements Repository
 {
 
     use ResourceBus;
@@ -12,6 +13,11 @@ abstract class EloquentResourceManager implements ManagerInterface
     abstract public function getModel();
 
     abstract public function resourceName();
+
+    /**
+     * @var callable
+     **/
+    protected $attributeFilter;
 
     /**
      * Return the resource with id $id. Throw an exception if resource not found
@@ -97,25 +103,32 @@ abstract class EloquentResourceManager implements ManagerInterface
         return $model;
     }
 
-    protected function validate(array $attributes, $action='update')
+    public function filterAttributesBy(callable $callable)
     {
-        
+        $this->attributeFilter = $callable;
+    }
+
+    protected function validate(array $attributes, $action='update'){}
+
+    protected function getAttributeFilter()
+    {
+        return function($key, $value){ return is_scalar($value); };
     }
 
     protected function toModelAttributes($model, $attributes)
     {
 
         $filtered = [];
+        $filter = $this->getAttributeFilter();
 
         foreach ($attributes as $key=>$value) {
 
-            if (!is_scalar($value)) {
+            if (!$filter($key, $value)) {
                 continue;
             }
 
             $filtered[$key] = $value;
         }
-
         return $filtered;
     }
 

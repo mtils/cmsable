@@ -1,13 +1,12 @@
-<?php namespace Cmsable\Model\Resource;
+<?php namespace Cmsable\Resource\Contracts;
 
 use Cmsable\Resource\Contracts\ModelFinder;
 
 /** 
- * A Manager is something like a repository specialized to edit RESTful
- * resources. Always throw exceptions and handle resource level validation
- * inside a manager
+ * A Resource Repository a repository specialized to edit RESTful
+ * resources.
  **/
-interface ManagerInterface extends ModelFinder
+interface Repository extends ModelFinder
 {
 
     /**

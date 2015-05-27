@@ -1,7 +1,6 @@
 <?php namespace Cmsable\Resource;
 
 use Cmsable\Resource\Contracts\ResourceForm;
-use Cmsable\Model\Resource\Bus;
 
 class Distributor
 {

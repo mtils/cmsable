@@ -1,4 +1,4 @@
-<?php namespace Cmsable\Model\Resource;
+<?php namespace Cmsable\Resource;
 
 use Signal\NamedEvent\BusHolderTrait;
 

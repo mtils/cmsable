@@ -1,7 +1,7 @@
 <?php namespace Cmsable\Http\Resource;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Cmsable\Model\Resource\ResourceBus;
+use Cmsable\Resource\ResourceBus;
 
 abstract class Request extends FormRequest
 {

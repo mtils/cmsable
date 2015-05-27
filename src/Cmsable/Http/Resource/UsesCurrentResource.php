@@ -3,7 +3,7 @@
 use Illuminate\Http\Request;
 use Cmsable\Resource\Contracts\ReceivesResourceMapper;
 use Cmsable\Resource\UsesResourceMapper;
-use Cmsable\Model\Resource\ResourceBus;
+use Cmsable\Resource\ResourceBus;
 
 trait UsesCurrentResource
 {
