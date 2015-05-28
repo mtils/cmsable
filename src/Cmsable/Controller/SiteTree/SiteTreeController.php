@@ -19,8 +19,11 @@ use Response;
 use Config;
 use Illuminate\Routing\Controller;
 use BadMethodCallException;
+use Signal\Support\Extendable;
 
 class SiteTreeController extends Controller {
+
+    use Extendable;
 
     /**
     * @brief Gibt den Loader für die Page Objekte zurück
@@ -284,12 +287,30 @@ class SiteTreeController extends Controller {
 
     public function getJsConfig(){
 
-        $content = 'window.cmsEditorCss = "' . Config::get('cmsable.cms-editor-css') . '";';
-        $content .= "\nwindow.cmsMessages = ";
+        $config = [
+            'window.cmsEditorCss' => Config::get('cmsable.cms-editor-css'),
+            'window.cmsMessages'  => Lang::get('cmsable::messages')
+        ];
 
-        $content .= json_encode(Lang::get('cmsable::messages')) . ';';
+        $this->callExtend('jsConfig', [&$config]);
+
+        $content = $this->formatJsConfig($config);
 
         return Response::make($content)->header('Content-Type', 'application/javascript');
+    }
+
+    protected function formatJsConfig($config) {
+
+        $js = '';
+        $nl = '';
+
+        foreach ($config as $key=>$value) {
+            $js .= "$nl$key = " . json_encode($value) . ';';
+            $nl = "\n";
+        }
+
+        return $js;
+
     }
 
     protected function findChildByPosition($parent, $position){
