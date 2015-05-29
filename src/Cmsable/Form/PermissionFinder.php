@@ -11,7 +11,7 @@ class PermissionFinder{
     }
 
     public function getViewPermissions(){
-        return array('page.public-view','page.logged-view');
+        return array('page.public-view','page.logged-view','cms.access');
     }
 
     public function getEditPermissions(){
