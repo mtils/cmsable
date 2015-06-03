@@ -40,7 +40,8 @@ class SiteTreeControllerCreator implements ControllerCreatorInterface{
 
         return new Dispatcher($app['Cmsable\PageType\RepositoryInterface'],
                               $app['events'],
-                              $app);
+                              $app,
+                              $app['formobject.factory']);
 
     }
 
