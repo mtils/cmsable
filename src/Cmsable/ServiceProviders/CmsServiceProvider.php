@@ -745,10 +745,10 @@ class CmsServiceProvider extends ServiceProvider{
     protected function registerResourceMapper()
     {
 
-        $this->app->alias('cmsable.resourcemapper', 'Cmsable\Resource\Contracts\ResourceMapper');
+        $this->app->alias('cmsable.resource-mapper', 'Cmsable\Resource\Contracts\Mapper');
 
-        $this->app->singleton('cmsable.resourcemapper', function($app){
-            return $app->make('Cmsable\Resource\ResourceMapper');
+        $this->app->singleton('cmsable.resource-mapper', function($app){
+            return $app->make('Cmsable\Resource\Mapper');
         });
 
         $this->registerResourceMapperHook();
@@ -760,11 +760,22 @@ class CmsServiceProvider extends ServiceProvider{
         $this->registerInputCaster();
     }
 
+    protected function registerResourceDetector()
+    {
+        $this->app->alias('cmsable.resource-detector', 'Cmsable\Resource\Contracts\Detector');
+
+        $this->app->singleton('cmsable.resource-detector', function($app){
+            return $app->make('Cmsable\Resource\PathDetector');
+        });
+    }
+
     protected function registerResourceDistributor()
     {
-        $this->app->singleton('Cmsable\Resource\Distributor', function($app){
-            return new Distributor(\Cmsable\Resource\Bus::instance(),
-                                   $app->make('cmsable.resourcemapper'));
+
+        $this->app->alias('cmsable.resource-distributor', 'Cmsable\Resource\Distributor');
+
+        $this->app->singleton('cmsable.resource-distributor', function($app){
+            return new Distributor($app->make('cmsable.resourcemapper'));
         });
     }
 

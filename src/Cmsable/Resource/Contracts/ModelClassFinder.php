@@ -1,6 +1,6 @@
 <?php namespace Cmsable\Resource\Contracts;
 
-interface ModelFinder
+interface ModelClassFinder
 {
 
     /**
@@ -9,7 +9,7 @@ interface ModelFinder
      * @param mixed $id
      * @return object|null
      **/
-    public function model($modelClass, $id);
+    public function modelClass($resource);
 
 
 }

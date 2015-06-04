@@ -6,8 +6,16 @@ use Cmsable\Resource\Contracts\ModelFinder;
  * A Resource Repository a repository specialized to edit RESTful
  * resources.
  **/
-interface Repository extends ModelFinder
+interface Repository
 {
+
+    /**
+     * Find a model by its id. Should return null if not found
+     *
+     * @param mixed $id
+     * @return object|null
+     **/
+    public function find($id);
 
     /**
      * Instantiate a new resource  and fill it with the attributes
@@ -23,7 +31,7 @@ interface Repository extends ModelFinder
      * @param array $attributes
      * @return mixed The created resource
      **/
-    public function store(array $attributes=[]);
+    public function store(array $attributes);
 
     /**
      * Update the resource with id $id with new attributes $attributes
@@ -36,7 +44,7 @@ interface Repository extends ModelFinder
     public function update($model, array $newAttributes);
 
     /**
-     * Delete the resource with id $id. Throw an exception if not found.
+     * Delete the resource with id $id.
      *
      * @param mixed $model
      * @return mixed The deleted resource

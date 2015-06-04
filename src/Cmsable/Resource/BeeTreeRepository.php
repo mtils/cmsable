@@ -1,14 +1,16 @@
 <?php namespace Cmsable\Resource;
 
-use Cmsable\Resource\Contracts\Repository;
+use Cmsable\Resource\Contracts\TreeRepository;
 use Signal\NamedEvent\BusHolderTrait;
 use Illuminate\Database\Eloquent\Model;
 use FormObject\Form;
 
-abstract class EloquentRepository implements Repository
+abstract class BeeTreeRepository implements TreeRepository
 {
 
     use ResourceBus;
+
+    protected $model;
 
     abstract public function getModel();
 
@@ -26,7 +28,7 @@ abstract class EloquentRepository implements Repository
      **/
     public function find($id)
     {
-        $query = $this->getModel()->newQuery();
+        $query = $this->model()->newQuery();
         $this->fire($this->event('find'), [$query]);
         $model = $query->find($id);
         $this->fire($this->event('found'), [$model]);
@@ -41,7 +43,7 @@ abstract class EloquentRepository implements Repository
      **/
     public function make(array $attributes=[])
     {
-        $model = $this->getModel()->newInstance($attributes);
+        $model = $this->model()->make($attributes);
         $this->fire($this->event('make'), [$model]);
         return $model;
     }
@@ -54,15 +56,19 @@ abstract class EloquentRepository implements Repository
      **/
     public function store(array $attributes)
     {
-        $model = $this->make([]);
 
         $this->validate($attributes, 'store');
 
-        $this->fillModel($model, $attributes);
-        $this->fire($this->event('storing'), [$model]);
-        $model->save();
+        $filtered = $this->toModelAttributes($this->make([]), $attributes);
+
+        $this->fire($this->event('storing'), [$attributes]);
+
+        $model = $this->model()->createRoot($filtered);
+
         $this->fire($this->event('stored'), [$model]);
+
         return $model;
+
     }
 
     /**
@@ -82,7 +88,7 @@ abstract class EloquentRepository implements Repository
 
         $this->fire($this->event('updating'), [$model]);
 
-        $model->save();
+        $this->model()->savePayload($model);
 
         $this->fire($this->event('updated'), [$model]);
 
@@ -98,9 +104,63 @@ abstract class EloquentRepository implements Repository
     public function delete($model)
     {
         $this->fire($this->event('destroying'), [$model]);
-        $model->delete();
+        $this->model()->remove($model);
         $this->fire($this->event('destroyed'), [$model]);
         return $model;
+    }
+
+    /**
+     * Create a new model as a child of $parentModel
+     *
+     * @param array $attributes
+     * @param mixed $parentModel
+     * @param int $position (optional, defaults to last)
+     * @return mixed The created resource
+     **/
+    public function storeAsChildOf(array $attributes, $parentModel, $position=null)
+    {
+
+        $this->validate($attributes, 'store');
+
+        $filtered = $this->toModelAttributes($this->make([]), $attributes);
+
+        $this->fire($this->event('storing'), [$attributes, $parentModel]);
+
+        if (!$position) {
+            $model = $this->model()->createChildOf($filtered, $parentModel);
+        } else {
+            $model = $this->model()->createAt($filtered, $parentModel, $position);
+        }
+
+        $this->fire($this->event('stored'), [$model]);
+
+        return $model;
+    }
+
+    /**
+     * Move the $movedNode inside $newParent to position $position
+     *
+     * @param \BeeTree\Contracts\Sortable $movedNode
+     * @param \BeeTree\Contracts\Sortable $newParent
+     * @param int $position
+     * @return self
+     **/
+    public function moveToParent($movedNode, $newParent, $position=null)
+    {
+
+        $this->fire($this->event('moving'), [$movedNode, $newParent, $position]);
+
+        $this->model()->placeAt($movedNode, $newParent, $position);
+
+        if (!$position) {
+            $this->model()->makeChildOf($movedNode, $parentModel);
+        } else {
+            $this->model()->placeAt($movedNode, $parentModel, $position);
+        }
+
+        $this->fire($this->event('moved'), [$movedNode, $newParent, $position]);
+
+        return $this;
     }
 
     public function filterAttributesBy(callable $callable)
@@ -141,6 +201,15 @@ abstract class EloquentRepository implements Repository
     protected function event($name)
     {
         return $this->eventName($this->resourceName() . ".$name");
+    }
+
+    protected final function model()
+    {
+        if (!$this->model) {
+            $this->model = $this->getModel();
+        }
+
+        return $this->model;
     }
 
 }

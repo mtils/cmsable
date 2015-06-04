@@ -20,11 +20,11 @@ trait FindsModelByKey
 
     public function findModel($key)
     {
-        if ($this->model && $this->modelHasKey($key)) {
+        if ($this->model && $this->modelHasKey($this->model, $key)) {
             return $this->model;
         }
 
-        if ($this->model && !$this->modelHasKey($key)) {
+        if ($this->model && !$this->modelHasKey($this->model, $key)) {
             throw new BadMethodCallException("Different model already added");
         }
 
