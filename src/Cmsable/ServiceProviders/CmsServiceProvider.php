@@ -36,6 +36,7 @@ use Cmsable\Resource\Contracts\ReceivesResourceMapper;
 use Cmsable\Resource\Contracts\ResourceForm;
 use Cmsable\Http\Contracts\DecoratesRequest;
 use Cmsable\Resource\Distributor;
+use Cmsable\Support\ReceivesContainerWhenResolved;
 use Blade;
 use Log;
 
@@ -64,6 +65,8 @@ class CmsServiceProvider extends ServiceProvider{
     public function register(){
 
         $this->registerPackageConfig();
+        
+        $this->registerContainerHook();
 
 //         $serviceProvider = $this;
 
@@ -113,6 +116,14 @@ class CmsServiceProvider extends ServiceProvider{
             return preg_replace($pattern, '$1<?php echo \Cmsable\Lang\OptionalTranslator::guess$2 ?>', $view);
         });
 
+    }
+
+    protected function registerContainerHook()
+    {
+        $this->app->afterResolving(function(ReceivesContainerWhenResolved $resolved)
+        {
+            $resolved->setContainer($this->app);
+        });
     }
 
     protected function registerSiteTreeModel(){
