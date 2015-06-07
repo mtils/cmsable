@@ -12,7 +12,7 @@ interface Mapper
 
     public function searchFormClass($resource);
 
-    public function validationRules($resource);
+    public function validatorClass($resource);
 
     /**
      * Map resource to model class $class
@@ -42,12 +42,12 @@ interface Mapper
     public function mapSearchFormClass($resource, $searchFormClass);
 
     /**
-     * Manually map the rules to $resource
+     * Manually map the validator to $resource
      *
      * @param string $resource
-     * @param array $rules
+     * @param string $validatorClass
      * @return self
      **/
-    public function mapValidationRules($resource, array $rules);
+    public function mapValidatorClass($resource, $validatorClass);
 
 }

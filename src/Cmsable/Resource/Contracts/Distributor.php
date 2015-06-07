@@ -7,6 +7,8 @@ interface Distributor
 
     public function searchForm($resource=null);
 
+    public function validator($resource=null);
+
     public function rules($resource=null);
 
     public function getCurrentResource();

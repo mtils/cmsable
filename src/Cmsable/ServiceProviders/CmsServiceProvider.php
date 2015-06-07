@@ -33,11 +33,12 @@ use Cmsable\View\FallbackFileViewFinder;
 use Cmsable\PageType\DBConfigRepository;
 use Cmsable\Routing\TreeScope\TreeScope;
 use Cmsable\Resource\Contracts\ReceivesResourceMapper;
+use Cmsable\Resource\Contracts\ReceivesDistributorWhenResolved;
 use Cmsable\Resource\Contracts\ResourceForm;
 use Cmsable\Http\Contracts\DecoratesRequest;
 use Cmsable\Resource\Distributor;
 use Cmsable\Support\ReceivesContainerWhenResolved;
-use Blade;
+use Cmsable\Http\Resource\CleanedRequest;
 use Log;
 
 class CmsServiceProvider extends ServiceProvider{
@@ -106,15 +107,29 @@ class CmsServiceProvider extends ServiceProvider{
 
         $this->registerResourceMapper();
 
-        Blade::extend(function($view, $compiler){
+        $this->app->afterResolving('blade.compiler', function($compiler, $app){
+
+            $this->registerBladeExtensions($compiler);
+        });
+
+    }
+
+    protected function registerBladeExtensions($compiler)
+    {
+
+        $compiler->extend(function($view, $compiler){
             $pattern = $compiler->createMatcher('toJsTree');
             return preg_replace($pattern, '$1<?php $f = new \BeeTree\Support\HtmlPrinter(); echo $f->toJsTree$2 ?>', $view);
         });
 
-        Blade::extend(function($view, $compiler){
+        $compiler->extend(function($view, $compiler){
             $pattern = $compiler->createMatcher('guessTrans');
             return preg_replace($pattern, '$1<?php echo \Cmsable\Lang\OptionalTranslator::guess$2 ?>', $view);
         });
+
+        $resourceDirectives = $this->app->make('Cmsable\View\Blade\ResourceDirectives');
+
+        $resourceDirectives->register($compiler);
 
     }
 
@@ -762,13 +777,57 @@ class CmsServiceProvider extends ServiceProvider{
             return $app->make('Cmsable\Resource\Mapper');
         });
 
+        $this->registerResourceDetector();
         $this->registerResourceMapperHook();
 
+        $this->registerFormClassFinder();
+        $this->registerModelClassFinder();
+        $this->registerValidatorClassFinder();
+        $this->registerClassFinder();
+
         $this->registerResourceDistributor();
+        $this->registerResourceDistributorHook();
         $this->registerRequestDecoratorHook();
         $this->registerModelFinder();
         $this->registerResourceFormHook();
         $this->registerInputCaster();
+
+        $this->app['events']->listen('router.matched', function()
+        {
+            $this->app->resolving(function(CleanedRequest $request, $app)
+            {
+                $request->setRedirector($app['Illuminate\Routing\Redirector']);
+            });
+        });
+
+    }
+
+    protected function registerFormClassFinder()
+    {
+        $this->app->singleton('Cmsable\Resource\Contracts\FormClassFinder', function($app){
+            return $app->make('Cmsable\Resource\FormClassFinder');
+        });
+    }
+
+    protected function registerModelClassFinder()
+    {
+        $this->app->singleton('Cmsable\Resource\Contracts\ModelClassFinder', function($app){
+            return $app->make('Cmsable\Resource\ModelClassFinder');
+        });
+    }
+
+    protected function registerValidatorClassFinder()
+    {
+        $this->app->singleton('Cmsable\Resource\Contracts\ValidatorClassFinder', function($app){
+            return $app->make('Cmsable\Resource\ValidatorClassFinder');
+        });
+    }
+
+    protected function registerClassFinder()
+    {
+        $this->app->singleton('Cmsable\Resource\Contracts\ClassFinder', function($app){
+            return $app->make('Cmsable\Resource\ClassFinder');
+        });
     }
 
     protected function registerResourceDetector()
@@ -783,17 +842,24 @@ class CmsServiceProvider extends ServiceProvider{
     protected function registerResourceDistributor()
     {
 
-        $this->app->alias('cmsable.resource-distributor', 'Cmsable\Resource\Distributor');
+        $this->app->alias('cmsable.resource-distributor', 'Cmsable\Resource\Contracts\Distributor');
 
         $this->app->singleton('cmsable.resource-distributor', function($app){
-            return new Distributor($app->make('cmsable.resourcemapper'));
+            return $app->make('Cmsable\Resource\Distributor');
+        });
+    }
+
+    protected function registerResourceDistributorHook()
+    {
+        $this->app->resolving(function(ReceivesDistributorWhenResolved $mapperUser, $app){
+            $mapperUser->setResourceDistributor($app->make('cmsable.resource-distributor'));
         });
     }
 
     protected function registerResourceMapperHook()
     {
         $this->app->resolving(function(ReceivesResourceMapper $mapperUser, $app){
-            $mapperUser->setResourceMapper($app->make('cmsable.resourcemapper'));
+            $mapperUser->setResourceMapper($app->make('cmsable.resource-mapper'));
         });
     }
 

@@ -1,5 +1,7 @@
 <?php namespace Cmsable\Support;
 
+use Illuminate\Contracts\Container\Container;
+
 trait HoldsContainer
 {
 

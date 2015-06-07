@@ -1,26 +1,26 @@
 <?php namespace Cmsable\Resource;
 
-use Cmsable\Resource\Contracts\ClassFinder;
+use Cmsable\Resource\Contracts\ClassFinder as ClassFinderContract;
 use Cmsable\Resource\Contracts\FormClassFinder;
 use Cmsable\Resource\Contracts\ModelClassFinder;
-use Cmsable\Resource\Contracts\ValidationRuleFinder;
+use Cmsable\Resource\Contracts\ValidatorClassFinder;
 
-class Finder implements ClassFinder
+class ClassFinder implements ClassFinderContract
 {
 
     protected $formFinder;
 
     protected $modelFinder;
 
-    protected $ruleFinder;
+    protected $validatorFinder;
 
     public function __construct(FormClassFinder $formFinder,
                                 ModelClassFinder $modelFinder,
-                                ValidationRuleFinder $ruleFinder)
+                                ValidatorClassFinder $validatorFinder)
     {
         $this->formFinder = $formFinder;
         $this->modelFinder = $modelFinder;
-        $this->ruleFinder = $ruleFinder;
+        $this->validatorFinder = $validatorFinder;
     }
 
     /**
@@ -68,9 +68,9 @@ class Finder implements ClassFinder
      * @param string $modelClass (optional)
      * @return array
      **/
-    public function validationRules($resource, $modelClass=null)
+    public function validatorClass($resource, $modelClass=null)
     {
-        return $this->ruleFinder->validationRules($resource, $modelClass)
+        return $this->validatorFinder->validatorClass($resource, $modelClass);
     }
 
 }

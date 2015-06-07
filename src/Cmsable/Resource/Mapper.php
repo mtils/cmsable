@@ -11,7 +11,7 @@ class Mapper implements MapperContract
 
     protected $searchForms = [];
 
-    protected $rules = [];
+    protected $validators = [];
 
     public function modelClass($resource)
     {
@@ -43,10 +43,10 @@ class Mapper implements MapperContract
         }
     }
 
-    public function validationRules($resource)
+    public function validatorClass($resource)
     {
-        if (isset($this->rules[$resource])) {
-            return $this->rules[$resource];
+        if (isset($this->validators[$resource])) {
+            return $this->validators[$resource];
         }
     }
 
@@ -90,15 +90,15 @@ class Mapper implements MapperContract
     }
 
     /**
-     * Manually map the rules to $resource
+     * Manually map the validator to $resource
      *
      * @param string $resource
-     * @param array $rules
+     * @param string $validatorClass
      * @return self
      **/
-    public function mapValidationRules($resource, array $rules)
+    public function mapValidatorClass($resource, $validatorClass)
     {
-        $this->rules[$resource] = $rules;
+        $this->validators[$resource] = $validatorClass;
         return $this;
     }
 

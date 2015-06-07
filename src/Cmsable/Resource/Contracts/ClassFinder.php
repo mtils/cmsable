@@ -1,3 +1,3 @@
 <?php namespace Cmsable\Resource\Contracts;
 
-interface ClassFinder extends FormClassFinder, ModelClassFinder, ValidationRuleFinder{}
+interface ClassFinder extends FormClassFinder, ModelClassFinder, ValidatorClassFinder{}

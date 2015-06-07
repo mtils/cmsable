@@ -3,13 +3,16 @@
 use Cmsable\Resource\Contracts\Validator;
 use App;
 use Cmsable\Support\ReceivesContainerWhenResolved;
+use Cmsable\Resource\Contracts\ReceivesDistributorWhenResolved;
 use Cmsable\Support\HoldsContainer;
+use Illuminate\Contracts\Validation\ValidationException;
 
-abstract class ResourceValidator implements Validator, ReceivesContainerWhenResolved
+abstract class ResourceValidator implements Validator, ReceivesContainerWhenResolved,
+                                            ReceivesDistributorWhenResolved
 {
 
-    use ResourceBus;
     use HoldsContainer;
+    use UsesCurrentResource;
 
     protected $rules = [];
 
@@ -31,13 +34,82 @@ abstract class ResourceValidator implements Validator, ReceivesContainerWhenReso
      **/
     public function validateOrFail(array $data, $model=null)
     {
+
+        $this->publish('validating', [$this, $data, $model]);
+
         $rules = $this->rules();
+
+        $this->publish('validation-rules.setted', [&$rules]);
+
         $parsedRules = $this->parseRules($rules, $data, $model);
+
+        $this->publish('validation-rules.parsed', [&$parsedRules]);
+
+        $validator = $this->getValidatorInstance($parsedRules, $data, $model);
+
+        $validator->setAttributeNames($this->customAttributes());
+
+        if ($this->validate($validator)) {
+            return true;
+        }
+
+        throw new ValidationException($validator);
+
+    }
+
+    protected function validate($validator)
+    {
+        return $validator->passes();
     }
 
     protected function parseRules(array $rules, array $data, $model=null)
     {
-    
+        return $rules;
+    }
+
+    /**
+     * Get the validator instance to perform the actual validation
+     *
+     * @return \Illuminate\Validation\Validator
+     */
+    protected function getValidatorInstance($rules, $data, $model=null)
+    {
+        $factory = $this->container->make('Illuminate\Validation\Factory');
+
+        if (method_exists($this, 'validatorInstance'))
+        {
+            return $this->container->call(
+                [$this, 'validatorInstance'],
+                compact('factory')
+            );
+        }
+
+        return $factory->make(
+            $data, $rules, $this->customMessages(), $this->customAttributes()
+        );
+    }
+
+    /**
+     * Set custom messages for validator errors.
+     *
+     * @return array
+     */
+    public function customMessages()
+    {
+        return [];
+    }
+
+    /**
+     * Set custom attributes for validator errors.
+     *
+     * @return array
+     */
+    public function customAttributes()
+    {
+        if (!$form = $this->distributor->form(null, $this->resourceName())){
+            return [];
+        }
+        return $form->getValidator()->buildAttributeNames($form);
     }
 
 }

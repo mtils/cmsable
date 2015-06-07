@@ -3,7 +3,7 @@
 use Illuminate\Contracts\Container\Container;
 use Cmsable\Resource\Contracts\Detector;
 use Cmsable\Resource\Contracts\ClassFinder;
-use Cmsable\Resource\Contracts\Mapper;
+use Cmsable\Resource\Contracts\Mapper as MapperContract;
 use Cmsable\Resource\Contracts\ResourceForm;
 use Cmsable\Resource\Contracts\Distributor as DistributorContract;
 
@@ -24,7 +24,7 @@ class Distributor implements DistributorContract
 
     protected $currentResource;
 
-    public function __construct(Mapper $mapper, ClassFinder $finder,
+    public function __construct(MapperContract $mapper, ClassFinder $finder,
                                 Detector $detector, Container $container)
     {
         $this->mapper = $mapper;
@@ -47,7 +47,7 @@ class Distributor implements DistributorContract
             return $this->makeForm($resource, $formClass);
         }
 
-        $modelClass = $this->modelClass($resource);
+        $modelClass = class_basename($this->modelClass($resource));
 
         if (!$formClass = $this->finder->formClass($resource, $modelClass)) {
             return '';
@@ -72,7 +72,7 @@ class Distributor implements DistributorContract
             return $this->makeSearchForm($resource, $formClass);
         }
 
-        $modelClass = $this->modelClass($resource);
+        $modelClass = class_basename($this->modelClass($resource));
 
         if (!$formClass = $this->finder->searchFormClass($resource, $modelClass)) {
             return '';
@@ -82,22 +82,32 @@ class Distributor implements DistributorContract
 
     }
 
-    public function rules($resource=null)
+    public function validator($resource=null)
     {
 
         $resource = $this->passedOrCurrent($resource);
 
-        $rules = $this->mapper->validationRules($resource);
-
-        if (is_array($rules)) {
-            return $this->parseRules($resource, $rules);
+        if ($class = $this->mapper->validatorClass($resource)) {
+            return $this->makeValidator($resource, $class);
         }
 
-        $modelClass = $this->modelClass($resource);
+        $modelClass = class_basename($this->modelClass($resource));
 
-        $rules = $this->finder->validationRules($resource, $modelClass);
+        if (!$class = $this->finder->validatorClass($resource, $modelClass)) {
+            return;
+        }
 
-        return $this->parseRules($resource, $rules);
+        return $this->makeValidator($resource, $class);
+
+    }
+
+    public function rules($resource=null)
+    {
+
+        if ($validator = $this->validator($resource)) {
+            return $validator->rules();
+        }
+
     }
 
     public function model($id, $resource=null)
@@ -143,7 +153,13 @@ class Distributor implements DistributorContract
     protected function makeForm($resource, $class)
     {
         $form = $this->container->make($class);
+
+        if ($rules = $this->rules($resource)) {
+            $form->getValidator()->setRules($rules);
+        }
+
         $this->publish($resource, 'form.created', [$form]);
+
         return $form;
     }
 
@@ -154,10 +170,11 @@ class Distributor implements DistributorContract
         return $form;
     }
 
-    protected function parseRules($resource, &$rules)
+    protected function makeValidator($resource, $class)
     {
-        $this->publish($resource, 'validation-rules.setted', [&$rules]);
-        return $rules;
+        $validator = $this->container->make($class);
+        $this->publish($resource, 'validator.created', [$validator]);
+        return $validator;
     }
 
     protected function publish($resource, $event, array $params=[])
