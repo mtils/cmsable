@@ -1,6 +1,5 @@
 <?php namespace Cmsable\View\Blade;
 
-use Illuminate\Contracts\Container\Container;
 use Illuminate\View\Compilers\BladeCompiler as Compiler;
 
 class ResourceDirectives
