@@ -44,7 +44,7 @@ class Distributor implements DistributorContract
         $resource = $this->passedOrCurrent($resource);
 
         if ($formClass = $this->mapper->formClass($resource)) {
-            return $this->makeForm($resource, $formClass);
+            return $this->makeForm($resource, $formClass, $model);
         }
 
         $modelClass = class_basename($this->modelClass($resource));
@@ -53,11 +53,7 @@ class Distributor implements DistributorContract
             return '';
         }
 
-        $form = $this->makeForm($resource, $formClass);
-
-        if ($model) {
-            $form->setModel($model);
-        }
+        $form = $this->makeForm($resource, $formClass, $model);
 
         return $form;
 
@@ -150,12 +146,16 @@ class Distributor implements DistributorContract
         return $resource ? $resource : $this->getCurrentResource();
     }
 
-    protected function makeForm($resource, $class)
+    protected function makeForm($resource, $class, $model)
     {
         $form = $this->container->make($class);
 
         if ($rules = $this->rules($resource)) {
             $form->getValidator()->setRules($rules);
+        }
+
+        if ($model) {
+            $form->setModel($model);
         }
 
         $this->publish($resource, 'form.created', [$form]);

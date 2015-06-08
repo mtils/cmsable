@@ -24,6 +24,8 @@ class CleanedRequest extends Request implements DecoratesRequest,
 
     protected $model;
 
+    protected $caster;
+
     /**
      * The redirector instance.
      *
@@ -191,14 +193,17 @@ class CleanedRequest extends Request implements DecoratesRequest,
 
     protected function caster()
     {
-        return $this->container->make('XType\Casting\Contracts\InputCaster');
+        if (!$this->caster) {
+            $this->caster = $this->container->make('XType\Casting\Contracts\InputCaster');
+        }
+        return $this->caster;
     }
 
     /**
      * Set the Redirector instance.
      *
      * @param  \Illuminate\Routing\Redirector  $redirector
-     * @return \Illuminate\Foundation\Http\FormRequest
+     * @return self
      */
     public function setRedirector(Redirector $redirector)
     {
@@ -211,6 +216,12 @@ class CleanedRequest extends Request implements DecoratesRequest,
     {
        $eventName = $this->eventName($this->resourceName().".$action");
        return $this->fire($eventName, $params);
+    }
+
+    public function withConfirmations($with=true)
+    {
+        $this->caster()->withConfirmations($with);
+        return $this;
     }
 
 }

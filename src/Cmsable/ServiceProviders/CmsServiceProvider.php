@@ -32,7 +32,6 @@ use Cmsable\Controller\SiteTree\Plugin\Dispatcher;
 use Cmsable\View\FallbackFileViewFinder;
 use Cmsable\PageType\DBConfigRepository;
 use Cmsable\Routing\TreeScope\TreeScope;
-use Cmsable\Resource\Contracts\ReceivesResourceMapper;
 use Cmsable\Resource\Contracts\ReceivesDistributorWhenResolved;
 use Cmsable\Resource\Contracts\ResourceForm;
 use Cmsable\Http\Contracts\DecoratesRequest;
@@ -778,7 +777,6 @@ class CmsServiceProvider extends ServiceProvider{
         });
 
         $this->registerResourceDetector();
-        $this->registerResourceMapperHook();
 
         $this->registerFormClassFinder();
         $this->registerModelClassFinder();
@@ -853,13 +851,6 @@ class CmsServiceProvider extends ServiceProvider{
     {
         $this->app->resolving(function(ReceivesDistributorWhenResolved $mapperUser, $app){
             $mapperUser->setResourceDistributor($app->make('cmsable.resource-distributor'));
-        });
-    }
-
-    protected function registerResourceMapperHook()
-    {
-        $this->app->resolving(function(ReceivesResourceMapper $mapperUser, $app){
-            $mapperUser->setResourceMapper($app->make('cmsable.resource-mapper'));
         });
     }
 

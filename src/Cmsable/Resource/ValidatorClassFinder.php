@@ -1,12 +1,12 @@
 <?php namespace Cmsable\Resource;
 
-use Signal\Support\FindsClasses;
 use Cmsable\Resource\Contracts\ValidatorClassFinder as ClassFinderContract;
+use Cmsable\Support\FindsResourceClasses;
 
 class ValidatorClassFinder implements ClassFinderContract
 {
 
-    use FindsClasses;
+    use FindsResourceClasses;
 
     protected $namespaces = ['App\Validators'];
 
@@ -23,7 +23,8 @@ class ValidatorClassFinder implements ClassFinderContract
         if ($modelClass) {
             return $this->findClass($modelClass.'Validator');
         }
-        return $this->findClass($this->camelCase($resource).'Validator');
+
+        return $this->findClass($this->className($resource).'Validator');
     }
 
 }

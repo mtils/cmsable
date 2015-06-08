@@ -2,11 +2,12 @@
 
 use Signal\Support\FindsClasses;
 use Cmsable\Resource\Contracts\FormClassFinder as ClassFinderContract;
+use Cmsable\Support\FindsResourceClasses;
 
 class FormClassFinder implements ClassFinderContract
 {
 
-    use FindsClasses;
+    use FindsResourceClasses;
 
     protected $namespaces = ['App\Http\Forms'];
 
@@ -23,7 +24,7 @@ class FormClassFinder implements ClassFinderContract
         if ($modelClass) {
             return $this->findClass($modelClass.'Form');
         }
-        return $this->findClass($this->camelCase($resource).'Form');
+        return $this->findClass($this->className($resource).'Form');
     }
 
     /**
@@ -39,7 +40,7 @@ class FormClassFinder implements ClassFinderContract
         if ($modelClass) {
             return $this->findClass($modelClass.'SearchForm');
         }
-        return $this->findClass($this->camelCase($resource).'SearchForm');
+        return $this->findClass($this->className($resource).'SearchForm');
     }
 
 }
