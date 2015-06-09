@@ -28,9 +28,8 @@ abstract class BeeTreeRepository implements TreeRepository
      **/
     public function find($id)
     {
-        $query = $this->model()->newQuery();
-        $this->fire($this->event('find'), [$query]);
-        $model = $query->find($id);
+        $this->fire($this->event('find'), []);
+        $model = $this->model()->get($id);
         $this->fire($this->event('found'), [$model]);
         return $model;
     }
@@ -46,6 +45,20 @@ abstract class BeeTreeRepository implements TreeRepository
         $model = $this->model()->make($attributes);
         $this->fire($this->event('make'), [$model]);
         return $model;
+    }
+
+    /**
+     * Construct a node (new $NodeClass()) (Doesn't save the node)
+     * 
+     * @param array $attributes (optional)
+     * @param mixed \Beetree\Contracts\Node
+     * @return mixed the created child
+     **/
+    public function makeChild(array $attributes=[], $parent)
+    {
+        $child = $this->model()->makeChild($attributes, $parent);
+        $this->fire($this->event('make'), [$child]);
+        return $child;
     }
 
     /**

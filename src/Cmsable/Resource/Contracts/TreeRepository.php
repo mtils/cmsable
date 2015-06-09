@@ -10,6 +10,15 @@ interface TreeRepository extends Repository
 {
 
     /**
+     * Construct a node (new $NodeClass()) (Doesn't save the node)
+     * 
+     * @param array $attributes (optional)
+     * @param mixed $parent
+     * @return mixed the created child
+     **/
+    public function makeChild(array $attributes=[], $parent);
+
+    /**
      * Create a new model as a child of $parentModel
      *
      * @param array $attributes
