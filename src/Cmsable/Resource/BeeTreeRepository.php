@@ -166,9 +166,9 @@ abstract class BeeTreeRepository implements TreeRepository
         $this->model()->placeAt($movedNode, $newParent, $position);
 
         if (!$position) {
-            $this->model()->makeChildOf($movedNode, $parentModel);
+            $this->model()->makeChildOf($movedNode, $newParent);
         } else {
-            $this->model()->placeAt($movedNode, $parentModel, $position);
+            $this->model()->placeAt($movedNode, $newParent, $position);
         }
 
         $this->fire($this->event('moved'), [$movedNode, $newParent, $position]);
