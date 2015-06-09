@@ -1,8 +1,10 @@
 <?php namespace Cmsable\Cms\Action;
 
 use Collection\StringList;
+use FormObject\Attributes;
 
-class Action{
+class Action
+{
 
     protected $title;
 
@@ -25,6 +27,8 @@ class Action{
     protected $url;
 
     protected $contexts;
+
+    protected $data;
 
     public function getTitle(){
         return $this->title;
@@ -167,6 +171,34 @@ class Action{
             }
         }
         return false;
+    }
+
+    public function getData($key=null)
+    {
+        $this->initData();
+
+        if ($key === null) {
+            return $this->data;
+        }
+
+        if (isset($this->data["data-$key"])) {
+            return $this->data["data-$key"];
+        }
+    }
+
+    public function setData($key, $value)
+    {
+        $this->initData();
+        $this->data["data-$key"] = $value;
+        return $this;
+    }
+
+    protected function initData()
+    {
+        if ($this->data) {
+            return;
+        }
+        $this->data = new Attributes;
     }
 
     public function __get($name){
