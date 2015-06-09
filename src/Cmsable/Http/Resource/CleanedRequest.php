@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Cmsable\Http\Contracts\DecoratesRequest;
+use Illuminate\Http\JsonResponse;
 use Cmsable\Support\ReceivesContainerWhenResolved;
 use Cmsable\Resource\Contracts\ReceivesDistributorWhenResolved;
 use Cmsable\Support\HoldsContainer;
