@@ -19,7 +19,7 @@
     "ems/xtype": "0.1.*",
     "ems/beetree":"0.1.*",
     "ems/formobject": "0.2.*",
-    "ems/versatile": "dev-master",
+    "ems/versatile": "0.1.*",
     "edvinaskrucas/notification": "5.0.*"
   },
   "require-dev": {
