@@ -340,11 +340,9 @@ class CmsServiceProvider extends ServiceProvider{
        $this->app->instance('cmsable.cms', $cmsApp);
        $this->app->instance('Cmsable\Cms\Application', $cmsApp);
 
-       if(!$this->app->runningInConsole()) {
-           $this->app['Illuminate\Contracts\Http\Kernel']->prependMiddleWare(
-                'Cmsable\Http\CmsRequestInjector'
-           );
-       }
+        $this->app['Illuminate\Contracts\Http\Kernel']->prependMiddleWare(
+            'Cmsable\Http\CmsRequestInjector'
+        );
 
         $this->app->instance('Cmsable\Http\CurrentCmsPathProviderInterface', $cmsApp);
 

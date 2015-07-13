@@ -37,10 +37,8 @@ class CmsRequestInjector implements Middleware
     public function handle($request, Closure $next)
     {
 
-        if(!$this->app->runningInConsole()){
-            $request = $this->cmsApplication->_updateCmsRequest($request);
-            $this->app['events']->fire($this->requestEventName,[$request, $this]);
-        }
+        $request = $this->cmsApplication->_updateCmsRequest($request);
+        $this->app['events']->fire($this->requestEventName,[$request, $this]);
 
         return $next($request);
 
