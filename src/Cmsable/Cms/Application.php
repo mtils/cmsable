@@ -183,6 +183,7 @@ class Application implements CurrentCmsPathProviderInterface, CurrentScopeProvid
             $request->cookies->all(), $request->files->all(), $request->server->all()
         );
 
+        $cmsRequest->headers = clone $request->headers;
         $cmsRequest->setEventDispatcher($this->eventDispatcher);
 
         return $cmsRequest;
