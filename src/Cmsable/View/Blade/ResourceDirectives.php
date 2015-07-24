@@ -6,7 +6,8 @@ class ResourceDirectives
 {
 
     public $names = [
-        'form' => 'form'
+        'form'       => 'form',
+        'searchForm' => 'searchForm'
     ];
 
     public function register(Compiler $blade)
@@ -41,6 +42,39 @@ class ResourceDirectives
                             $res = isset($resource) ? $resource : null;
                         }
                         echo Resource::form($m, $res);
+                    }
+                ?>
+EOD;
+
+            return preg_replace($pattern, $code, $view);
+        });
+    }
+
+    protected function registerSearchForm(Compiler $blade, $name)
+    {
+        $blade->extend(function($view, $compiler) use ($name) {
+
+            $pattern = $compiler->createMatcher($name);
+
+            $code = <<<'EOD'
+                    $1<?php
+                    if (isset($searchForm)) {
+                        echo $searchForm;
+                    } else{
+                        $passed = array$2;
+                        if (count($passed) == 2) {
+                            $m = $passed[0];
+                            $res = $passed[1];
+                        }
+                        if (count($passed) == 1) {
+                            $m = $passed[0];
+                            $res = isset($resource) ? $resource : null;
+                        }
+                        if (count($passed) == 0) {
+                            $m = isset($model) ? $model : null;
+                            $res = isset($resource) ? $resource : null;
+                        }
+                        echo Resource::searchForm($m, $res);
                     }
                 ?>
 EOD;
