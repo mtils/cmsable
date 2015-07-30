@@ -14,9 +14,7 @@ class PathPrefixDetector implements DetectorInterface{
     protected $repository;
 
     public function __construct(RepositoryInterface $repository){
-
         $this->repository = $repository;
-
     }
 
     /**
@@ -29,11 +27,14 @@ class PathPrefixDetector implements DetectorInterface{
 
         $firstSegment = $this->getFirstSegment($request);
 
-        try{
+        try {
             return $this->repository->getByPathPrefix($firstSegment);
-        }
-        catch(OutOfBoundsException $e){
+        } catch(OutOfBoundsException $e) {}
+
+        try {
             return $this->repository->get(TreeScope::DEFAULT_NAME);
+        } catch(OutOfBoundsException $e) {
+            return new TreeScope;
         }
 
     }

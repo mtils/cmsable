@@ -1,35 +1,22 @@
 <?php namespace Cmsable\Cms;
 
 use InvalidArgumentException;
-use OutOfBoundsException;
 
-use Input;
 use App;
 
-use Symfony\Component\HttpKernel\HttpKernelInterface;
-use Symfony\Component\HttpKernel\TerminableInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 
 use Cmsable\Http\CmsPathCreatorInterface;
 use Cmsable\Http\CmsRequest;
-use Cmsable\Http\CmsPath;
+use Cmsable\Http\CmsRequestConverter;
 use Cmsable\Http\CurrentCmsPathProviderInterface;
 use Cmsable\Support\EventSenderTrait;
-use Cmsable\Routing\ControllerDispatcher;
 use Cmsable\Routing\CurrentScopeProviderInterface;
-use Cmsable\PageType\RepositoryInterface as PageTypeRepository;
-use Cmsable\Routing\TreeScope\DetectorInterface;
 
-class Application implements CurrentCmsPathProviderInterface, CurrentScopeProviderInterface{
+class Application implements CurrentCmsPathProviderInterface, CurrentScopeProviderInterface
+{
 
     use EventSenderTrait;
-
-    protected $pathCreatorLoadEventName = 'cmsable::path-creators-requested';
-
-    protected $pathSettedEventName = 'cmsable::cms-path-setted';
-
-    protected $scopeChangedEventName = 'cmsable::treescope-changed';
 
     protected $app;
 
@@ -37,14 +24,22 @@ class Application implements CurrentCmsPathProviderInterface, CurrentScopeProvid
 
     protected $cmsRequest;
 
+    protected $requestConverter;
+
     protected $scopeFilters = [];
 
     public function __construct(CmsPathCreatorInterface $pathCreator,
+                                CmsRequestConverter $requestConverter,
                                 $eventDispatcher){
 
 
         $this->pathCreator = $pathCreator;
+        $this->requestConverter = $requestConverter;
         $this->setEventDispatcher($eventDispatcher);
+
+        $this->eventDispatcher->listen('cmsable::request-replaced', function($request){
+            $this->setCmsRequest($request);
+        });
 
         $this->eventDispatcher->listen('router.matched', function($route, $request){
             $this->registerScopeFilters($route, $request);
@@ -62,22 +57,6 @@ class Application implements CurrentCmsPathProviderInterface, CurrentScopeProvid
         if(count($this->scopeFilters)){
             $route->before('cmsable.scope-filter');
         }
-
-    }
-
-    public function attachCmsPath(CmsRequest $request){
-
-        $cmsPath = $this->pathCreator->createFromRequest($request);
-
-        $this->cmsRequest = $request;
-
-        $request->setCmsPath($cmsPath);
-
-        if($request->originalPath() != $request->path()){
-            $this->fireEvent($this->pathSettedEventName,[$cmsPath]);
-        }
-
-        $this->fireEvent($this->scopeChangedEventName, [$cmsPath->getTreeScope()]);
 
     }
 
@@ -99,7 +78,7 @@ class Application implements CurrentCmsPathProviderInterface, CurrentScopeProvid
             return $cmsPath->isCmsPath();
         }
 
-        return FALSE;
+        return false;
 
     }
 
@@ -157,11 +136,6 @@ class Application implements CurrentCmsPathProviderInterface, CurrentScopeProvid
 
     }
 
-    public function _updateCmsRequest(Request $request){
-        $this->cmsRequest = $this->createCmsRequest($request);
-        return $this->cmsRequest;
-    }
-
     public function getCmsRequest(){
 
         if(!$this->cmsRequest){
@@ -172,21 +146,30 @@ class Application implements CurrentCmsPathProviderInterface, CurrentScopeProvid
 
     }
 
-    public function createCmsRequest(Request $request=null){
+    public function setCmsRequest(CmsRequest $cmsRequest)
+    {
+        $this->cmsRequest = $cmsRequest;
+        return $this;
+    }
+
+    protected function attachCmsPath(CmsRequest $request){
+
+        $cmsPath = $this->pathCreator->createFromRequest($request);
+        $this->cmsRequest = $request;
+        $request->setCmsPath($cmsPath);
+
+    }
+
+    protected function createCmsRequest(Request $request=null)
+    {
 
         $request = ($request === NULL) ? App::make('request') : $request;
+        $cmsRequest = $this->requestConverter->toCmsRequest($request);
 
-        $cmsRequest = (new CmsRequest)->duplicate(
-
-            $request->query->all(), $request->request->all(), $request->attributes->all(),
-
-            $request->cookies->all(), $request->files->all(), $request->server->all()
-        );
-
-        $cmsRequest->headers = clone $request->headers;
-        $cmsRequest->setEventDispatcher($this->eventDispatcher);
+        $cmsRequest->provideCmsPath(function($cmsRequest){
+            $this->attachCmsPath($cmsRequest);
+        });
 
         return $cmsRequest;
-
     }
 }

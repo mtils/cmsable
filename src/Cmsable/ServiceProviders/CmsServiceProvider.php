@@ -330,6 +330,7 @@ class CmsServiceProvider extends ServiceProvider{
 
         $cmsApp = new Application(
             $this->app->make('Cmsable\Http\CmsPathCreatorInterface'),
+            $this->app->make('Cmsable\Http\CmsRequestConverter'),
             $this->app['events']
         );
 
@@ -353,10 +354,6 @@ class CmsServiceProvider extends ServiceProvider{
                 Log::debug($cmsPath->getOriginalPath() . ' => ' . $cmsPath->getRewrittenPath());
             });
         }
-
-        $this->app['events']->listen('cmsable::request.path-requested', function($request) use ($app){
-            $app->make('cmsable.cms')->attachCmsPath($request);
-        });
 
         $serviceProvider = $this;
 

@@ -4,24 +4,34 @@ use Closure;
 
 use Illuminate\Foundation\Application;
 use Illuminate\Contracts\Routing\Middleware;
+use Illuminate\Support\Facades\Facade;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-use Cmsable\Cms\Application AS CmsApplication;
+use Cmsable\Cms\Application as CmsApplication;
 
 class CmsRequestInjector implements Middleware
 {
 
     public $requestEventName = 'cmsable::request-replaced';
 
+    public $pathSettedEventName = 'cmsable::cms-path-setted';
+
+    public $scopeChangedEventName = 'cmsable::treescope-changed';
+
     protected $app;
 
     protected $cmsApplication;
 
-    public function __construct(Application $app, CmsApplication $cmsApplication)
+    protected $cmsPathCreator;
+
+    public function __construct(Application $app,
+                                CmsRequestConverter $requestConverter,
+                                CmsPathCreatorInterface $pathCreator)
     {
         $this->app = $app;
-        $this->cmsApplication = $cmsApplication;
+        $this->requestConverter = $requestConverter;
+        $this->cmsPathCreator = $pathCreator;
     }
 
     /**
@@ -37,26 +47,37 @@ class CmsRequestInjector implements Middleware
     public function handle($request, Closure $next)
     {
 
-        $request = $this->cmsApplication->_updateCmsRequest($request);
+        $request = $this->requestConverter->toCmsRequest($request);
+
+        $request->provideCmsPath(function($request){
+            $this->attachCmsPath($request);
+        });
+
+        $this->injectRequest($request);
+
         $this->app['events']->fire($this->requestEventName,[$request, $this]);
 
         return $next($request);
 
     }
 
-    protected function toCmsRequest(Request $request){
+    protected function attachCmsPath(CmsRequest $request){
 
-        $cmsRequest = (new CmsRequest)->duplicate(
+        $cmsPath = $this->cmsPathCreator->createFromRequest($request);
 
-            $request->query->all(), $request->request->all(), $request->attributes->all(),
+        $request->setCmsPath($cmsPath);
 
-            $request->cookies->all(), $request->files->all(), $request->server->all()
-        );
+        if($request->originalPath() != $request->path()){
+            $this->app['events']->fire($this->pathSettedEventName,[$cmsPath]);
+        }
 
-        $cmsRequest->setEventDispatcher($this->app['events']);
-
-        return $cmsRequest;
+        $this->app['events']->fire($this->scopeChangedEventName, [$cmsPath->getTreeScope()]);
 
     }
 
+    protected function injectRequest(CmsRequest $request)
+    {
+        $this->app->instance('request', $request);
+        Facade::clearResolvedInstance('request');
+    }
 }

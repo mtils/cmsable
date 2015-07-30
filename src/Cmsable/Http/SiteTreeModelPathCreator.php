@@ -1,5 +1,6 @@
 <?php namespace Cmsable\Http;
 
+use DomainException;
 use Symfony\Component\HttpFoundation\Request;
 use Cmsable\Http\CmsRequest;
 
@@ -49,9 +50,17 @@ class SiteTreeModelPathCreator implements CmsPathCreatorInterface{
 
         $scope = $this->scopeDetector->detectScope($request);
 
-        // Find matching page
-        if(!$node = $this->getFirstMatchingNode($scope, $originalPath)){
+        try {
+
+            // Find matching page
+            if(!$node = $this->getFirstMatchingNode($scope, $originalPath)){
+                return $this->createDeactivated($scope, $originalPath);
+            }
+
+        } catch (DomainException $e) { // if db is empty
+
             return $this->createDeactivated($scope, $originalPath);
+
         }
 
         $cmsPath = new CmsPath;
@@ -197,7 +206,11 @@ class SiteTreeModelPathCreator implements CmsPathCreatorInterface{
             $path = CmsPath::$homeSegment;
         }
 
-        return $treeModel->pageByPath($path);
+        try {
+            return $treeModel->pageByPath($path);
+        } catch (DomainException $e) {
+            return $treeModel->makeNode();
+        }
     }
 
     public function removeScope($originalPath, $scope){
