@@ -31,7 +31,8 @@ class PermissionFinder{
         $formValues = array();
 
         foreach($permissions as $perm){
-            $formValues[$perm] = trans("cmsable::permissions.$perm");
+            $key = str_replace('.', '-', $perm);
+            $formValues[$perm] = trans("cmsable::permissions.$key");
         }
 
         return $formValues;
