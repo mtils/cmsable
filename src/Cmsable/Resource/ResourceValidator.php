@@ -16,7 +16,25 @@ abstract class ResourceValidator implements Validator, ReceivesContainerWhenReso
 
     protected $rules = [];
 
-    public function rules()
+    private $extendedRules;
+
+    public final function rules()
+    {
+        if ($this->extendedRules !== null) {
+            return $this->extendedRules;
+        }
+
+        $rules = $this->buildRules();
+
+        $this->publish('validation-rules.setted', [&$rules]);
+
+        $this->extendedRules = $rules;
+
+        return $this->extendedRules;
+
+    }
+
+    public function buildRules()
     {
         return $this->rules;
     }
@@ -38,8 +56,6 @@ abstract class ResourceValidator implements Validator, ReceivesContainerWhenReso
         $this->publish('validating', [$this, $data, $model]);
 
         $rules = $this->rules();
-
-        $this->publish('validation-rules.setted', [&$rules]);
 
         $parsedRules = $this->parseRules($rules, $data, $model);
 
@@ -110,6 +126,10 @@ abstract class ResourceValidator implements Validator, ReceivesContainerWhenReso
             return [];
         }
         return $form->getValidator()->buildAttributeNames($form);
+    }
+
+    private function getAndFireRules()
+    {
     }
 
 }
