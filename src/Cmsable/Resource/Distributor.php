@@ -43,20 +43,17 @@ class Distributor implements DistributorContract
 
         $resource = $this->passedOrCurrent($resource);
 
-        if ($formClass = $this->mapper->formClass($resource)) {
-            return $this->makeForm($resource, $formClass, $model);
-        }
-
-        $modelClass = class_basename($this->modelClass($resource));
-
-        if (!$formClass = $this->finder->formClass($resource, $modelClass)) {
+        if (!$formClass = $this->formClass($resource)) {
             return '';
         }
 
-        $form = $this->makeForm($resource, $formClass, $model);
+        return $this->makeForm($resource, $formClass, $model);
 
-        return $form;
+    }
 
+    public function hasForm($resource=null)
+    {
+        return (bool)$this->formClass($resource);
     }
 
     public function searchForm($resource=null)
@@ -64,18 +61,17 @@ class Distributor implements DistributorContract
 
         $resource = $this->passedOrCurrent($resource);
 
-        if ($formClass = $this->mapper->searchFormClass($resource)) {
-            return $this->makeSearchForm($resource, $formClass);
-        }
-
-        $modelClass = class_basename($this->modelClass($resource));
-
-        if (!$formClass = $this->finder->searchFormClass($resource, $modelClass)) {
+        if (!$formClass = $this->searchFormClass($resource)) {
             return '';
         }
 
         return $this->makeSearchForm($resource, $formClass);
 
+    }
+
+    public function hasSearchForm($resource=null)
+    {
+        return (bool)$this->searchFormClass($resource);
     }
 
     public function validator($resource=null)
@@ -126,6 +122,41 @@ class Distributor implements DistributorContract
 
     }
 
+    public function formClass($resource=null)
+    {
+
+        $resource = $this->passedOrCurrent($resource);
+
+        if ($formClass = $this->mapper->formClass($resource)) {
+            return $formClass;
+        }
+
+        $modelClass = class_basename($this->modelClass($resource));
+
+        if ($formClass = $this->finder->formClass($resource, $modelClass)) {
+            return $formClass;
+        }
+
+        return '';
+    }
+
+    public function searchFormClass($resource=null)
+    {
+        $resource = $this->passedOrCurrent($resource);
+
+        if ($formClass = $this->mapper->searchFormClass($resource)) {
+            return $formClass;
+        }
+
+        $modelClass = class_basename($this->modelClass($resource));
+
+        if ($formClass = $this->finder->searchFormClass($resource, $modelClass)) {
+            return $formClass;
+        }
+
+        return '';
+    }
+
     public function getCurrentResource()
     {
         if (!$this->currentResource) {
@@ -167,6 +198,7 @@ class Distributor implements DistributorContract
     {
         $form = $this->container->make($class);
         $this->publish($resource, 'search-form.created', [$form]);
+        $form->addCssClass('search-form');
         return $form;
     }
 
