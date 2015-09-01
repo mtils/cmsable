@@ -59,9 +59,9 @@ abstract class EloquentRepository implements Repository
         $this->validate($attributes, 'store');
 
         $this->fillModel($model, $attributes);
-        $this->fire($this->event('storing'), [$model]);
+        $this->fire($this->event('storing'), [$model, $attributes]);
         $model->save();
-        $this->fire($this->event('stored'), [$model]);
+        $this->fire($this->event('stored'), [$model, $attributes]);
         return $model;
     }
 
@@ -80,11 +80,11 @@ abstract class EloquentRepository implements Repository
 
         $this->fillModel($model, $newAttributes);
 
-        $this->fire($this->event('updating'), [$model]);
+        $this->fire($this->event('updating'), [$model, $newAttributes]);
 
         $model->save();
 
-        $this->fire($this->event('updated'), [$model]);
+        $this->fire($this->event('updated'), [$model, $newAttributes]);
 
         return $model;
     }
