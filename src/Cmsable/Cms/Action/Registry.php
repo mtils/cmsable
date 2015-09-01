@@ -11,6 +11,8 @@ class Registry{
 
     protected $collectionCreators = [];
 
+    protected $typeCreators = [];
+
     protected $identifier;
 
     protected $currentUserProvider;
@@ -98,6 +100,25 @@ class Registry{
 
     }
 
+    public function onType($type, callable $creator)
+    {
+
+        $resources = is_array($type) ? $type : [$type];
+
+        foreach($resources as $resource){
+
+            $resourceTypeId = $this->identifier->identifyItem($resource);
+
+            if(!isset($this->typeCreators[$resourceTypeId])){
+                $this->typeCreators[$resourceTypeId] = [];
+            }
+
+            $this->typeCreators[$resourceTypeId][] = $creator;
+
+        }
+
+    }
+
     public function forItem($resource, $context='default'){
 
         $actionGroup = $this->groupCreator->createGroup('default', $resource, $context);
@@ -132,6 +153,29 @@ class Registry{
 
             foreach($this->collectionCreators[$resourceTypeId] as $creator){
                 $creator($actionGroup, $user, $resource, $context);
+            }
+        }
+
+        if($context != 'default'){
+            return $actionGroup->filtered($context);
+        }
+
+        return $actionGroup;
+
+    }
+
+    public function forType($resource, $context='default'){
+
+        $actionGroup = $this->groupCreator->createGroup('default', $resource, $context);
+
+        $resourceTypeId = $this->identifier->identifyItem($resource);
+
+        if(isset($this->typeCreators[$resourceTypeId])){
+
+            $user = $this->currentUserProvider->current();
+
+            foreach($this->typeCreators[$resourceTypeId] as $creator){
+                $creator($actionGroup, $user, $context);
             }
         }
 
