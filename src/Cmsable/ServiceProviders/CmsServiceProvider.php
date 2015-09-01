@@ -62,6 +62,8 @@ class CmsServiceProvider extends ServiceProvider{
 
     protected $adminViewPath;
 
+    protected $notifier = 'Cmsable\View\NotificationNotifier';
+
     public function register(){
 
         $this->registerPackageConfig();
@@ -551,6 +553,8 @@ class CmsServiceProvider extends ServiceProvider{
 
         $this->registerPageTypeNamer();
 
+        $this->registerNotifier();
+
     }
 
     protected function registerPageQueryFactory()
@@ -918,6 +922,13 @@ class CmsServiceProvider extends ServiceProvider{
             'cmsable.pagetype-views-requested',
             'Cmsable\PageType\TranslationNamer@setNames'
         );
+    }
+
+    protected function registerNotifier()
+    {
+        $this->app->singleton('Cmsable\View\Contracts\Notifier', function($app){
+            return $app->make($this->notifier);
+        });
     }
 
     /**
