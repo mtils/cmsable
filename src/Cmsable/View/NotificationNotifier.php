@@ -71,7 +71,7 @@ class NotificationNotifier implements Notifier
      **/
     public function warning($message, array $parameters=[])
     {
-        $this->notification->warning($message, $parameters);
+        $this->notification->warning($message);
     }
 
 }
