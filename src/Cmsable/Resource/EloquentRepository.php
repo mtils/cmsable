@@ -4,6 +4,7 @@ use Cmsable\Resource\Contracts\Repository;
 use Signal\NamedEvent\BusHolderTrait;
 use Illuminate\Database\Eloquent\Model;
 use FormObject\Form;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 abstract class EloquentRepository implements Repository
 {
@@ -20,7 +21,7 @@ abstract class EloquentRepository implements Repository
     protected $attributeFilter;
 
     /**
-     * Return the resource with id $id. Throw an exception if resource not found
+     * {@inheritdoc}
      *
      * @return mixed The resource
      **/
@@ -28,9 +29,27 @@ abstract class EloquentRepository implements Repository
     {
         $query = $this->getModel()->newQuery();
         $this->fire($this->event('find'), [$query]);
-        $model = $query->find($id);
+
+        if (!$model = $query->find($id)) {
+            return;
+        }
+
         $this->fire($this->event('found'), [$model]);
+
         return $model;
+    }
+
+    /**
+     * Find and throw an exception if model not found
+     *
+     * @return mixed The resource
+     **/
+    public function findOrFail($id)
+    {
+        if ($model = $this->find($id)) {
+            return $model;
+        }
+        throw (new ModelNotFoundException)->setModel(get_class($this->getModel()));
     }
 
     /**
