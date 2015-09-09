@@ -25,6 +25,8 @@ class Factory{
 
     protected $compiledCrumbs = [];
 
+    protected $fallbackProvider;
+
 
     public function __construct(CrumbsCreatorInterface $creator,
                                 Router $router,
@@ -33,6 +35,10 @@ class Factory{
         $this->crumbsCreator = $creator;
         $this->router = $router;
         $this->store = $store;
+
+        $this->fallbackProvider = function($route, $breadcrumbs) {
+            return $breadcrumbs;
+        };
 
     }
 
@@ -79,8 +85,8 @@ class Factory{
 
         $routeCallbacks = $this->getRouteCallbacks();
 
-        if(!isset($routeCallbacks[$name])){
-            return $breadcrumbs;
+        if (!isset($routeCallbacks[$name])) {
+            return call_user_func_array($this->fallbackProvider, func_get_args());
         }
 
         $args = func_get_args();
@@ -143,6 +149,12 @@ class Factory{
 
     public function clearCurrentRoute(){
         $this->currentRoute = null;
+    }
+
+    public function provideFallback(callable $provider)
+    {
+        $this->fallbackProvider = $provider;
+        return $this;
     }
 
 }

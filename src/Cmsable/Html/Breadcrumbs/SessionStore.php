@@ -217,6 +217,13 @@ class SessionStore implements StoreInterface
         ];
     }
 
+    /**
+     * Deserializes a nodeArray to an node
+     * TODO: parent_id and route_name are hacked without an interface
+     *
+     * @param array $nodeArray
+     * @return \Cmsable\Model\SiteTreeNodeInterface
+     **/
     protected function fromArray(array $nodeArray)
     {
 
@@ -228,6 +235,7 @@ class SessionStore implements StoreInterface
         $node->setTitle($nodeArray['title']);
         $node->setContent($nodeArray['content']);
         $node->parent_id = 'parent-id-'.$nodeArray['id'];
+        $node->route_name = $nodeArray['routeName'];
 
         return $node;
 
