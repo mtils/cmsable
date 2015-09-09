@@ -55,6 +55,7 @@ class Bus extends IlluminateBus
     {
         if (!self::$singleInstance) {
             self::$singleInstance = new static(App::make('events'));
+            self::$singleInstance->fire('resource::bus.started', [self::$singleInstance]);
         }
         return self::$singleInstance;
     }
