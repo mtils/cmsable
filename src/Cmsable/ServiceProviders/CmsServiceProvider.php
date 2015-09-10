@@ -96,6 +96,8 @@ class CmsServiceProvider extends ServiceProvider{
 
         $this->registerCmsApplication();
 
+        $this->registerContentTypeMorpher();
+
         $this->registerUserProvider();
 
         $this->registerActionRegistry();
@@ -326,6 +328,38 @@ class CmsServiceProvider extends ServiceProvider{
 
         });
 
+    }
+
+    protected function registerContentTypeMorpher()
+    {
+
+        $this->app->resolving('Cmsable\Http\ContentTypeMorpher', function($morpher){
+
+            $morpher->detectContentTypeBy(function($response, $morpher) {
+
+                $request = $this->app['request'];
+
+                if (!$accept = $request->header('Accept')) {
+                    return;
+                }
+
+                if (!$contentTypes = explode(',', $accept)) {
+                    return;
+                }
+
+                return $contentTypes[0];
+
+            });
+
+            $morpher->provideMorphers(function($morpher) {
+                $this->app['events']->fire($this->cmsNamespace.'.fill-morphers', $morpher);
+            });
+
+        });
+
+        $this->app['Illuminate\Contracts\Http\Kernel']->pushMiddleWare(
+            'Cmsable\Http\ContentTypeMorpher'
+        );
     }
 
     protected function registerCmsApplication(){
