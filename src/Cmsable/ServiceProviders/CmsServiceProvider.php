@@ -912,7 +912,9 @@ class CmsServiceProvider extends ServiceProvider{
     {
 
         $this->app->bind('XType\Casting\Contracts\InputCaster', function($app){
-            return $app->make('FormObject\Support\Laravel\Http\InputCaster');
+            return $app->make('XType\Casting\InputCaster')->setChain(
+                ['no_leading_underscore', 'no_actions', 'no_confirmations', 'dotted', 'nested']
+            );
         });
     }
 

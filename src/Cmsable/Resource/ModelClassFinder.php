@@ -21,7 +21,7 @@ class ModelClassFinder implements ClassFinderContract
         return $this->findClass($this->resourceToClass($resource));
     }
 
-    protected function resourceToClass($resource)
+    public function resourceToClass($resource)
     {
         $class = ucfirst(camel_case($resource));
         return substr($class, 0, strlen($class)-1);
