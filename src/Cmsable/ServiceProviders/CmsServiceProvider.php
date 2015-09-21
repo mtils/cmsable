@@ -351,9 +351,7 @@ class CmsServiceProvider extends ServiceProvider{
 
             });
 
-            $morpher->provideMorphers(function($morpher) {
-                $this->app['events']->fire($this->cmsNamespace.'.fill-morphers', $morpher);
-            });
+            $morpher->setEventBus(new IlluminateBus($this->app['events']));
 
         });
 

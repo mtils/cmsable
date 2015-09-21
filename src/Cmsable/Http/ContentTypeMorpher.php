@@ -7,6 +7,7 @@ namespace Cmsable\Http;
 use Illuminate\Contracts\Routing\Middleware;
 use Closure;
 use ArrayAccess;
+use Signal\NamedEvent\BusHolderTrait;
 
 /**
  * The ContentTypeMorpher allows to render different content types like pdfs,
@@ -24,7 +25,7 @@ use ArrayAccess;
  *     return new Reponse(base64encode($response->getContent()));
  * }
  *
- * ContentTypeMorpher::on('application/pdf', $handler);
+ * Event::listen('cmsable::responding.application/pdf', $handler);
  *
  * The content type is detected via the content type detector callable:
  *
@@ -33,30 +34,19 @@ use ArrayAccess;
  * }
  *
  **/
-class ContentTypeMorpher implements Middleware, ArrayAccess
+class ContentTypeMorpher implements Middleware
 {
 
+    use BusHolderTrait;
+
     public $defaultContentType = 'text/html';
+
+    public $eventNamespace = 'cmsable';
 
     /**
      * @var callable
      **/
     protected $contentTypeDetector;
-
-    /**
-     * @var array
-     **/
-    protected $morphers=[];
-
-    /**
-     * @var callable
-     **/
-    protected $morpherProvider;
-
-    /**
-     * @var bool
-     **/
-    protected $wasFilledByProvider = false;
 
     /**
      * {@inheritdoc}
@@ -80,78 +70,6 @@ class ContentTypeMorpher implements Middleware, ArrayAccess
     }
 
     /**
-     * Assign a morpher for a contentType.
-     *
-     * @param string $contentType
-     * @param callable $morpher
-     * @return self
-     **/
-    public function on($contentType, callable $morpher)
-    {
-        $this->morphers[$contentType] = $morpher;
-        return $this;
-    }
-
-    /**
-     * Check if a morpher exists for $contentType
-     *
-     * @param string $contentType
-     * @return bool
-     **/
-    public function offsetExists($contentType)
-    {
-        $this->fillByProviderIfNotDone();
-        return isset($this->morphers[$contentType]);
-    }
-
-    /**
-     * Return morpher for $contentType
-     *
-     * @param string $contentType
-     * @return callable|null
-     **/
-    public function offsetGet($contentType)
-    {
-        $this->fillByProviderIfNotDone();
-        return $this->morphers[$contentType];
-    }
-
-    /**
-     * Set a morpher for $contentType
-     *
-     * @param string $contentType
-     * @param callable $morpher
-     * @return void
-     * @see self::on()
-     **/
-    public function offsetSet($contentType, $morpher)
-    {
-        $this->on($contentType, $morpher);
-    }
-
-    /**
-     * Unset the morpher of $contentType
-     *
-     * @param string $contentType
-     * @return void
-     **/
-    public function offsetUnset($contentType)
-    {
-        unset($this->morphers[$contentType]);
-    }
-
-    /**
-     * Returns all morphers as a [$contentType=>$morpher] array
-     *
-     * @return array
-     **/
-    public function morphers()
-    {
-        $this->fillByProviderIfNotDone();
-        return $this->morphers;
-    }
-
-    /**
      * Assign a callable which will detect the $contentType string
      * The callable will be called with this ($response, $this)
      *
@@ -161,20 +79,6 @@ class ContentTypeMorpher implements Middleware, ArrayAccess
     public function detectContentTypeBy(callable $detector)
     {
         $this->contentTypeDetector = $detector;
-        return $this;
-    }
-
-    /**
-     * An additional hook to fill the morphers. Makes it easier to assign them
-     * before needed (at the end of the application cycle).
-     * The callable will be called with ($this)
-     *
-     * @param callable $provider
-     * @return self
-     **/
-    public function provideMorphers(callable $provider)
-    {
-        $this->morpherProvider = $provider;
         return $this;
     }
 
@@ -189,11 +93,9 @@ class ContentTypeMorpher implements Middleware, ArrayAccess
 
         $contentType = $this->detectContentType($response);
 
-        if (!$this->offsetExists($contentType)) {
-            return;
+        if ($newResponse = $this->getFromListeners($contentType, $response)) {
+            return $newResponse;
         }
-
-        return call_user_func($this->offsetGet($contentType), $response, $this);
 
     }
 
@@ -217,19 +119,27 @@ class ContentTypeMorpher implements Middleware, ArrayAccess
     }
 
     /**
-     * Fills the morphers to allow late instanciation
+     * Builds the event name
      *
-     * @return void
+     * @param string $contentType
+     * @return string
      **/
-    protected function fillByProviderIfNotDone()
+    protected function eventName($contentType)
     {
+        return $this->eventNamespace . "::responding.$contentType";
+    }
 
-        if ($this->wasFilledByProvider || !$this->morpherProvider) {
-            return;
-        }
-
-        call_user_func($this->morpherProvider, $this);
-        $this->wasFilledByProvider = true;
+    /**
+     * Fires the event and returns the result if there were some
+     *
+     * @param string $contentType
+     * @param \Illuminate\Http\Response $response
+     * @return \Illuminate\Http\Response|null
+     **/
+    protected function getFromListeners($contentType, $response)
+    {
+        $eventName = $this->eventName($contentType);
+        return $this->fire($eventName, [$response, $this], true);
     }
 
 }
