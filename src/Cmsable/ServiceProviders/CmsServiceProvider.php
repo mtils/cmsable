@@ -339,6 +339,10 @@ class CmsServiceProvider extends ServiceProvider{
 
                 $request = $this->app['request'];
 
+                if ($contentType = $request->input('Content-Type')) {
+                    return $contentType;
+                }
+
                 if (!$accept = $request->header('Accept')) {
                     return;
                 }

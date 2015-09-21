@@ -18,12 +18,14 @@ class ClassResourceTypeIdentifier implements ResourceTypeIdentifierInterface{
 
             $className = get_class($resource);
 
-            if($className == 'stdClass'){
-                if(isset($resource->className)){
+            if ($className == 'stdClass') {
+                if (isset($resource->className)) {
                     return $resource->className;
                 }
             }
+
             return $className;
+
         }
 
         // If classnames passed
@@ -51,9 +53,17 @@ class ClassResourceTypeIdentifier implements ResourceTypeIdentifierInterface{
 
         }
 
+        if (!is_object($resource)) {
+            return gettype($resource);
+        }
+
         // empty result || Collection\Table\Table
-        if(is_object($resource) && isset($resource->itemClass)){
+        if (isset($resource->itemClass)) {
             return $resource->itemClass;
+        }
+
+        if (method_exists($resource, 'modelClass')) {
+            return $resource->modelClass();
         }
 
         return gettype($resource);
