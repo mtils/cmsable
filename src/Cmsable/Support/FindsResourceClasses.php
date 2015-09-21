@@ -13,4 +13,9 @@ trait FindsResourceClasses
         return $this->camelCase(Pluralizer::singular($resourceName));
     }
 
+    protected function resourceName($className)
+    {
+        return snake_case(Pluralizer::plural(class_basename($className)), '-');
+    }
+
 }
