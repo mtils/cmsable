@@ -97,8 +97,13 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
         $target = $this->urlGenerator->route($name, $params, false);
         $scope = $this->scopeRepository()->get($this->routeScope);
 
+
+
         if ($pageType = $this->pageTypeOfUri($targetUri)) {
-            return $this->toPageType($pageType);
+
+            if($pageTypeUri = $this->toPageType($pageType)) {
+                return $pageTypeUri;
+            }
         }
 
         return ltrim($scope->getPathPrefix() . '/' . trim($target, '/'),'/');
