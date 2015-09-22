@@ -565,22 +565,6 @@ class CmsServiceProvider extends ServiceProvider{
 
         $this->setAdminAuthSettings();
 
-        $this->app['cmsable.cms']->whenScope('*', function ($scope, $route, $request, $page)
-        {
-            return;
-            if ($page && ! $this->app['auth']->allowed($page->view_permission)) {
-
-                $intendedUrl = $this->app['url']->full();
-                if (!str_contains($intendedUrl, '_debugbar')) {
-                    $this->app['session']->set('url.intended', $intendedUrl);
-                }
-
-                return $this->app['redirect']->to('/session/create')->withErrors([
-                    $this->app['translator']->get('user.noaccess')
-                ]);
-            }
-        });
-
         $this->registerTextParser();
 
         $this->registerMailer();
