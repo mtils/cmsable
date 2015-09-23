@@ -69,11 +69,16 @@ class SiteTreeUrlGenerator extends UrlGenerator{
         elseif (is_string($path) && $this->currentCmsPathProvider->
                                         getCurrentCmsPath()
                                             ->isCmsPath()) {
-            if($extra && !isset($extra[0])){
+
+            if ($extra && !isset($extra[0])) {
                 $extra = array_values($extra);
                 $extraPath = implode('/',$extra);
                 $path = trim($path,'/') . '/' . trim($extraPath,'/');
-                $extra = array();
+                $extra = [];
+            }
+
+            if ($path == '/') {
+                $path = trim($this->treeScope->getPathPrefix() . $path, '/');
             }
         }
         return parent::to($path, $extra, $secure);
