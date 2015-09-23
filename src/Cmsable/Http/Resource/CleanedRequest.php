@@ -221,7 +221,11 @@ class CleanedRequest extends Request implements DecoratesRequest,
 
     public function withConfirmations($with=true)
     {
-        $this->caster()->withConfirmations($with);
+        if ($with) {
+            $this->caster = $this->caster()->with(['no_confirmations']);
+            return $this;
+        }
+        $this->caster = $this->caster()->with(['!no_confirmations']);
         return $this;
     }
 

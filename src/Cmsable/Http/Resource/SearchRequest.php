@@ -173,10 +173,4 @@ class SearchRequest extends Request implements DecoratesRequest,
        return $this->fire($eventName, $params);
     }
 
-    public function withConfirmations($with=true)
-    {
-        $this->caster()->withConfirmations($with);
-        return $this;
-    }
-
 }
