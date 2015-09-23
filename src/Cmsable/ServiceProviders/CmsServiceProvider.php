@@ -576,6 +576,24 @@ class CmsServiceProvider extends ServiceProvider{
 
         $this->registerNotifier();
 
+        $this->registerCmsPageType();
+
+    }
+
+    protected function registerCmsPageType()
+    {
+
+        $this->app['events']->listen('cmsable.pageTypeLoadRequested', function($pageTypes) {
+
+            $pageType = PageType::create('cmsable.admin-redirect')
+                                  ->setCategory('security')
+                                  ->setRouteScope('default')
+                                  ->setTargetPath('cms-redirect');
+
+            $pageTypes->add($pageType);
+
+        });
+
     }
 
     protected function registerPageQueryFactory()
