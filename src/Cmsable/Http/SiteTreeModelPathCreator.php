@@ -91,6 +91,8 @@ class SiteTreeModelPathCreator implements CmsPathCreatorInterface{
             $rewrittenPath = '/';
         }
 
+        $rewrittenPath = $this->changePathWhenNotGet($request, $rewrittenPath);
+
         $cmsPath->setRewrittenPath($rewrittenPath);
         $cmsPath->setSubPath($subPath);
 
@@ -229,6 +231,20 @@ class SiteTreeModelPathCreator implements CmsPathCreatorInterface{
             return rtrim(substr($path, 0, strlen($path)-strlen(CmsPath::$homeSegment)),'/');
         }
         return $path;
+    }
+
+    protected function changePathWhenNotGet(Request $request, $routeUri)
+    {
+
+        if ($request->method() != 'POST') {
+            return $routeUri;
+        }
+
+        if (ends_with($routeUri, '/create')) {
+            return substr($routeUri, 0, -7);
+        }
+
+        return $routeUri;
     }
 
 }

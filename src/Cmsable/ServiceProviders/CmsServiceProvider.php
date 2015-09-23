@@ -388,8 +388,9 @@ class CmsServiceProvider extends ServiceProvider{
         $app = $this->app;
 
         if ($app->isLocal()) {
-            $app['events']->listen('cmsable::cms-path-setted', function($cmsPath){
-                Log::debug($cmsPath->getOriginalPath() . ' => ' . $cmsPath->getRewrittenPath());
+            $app['events']->listen('cmsable::cms-path-setted', function($cmsPath) {
+                $method = $this->app['request']->method();
+                $this->app['log']->debug("$method " . $cmsPath->getOriginalPath() . ' => ' . $cmsPath->getRewrittenPath());
             });
         }
 
