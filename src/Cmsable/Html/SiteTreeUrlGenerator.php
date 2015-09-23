@@ -77,10 +77,15 @@ class SiteTreeUrlGenerator extends UrlGenerator{
                 $extra = [];
             }
 
-            if ($path == '/') {
-                $path = trim($this->treeScope->getPathPrefix() . $path, '/');
+            if ($path == '/' && $this->getTreeScope()) {
+                $path = trim($this->getTreeScope()->getPathPrefix() . $path, '/');
             }
         }
+
+        elseif ($path == '/' && $treeScope = $this->getTreeScope()) {
+            $path = trim($treeScope->getPathPrefix() . $path, '/');
+        }
+
         return parent::to($path, $extra, $secure);
     }
 
