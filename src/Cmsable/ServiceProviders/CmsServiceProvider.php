@@ -825,7 +825,6 @@ class CmsServiceProvider extends ServiceProvider{
         $this->registerResourceDistributorHook();
         $this->registerRequestDecoratorHook();
         $this->registerModelFinder();
-        $this->registerResourceFormHook();
         $this->registerInputCaster();
 
         $this->app['events']->listen('router.matched', function()
@@ -903,13 +902,6 @@ class CmsServiceProvider extends ServiceProvider{
     {
         $this->app->bind('Cmsable\Resource\Contracts\ModelFinder', function($app){
             return $app->make('Cmsable\Resource\EloquentModelFinder');
-        });
-    }
-
-    protected function registerResourceFormHook()
-    {
-        $this->app->resolving(function(ResourceForm $form, $app){
-            $app->make('Cmsable\Resource\Distributor')->forwardResourceForm($form);
         });
     }
 

@@ -1,7 +1,6 @@
 <?php namespace Cmsable\Resource;
 
 use Cmsable\Resource\Contracts\Validator;
-use App;
 use Cmsable\Support\ReceivesContainerWhenResolved;
 use Cmsable\Resource\Contracts\ReceivesDistributorWhenResolved;
 use Cmsable\Support\HoldsContainer;

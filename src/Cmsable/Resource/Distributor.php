@@ -6,6 +6,7 @@ use Cmsable\Resource\Contracts\ClassFinder;
 use Cmsable\Resource\Contracts\Mapper as MapperContract;
 use Cmsable\Resource\Contracts\ResourceForm;
 use Cmsable\Resource\Contracts\Distributor as DistributorContract;
+use Cmsable\Resource\GenericResourceValidator;
 
 class Distributor implements DistributorContract
 {
@@ -24,6 +25,8 @@ class Distributor implements DistributorContract
 
     protected $currentResource;
 
+    protected $manualRules = [];
+
     public function __construct(MapperContract $mapper, ClassFinder $finder,
                                 Detector $detector, Container $container)
     {
@@ -33,11 +36,13 @@ class Distributor implements DistributorContract
         $this->container = $container;
     }
 
-    public function forwardResourceForm(ResourceForm $form)
-    {
-
-    }
-
+    /**
+     * {@inheritdoc}
+     *
+     * @param mixed $model (optional)
+     * @param string $resource (optional)
+     * @return \FormObject\Form
+     **/
     public function form($model=null, $resource=null)
     {
 
@@ -51,11 +56,23 @@ class Distributor implements DistributorContract
 
     }
 
+    /**
+     * {@inheritdoc}
+     *
+     * @param string $resource (optional)
+     * @return bool
+     **/
     public function hasForm($resource=null)
     {
         return (bool)$this->formClass($resource);
     }
 
+    /**
+     * {@inheritdoc}
+     *
+     * @param string $resource (optional)
+     * @return \FormObject\Form
+     **/
     public function searchForm($resource=null)
     {
 
@@ -69,11 +86,23 @@ class Distributor implements DistributorContract
 
     }
 
+    /**
+     * {@inheritdoc}
+     *
+     * @param string $resource (optional)
+     * @return bool
+     **/
     public function hasSearchForm($resource=null)
     {
         return (bool)$this->searchFormClass($resource);
     }
 
+    /**
+     * {@inheritdoc}
+     *
+     * @param string $resource (optional)
+     * @return \Cmsable\Resource\Contracts\Validator
+     **/
     public function validator($resource=null)
     {
 
@@ -85,14 +114,25 @@ class Distributor implements DistributorContract
 
         $modelClass = class_basename($this->modelClass($resource));
 
-        if (!$class = $this->finder->validatorClass($resource, $modelClass)) {
-            return;
+        if ($class = $this->finder->validatorClass($resource, $modelClass)) {
+            return $this->makeValidator($resource, $class);;
         }
 
-        return $this->makeValidator($resource, $class);
+        $class = 'Cmsable\Resource\GenericResourceValidator';
+
+        if ($rules = $this->getManualRules($resource)) {
+            $validator = $this->makeValidator($resource, $class);
+            return $validator->setRules($rules);
+        }
 
     }
 
+    /**
+     * {@inheritdoc}
+     *
+     * @param string $resource (optional)
+     * @return array
+     **/
     public function rules($resource=null)
     {
 
@@ -100,13 +140,28 @@ class Distributor implements DistributorContract
             return $validator->rules();
         }
 
+
     }
 
-    public function model($id, $resource=null)
+    /**
+     * {@inheritdoc}
+     *
+     * @param string $resource
+     * @param array $rules
+     * @return self
+     **/
+    public function setRules($resource, array $rules)
     {
-        
+        $this->manualRules[$resource] = $rules;
+        return $this;
     }
 
+    /**
+     * This returns the model class for $resource. Caution: Not in interface
+     *
+     * @param string $resource (optional)
+     * @return string
+     **/
     public function modelClass($resource=null)
     {
 
@@ -122,6 +177,12 @@ class Distributor implements DistributorContract
 
     }
 
+    /**
+     * This returns the form class for $resource. Caution: Not in interface
+     *
+     * @param string $resource (optional)
+     * @return string
+     **/
     public function formClass($resource=null)
     {
 
@@ -140,6 +201,12 @@ class Distributor implements DistributorContract
         return '';
     }
 
+    /**
+     * This returns the search form class for $resource. Caution: Not in interface
+     *
+     * @param string $resource (optional)
+     * @return string
+     **/
     public function searchFormClass($resource=null)
     {
         $resource = $this->passedOrCurrent($resource);
@@ -157,6 +224,11 @@ class Distributor implements DistributorContract
         return '';
     }
 
+    /**
+     * {@inheritdoc}
+     *
+     * @return string
+     **/
     public function getCurrentResource()
     {
         if (!$this->currentResource) {
@@ -167,16 +239,37 @@ class Distributor implements DistributorContract
         return $this->currentResource;
     }
 
+    /**
+     * {@inheritdoc}
+     *
+     * @param string $resource
+     * @return self
+     **/
     public function setCurrentResource($resource)
     {
         $this->currentResource = $resource;
+        return $this;
     }
 
+    /**
+     * Returns the passed resource if passed, else the current
+     *
+     * @param string $resource
+     * @return $resource
+     **/
     protected function passedOrCurrent($resource)
     {
         return $resource ? $resource : $this->getCurrentResource();
     }
 
+    /**
+     * Creates the form and fires an event
+     *
+     * @param string $resource
+     * @param string $class
+     * @param mixed $model
+     * @return \FormObject\Form
+     **/
     protected function makeForm($resource, $class, $model)
     {
         $form = $this->container->make($class);
@@ -194,6 +287,13 @@ class Distributor implements DistributorContract
         return $form;
     }
 
+    /**
+     * Creates the search form and fires an event
+     *
+     * @param string $resource
+     * @param string $class
+     * @return \FormObject\Form
+     **/
     protected function makeSearchForm($resource, $class)
     {
         $form = $this->container->make($class);
@@ -202,6 +302,13 @@ class Distributor implements DistributorContract
         return $form;
     }
 
+    /**
+     * Creates the validator and fires an event
+     *
+     * @param string $resource
+     * @param string $class
+     * @return \Cmsable\Resource\Contracts\Validator
+     **/
     protected function makeValidator($resource, $class)
     {
         $validator = $this->container->make($class);
@@ -209,6 +316,27 @@ class Distributor implements DistributorContract
         return $validator;
     }
 
+    /**
+     * Returns the manual rules that has been set for $resource
+     *
+     * @param string $resource
+     * @return bool
+     **/
+    protected function getManualRules($resource)
+    {
+        if (!isset($this->manualRules[$resource])) {
+            return [];
+        }
+        return $this->manualRules[$resource];
+    }
+
+    /**
+     * Publishes an event on the event bus
+     *
+     * @param string $resource
+     * @param string $event
+     * @param array $params
+     **/
     protected function publish($resource, $event, array $params=[])
     {
         $eventName = $this->eventName("$resource.$event");
