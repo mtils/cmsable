@@ -5,7 +5,7 @@ return array(
     'page' => array(
         'name' => 'Seite|Seiten',
         'fields' => array(
-            'menu_title'            => 'Navigationsbezeichnung',
+            'menu_title'            => 'Navigationsname',
             'url_segment'           => 'URL-Segment',
             'title'                 => 'Titel',
             'content'               => 'Inhalt',

@@ -61,15 +61,18 @@ class BasePageForm extends Form implements ResourceForm
 //         $parentFields->setSwitchable(true);
 
         $mainFields = new FieldList('main',trans('cmsable::forms.page-form.main'));
+        $mainFields->setClassName('CmsMainFields');
         $mainFields->setSwitchable(TRUE);
+
+        $mainFields->push(TextField::create('title')
+                                ->setTitle(trans('cmsable::models.page.fields.title')));
+
         $mainFields->push(TextField::create('menu_title')
                                  ->setTitle(trans('cmsable::models.page.fields.menu_title')));
 
         $mainFields->push(UrlSegmentField::create('url_segment')
-                                      ->setTitle(trans('cmsable::models.page.fields.url_segment')));
+                          ->setTitle(trans('cmsable::models.page.fields.url_segment')));
 
-        $mainFields->push(TextField::create('title')
-                                ->setTitle(trans('cmsable::models.page.fields.title')));
 
         $mainFields->push(TextField::create('content')
                                 ->setTitle(trans('cmsable::models.page.fields.content'))
