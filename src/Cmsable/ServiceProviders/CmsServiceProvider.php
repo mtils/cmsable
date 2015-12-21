@@ -120,17 +120,33 @@ class CmsServiceProvider extends ServiceProvider{
     protected function registerBladeExtensions($compiler)
     {
 
-        $compiler->extend(function($view, $compiler){
-            $pattern = $compiler->createMatcher('toJsTree');
-            return preg_replace($pattern, '$1<?php $f = new \BeeTree\Support\HtmlPrinter(); echo $f->toJsTree$2 ?>', $view);
+        if (method_exists($compiler, 'createMatcher')) {
+            $compiler->extend(function($view, $compiler){
+                $pattern = $compiler->createMatcher('toJsTree');
+                return preg_replace($pattern, '$1<?php $f = new \BeeTree\Support\HtmlPrinter(); echo $f->toJsTree$2 ?>', $view);
+            });
+
+            $compiler->extend(function($view, $compiler){
+                $pattern = $compiler->createMatcher('guessTrans');
+                return preg_replace($pattern, '$1<?php echo \Cmsable\Lang\OptionalTranslator::guess$2 ?>', $view);
+            });
+
+            $resourceDirectives = $this->app->make('Cmsable\View\Blade\ResourceDirectives');
+
+            return;
+        }
+
+
+        $compiler->directive('toJsTree', function($expression){
+            return '<?php $f = new \BeeTree\Support\HtmlPrinter(); echo $f->toJsTree' . $expression . ' ?>';
         });
 
-        $compiler->extend(function($view, $compiler){
-            $pattern = $compiler->createMatcher('guessTrans');
-            return preg_replace($pattern, '$1<?php echo \Cmsable\Lang\OptionalTranslator::guess$2 ?>', $view);
+        $compiler->directive('guessTrans', function($expression){
+            return '<?php echo \Cmsable\Lang\OptionalTranslator::guess' . $expression  . '?>';
         });
 
-        $resourceDirectives = $this->app->make('Cmsable\View\Blade\ResourceDirectives');
+
+        $resourceDirectives = $this->app->make('Cmsable\View\Blade\ResourceDirectives51');
 
         $resourceDirectives->register($compiler);
 
