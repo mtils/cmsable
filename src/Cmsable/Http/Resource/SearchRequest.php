@@ -1,5 +1,6 @@
 <?php namespace Cmsable\Http\Resource;
 
+use RuntimeException;
 use Illuminate\Http\Request;
 use Cmsable\Http\Contracts\DecoratesRequest;
 use Illuminate\Http\JsonResponse;
@@ -68,7 +69,10 @@ class SearchRequest extends Request implements DecoratesRequest,
         $all = array_merge($defaults, $this->all());
         $resourceName = $this->resourceName();
 
-        $modelClass = $this->container->make('Cmsable\Resource\Contracts\ModelClassFinder')->modelClass($this->resourceName());
+        if (!$modelClass = $this->container->make('cmsable.resource-distributor')->modelClass($this->resourceName())) {
+            throw new RuntimeException("Couldnt find modelClass for resource $resourceName. Try to manually map it");
+        }
+
         $criteria = $this->container->make('versatile.criteria-builder')->criteria($modelClass, $all);
 
         $keys = $this->container->make('versatile.model-presenter')->keys($modelClass);
