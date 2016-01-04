@@ -61,7 +61,6 @@ abstract class ResourceValidator implements Validator, ReceivesContainerWhenReso
         $this->publish('validation-rules.parsed', [&$parsedRules]);
 
         $validator = $this->getValidatorInstance($parsedRules, $data, $model);
-
         $validator->setAttributeNames($this->customAttributes());
 
         if ($this->validate($validator)) {
@@ -124,6 +123,7 @@ abstract class ResourceValidator implements Validator, ReceivesContainerWhenReso
         if (!$form = $this->distributor->form(null, $this->resourceName())){
             return [];
         }
+
         return $form->getValidator()->buildAttributeNames($form);
     }
 

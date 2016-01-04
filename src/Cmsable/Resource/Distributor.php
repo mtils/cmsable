@@ -1,6 +1,8 @@
 <?php namespace Cmsable\Resource;
 
+use RuntimeException;
 use Illuminate\Contracts\Container\Container;
+use FormObject\Form;
 use Cmsable\Resource\Contracts\Detector;
 use Cmsable\Resource\Contracts\ClassFinder;
 use Cmsable\Resource\Contracts\Mapper as MapperContract;
@@ -124,6 +126,20 @@ class Distributor implements DistributorContract
             $validator = $this->makeValidator($resource, $class);
             return $validator->setRules($rules);
         }
+
+        // Support for rules inside forms
+        if (!$this->hasForm($resource)) {
+            throw new RuntimeException('No validator for resource $resource found');
+        }
+
+
+        if ($rules = $this->formRules($this->form(null, $resource))) {
+             $validator = $this->makeValidator($resource, $class);
+             return $validator->setRules($rules);
+
+        }
+
+        throw new RuntimeException('No validator for resource $resource found');
 
     }
 
@@ -274,7 +290,7 @@ class Distributor implements DistributorContract
     {
         $form = $this->container->make($class);
 
-        if ($rules = $this->rules($resource)) {
+        if (!$this->formRules($form) && $rules = $this->rules($resource)) {
             $form->getValidator()->setRules($rules);
         }
 
@@ -341,6 +357,18 @@ class Distributor implements DistributorContract
     {
         $eventName = $this->eventName("$resource.$event");
         $this->fire($eventName, $params);
+    }
+
+    protected function formRules(Form $form)
+    {
+        if (property_exists($form, 'validationRules')) {
+            return $form->validationRules;
+        }
+
+        if (method_exists($form, 'validationRules')) {
+            return $form->validationRules();
+        }
+
     }
 
 }
