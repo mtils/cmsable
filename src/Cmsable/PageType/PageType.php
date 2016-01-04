@@ -48,6 +48,8 @@ class PageType
 
     protected $_routeNames = [];
 
+    protected $langKey;
+
     public function __construct($id=NULL){
         $this->id = $id;
     }
@@ -222,6 +224,17 @@ class PageType
     public function setRouteNames($routeNames)
     {
         $this->_routeNames = (array)$routeNames;
+        return $this;
+    }
+
+    public function getLangKey()
+    {
+        return $this->langKey;
+    }
+
+    public function setLangKey($langKey)
+    {
+        $this->langKey = $langKey;
         return $this;
     }
 

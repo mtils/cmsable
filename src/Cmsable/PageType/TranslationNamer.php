@@ -57,7 +57,15 @@ class TranslationNamer
 
     protected function getLangKey(PageType $pageType)
     {
-        return $this->langKey . '.' .str_replace('.', '/', $pageType->getId());
+
+        $langKey = $pageType->getLangKey();
+
+        if ($langKey === null) {
+            $langKey = $this->langKey;
+        }
+
+        return $langKey . '.' .str_replace('.', '/', $pageType->getId());
+
     }
 
 }
