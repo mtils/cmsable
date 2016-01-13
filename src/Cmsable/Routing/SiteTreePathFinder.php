@@ -83,8 +83,23 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
         $currentUri = $currentRoute->uri();
         $targetUri = $targetRoute->uri();
+        $isCreateAction = false;
 
-        if($this->hasSameHead($currentUri, $targetUri) && $page = $this->currentPage()){
+        // Special handling for pagetypes to create routes
+        // if store is performed, the current uri is the same as the index route
+        // If you route inside store to index it would then lead to the current
+        // page, which points to create and not to index.
+        if ($currentPageType = $this->currentPageType()) {
+            $currentTargetPath = $currentPageType->getTargetPath();
+            if (ends_with($currentTargetPath, '/create')) {
+                $isCreateAction = true;
+            }
+        }
+
+        // If the path starts with the same segment, try to route inside this
+        // segment
+        if($this->hasSameHead($currentUri, $targetUri) && $page = $this->currentPage() && !$isCreateAction)
+        {
             $targetPath = $this->urlGenerator->route($name, $params, false);
             return $this->replaceWithPagePath($targetPath);
         }
@@ -96,8 +111,6 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
         $target = $this->urlGenerator->route($name, $params, false);
         $scope = $this->scopeRepository()->get($this->routeScope);
-
-
 
         if ($pageType = $this->pageTypeOfUri($targetUri)) {
 
