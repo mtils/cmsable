@@ -64,7 +64,16 @@ class PathDetector implements Detector
             return $routeName;
         }
 
-        return explode('.', $routeName)[0];
+        $tiles = explode('.', $routeName);
+
+        if ( count($tiles) == 2) {
+            return $tiles[0];
+        }
+
+        array_pop($tiles);
+
+        return implode('.', $tiles);
+
     }
 
     protected function getRouteName(Request $request)
