@@ -15,6 +15,11 @@ use CMS;
 
 class PermissionablePageForm extends BasePageForm{
 
+    public function getClassName()
+    {
+        return 'PageForm';
+    }
+
     public function createFields(){
 
         $parentFields = parent::createFields();
