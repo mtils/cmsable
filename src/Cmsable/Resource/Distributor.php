@@ -328,6 +328,10 @@ class Distributor implements DistributorContract
     protected function makeValidator($resource, $class)
     {
         $validator = $this->container->make($class);
+
+        if (method_exists($validator, 'setResourceName')) {
+            $validator->setResourceName($resource);
+        }
         $this->publish($resource, 'validator.created', [$validator]);
         return $validator;
     }

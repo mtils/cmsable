@@ -7,11 +7,23 @@ trait UsesCurrentResource
 
     protected $distributor;
 
+    protected $_resourceName = '';
+
     use ResourceBus;
 
     public function resourceName()
     {
+        if ($this->_resourceName) {
+            return $this->_resourceName;
+        }
+
         return $this->distributor->getCurrentResource();
+    }
+
+    public function setResourceName($resourceName)
+    {
+        $this->_resourceName = $resourceName;
+        return $this;
     }
 
     public function modelClass()
