@@ -1,7 +1,9 @@
 <?php namespace Cmsable\Resource;
 
+use OutOfBoundsException;
 use Cmsable\Resource\Contracts\Detector;
 use Illuminate\Http\Request;
+
 
 class PathDetector implements Detector
 {
@@ -79,7 +81,7 @@ class PathDetector implements Detector
     protected function getRouteName(Request $request)
     {
         if (!$route = $request->route()) {
-            throw new OutOfBoundsException("Request has no route, no chance to get the resource name");
+            throw new OutOfBoundsException("Request has no route, no chance to auto calculate the resource name");
         }
         return $route->getName();
     }
