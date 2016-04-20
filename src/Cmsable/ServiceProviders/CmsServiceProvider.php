@@ -133,6 +133,8 @@ class CmsServiceProvider extends ServiceProvider{
 
             $resourceDirectives = $this->app->make('Cmsable\View\Blade\ResourceDirectives');
 
+            $resourceDirectives->register($compiler);
+
             return;
         }
 
