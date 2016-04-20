@@ -1,6 +1,6 @@
 <?php namespace Cmsable\Resource;
 
-use Cmsable\Resource\Contracts\Distributor;
+use Cmsable\Resource\Contracts\Distributor as DistributorContract;
 
 trait UsesCurrentResource
 {
@@ -19,7 +19,7 @@ trait UsesCurrentResource
         return $this->distributor->modelByResource($this->resourceName());
     }
 
-    public function setResourceDistributor(Distributor $distributor)
+    public function setResourceDistributor(DistributorContract $distributor)
     {
         $this->distributor = $distributor;
     }
