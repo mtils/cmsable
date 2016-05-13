@@ -472,10 +472,16 @@ class CmsServiceProvider extends ServiceProvider{
 
             $class = 'Cmsable\Cms\Action\Registry';
 
-            return $app->make($class,[
+            $registry = $app->make($class,[
                 new NamedGroupCreator,
                 new ClassResourceTypeIdentifier
             ]);
+
+            $registry->providerCurrentActionName(function(){
+                return $this->app['router']->currentRouteName();
+            });
+
+            return $registry;
 
         });
 

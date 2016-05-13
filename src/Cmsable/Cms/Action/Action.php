@@ -16,6 +16,8 @@ class Action
 
     protected $enabled = TRUE;
 
+    protected $active = false;
+
     protected $checkable;
 
     protected $group;
@@ -67,6 +69,30 @@ class Action
 
     public function setCheckable($checkable=TRUE){
         $this->checkable = TRUE;
+        return $this;
+    }
+
+    /**
+     * Returns if this action is currently active. E.G. if this action points
+     * to url x and this url is the current it will be setted active
+     * Or if you do this by js, more than one actions could be currently active
+     *
+     * @return bool
+     **/
+    public function isActive()
+    {
+        return $this->active;
+    }
+
+    /**
+     * @see self::isActive()
+     *
+     * @param bool $active
+     * @return self
+     **/
+    public function setActive($active)
+    {
+        $this->active = $active;
         return $this;
     }
 

@@ -3,7 +3,8 @@
 use Cmsable\Auth\CurrentUserProviderInterface;
 use UnexpectedValueException;
 
-class Registry{
+class Registry
+{
 
     protected $creators = [];
 
@@ -20,6 +21,8 @@ class Registry{
     protected $tempGroup;
 
     protected $groupCreator;
+
+    protected $currentActionNameProvider;
 
     public function __construct(GroupCreatorInterface $groupCreator,
                                 ResourceTypeIdentifierInterface $identifier,
@@ -134,6 +137,8 @@ class Registry{
             }
         }
 
+        $this->markCurrentAction($actionGroup);
+
         if($context != 'default'){
             return $actionGroup->filtered($context);
         }
@@ -155,6 +160,8 @@ class Registry{
                 $creator($actionGroup, $user, $resource, $context);
             }
         }
+
+        $this->markCurrentAction($actionGroup);
 
         if($context != 'default'){
             return $actionGroup->filtered($context);
@@ -179,6 +186,8 @@ class Registry{
             }
         }
 
+        $this->markCurrentAction($actionGroup);
+
         if($context != 'default'){
             return $actionGroup->filtered($context);
         }
@@ -196,6 +205,40 @@ class Registry{
         }
         return $actionGroup;
 
+    }
+
+    public function providerCurrentActionName(callable $provider)
+    {
+        $this->currentActionNameProvider = $provider;
+        return $this;
+    }
+
+    protected function markCurrentAction(Group $group)
+    {
+        if (!$this->currentActionNameProvider) {
+            return;
+        }
+
+        foreach ($group as $action) {
+            if ($action instanceof Group) {
+                $this->markCurrentAction($action);
+                continue;
+            }
+            $this->markIfCurrent($action);
+        }
+    }
+
+    protected function markIfCurrent(Action $action)
+    {
+        if (!$this->currentActionNameProvider) {
+            return;
+        }
+
+        $currentActionName = call_user_func($this->currentActionNameProvider);
+
+        if ($currentActionName == $action->getName()) {
+            $action->setActive(true);
+        }
     }
 
 }
