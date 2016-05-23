@@ -28,8 +28,14 @@ abstract class BeeTreeRepository implements TreeRepository
      **/
     public function find($id)
     {
-        $this->fire($this->event('find'), []);
-        $model = $this->model()->get($id);
+
+        $query = $this->getModel()->newQuery();
+        $this->fire($this->event('find'), [$query]);
+
+        if (!$model = $query->find($id)) {
+            return;
+        }
+
         $this->fire($this->event('found'), [$model]);
         return $model;
     }
