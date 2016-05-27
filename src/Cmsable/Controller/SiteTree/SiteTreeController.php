@@ -98,6 +98,7 @@ class SiteTreeController extends Controller {
 
         $this->form->get('url_segment')->pathPrefix = '/'. ltrim($pathPrefix,'/');
 
+        $this->form->setModel($page);
         $this->form->fillByArray($page->toArray());
 
         $this->events->fire("sitetree.$pageTypeId.form-filled", [$this->form, $page]);
@@ -165,6 +166,7 @@ class SiteTreeController extends Controller {
         $this->form->get('url_segment')->pathPrefix = '/'. ltrim($pathPrefix,'/');
 
         $this->form->get('id')->setValue($pageId);
+        $this->form->setModel($page);
         $this->form->fillByArray($page->toArray());
 
 
