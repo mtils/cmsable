@@ -232,5 +232,8 @@ class Group implements Countable, IteratorAggregate, ArrayAccess{
 
     }
 
-    
+    public function newAction()
+    {
+        return new Action();
+    }
 }
