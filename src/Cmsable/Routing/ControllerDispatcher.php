@@ -50,15 +50,34 @@ class ControllerDispatcher extends IlluminateDispatcher
      protected function makeController($controller)
     {
 
-        if($this->creator){
-
-            Controller::setRouter($this->router);
-            return $this->creator->createController($controller, $this->getPage());
-
+        if (!$this->creator) {
+            return parent::makeController($controller);
         }
 
-        return parent::makeController($controller);
+        Controller::setRouter($this->router);
+        return $this->creator->createController($controller, $this->getPage());
 
+    }
+
+    /**
+     * Call the given controller instance method.
+     *
+     * @param  \Illuminate\Routing\Controller  $instance
+     * @param  \Illuminate\Routing\Route  $route
+     * @param  string  $method
+     * @return mixed
+     */
+    protected function call($instance, $route, $method)
+    {
+        $parameters = $this->resolveClassMethodDependencies(
+            $route->parametersWithoutNulls(), $instance, $method
+        );
+
+        if ($this->creator && method_exists($this->creator, 'modifyMethodParameters')) {
+            $this->creator->modifyMethodParameters($instance, $method, $parameters);
+        }
+
+        return $instance->callAction($method, $parameters);
     }
 
     public function getCreator(){
