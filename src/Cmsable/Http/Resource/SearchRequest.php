@@ -28,6 +28,8 @@ class SearchRequest extends Request implements DecoratesRequest,
 
     protected $caster;
 
+    protected $searchModifier;
+
     /**
      * The redirector instance.
      *
@@ -81,7 +83,13 @@ class SearchRequest extends Request implements DecoratesRequest,
 
         $searchFactory = $this->container->make('versatile.search-factory');
 
-        return $searchFactory->search($criteria)->withKey($keys);
+        $search = $searchFactory->search($criteria)->withKey($keys);
+
+        if ($this->searchModifier) {
+            call_user_func($this->searchModifier, $search);
+        }
+
+        return $search;
     }
 
     /**
@@ -175,6 +183,18 @@ class SearchRequest extends Request implements DecoratesRequest,
     {
        $eventName = $this->eventName($this->resourceName().".$action");
        return $this->fire($eventName, $params);
+    }
+
+    /**
+     * Modify the search before returning it to the controller
+     *
+     * @param callable $modifier
+     * @return self
+     **/
+    public function modifySearch(callable $modifier)
+    {
+        $this->searchModifier = $modifier;
+        return $this;
     }
 
 }
