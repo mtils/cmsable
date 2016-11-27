@@ -355,10 +355,25 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
         if($cmsPath = $this->currentCmsPath()){
 
-            $pageType = $cmsPath->getPageType();
+            $pageTypePath = $cmsPath->getPageType()->getTargetPath();
             $page = $cmsPath->getMatchedNode();
 
-            return $this->replacePathHead($pageType->getTargetPath(), $this->toPage($page), $routePath);
+            list($pagePath, $params) = [$this->toPage($page), ''];
+
+            if (strpos($pagePath, '?')) {
+                list($pagePath, $params) = explode('?', $pagePath, 2);
+                $params = "?$params";
+            }
+
+            $pagePath = parse_url($pagePath, PHP_URL_PATH);
+
+            if ($pageTypePath[0] != '/' && $pagePath[0] == '/') {
+                $pageTypePath = "/$pageTypePath";
+            }
+
+            $url = $this->replacePathHead($pageTypePath, $pagePath, $routePath);
+
+            return $url;
 
         }
 
