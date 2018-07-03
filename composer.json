@@ -13,13 +13,13 @@
   ],
   "require": {
     "php": ">=5.4.0",
-    "laravel/framework": "5.0.*|5.1.*",
-    "ems/collection": "0.1.*",
-    "ems/signal": "0.1.*",
-    "ems/xtype": "0.1.*",
-    "ems/beetree":"0.1.*",
-    "ems/formobject": "0.2.*",
-    "ems/versatile": "0.1.*",
+    "laravel/framework": "5.0.*|5.1.*|5.2.*|5.3.*|5.4.*|5.5.*",
+    "ems/collection": "0.2.*",
+    "ems/signal": "0.2.*",
+    "ems/xtype": "0.2.*",
+    "ems/beetree":"0.2.*",
+    "ems/formobject": "0.3.*",
+    "ems/versatile": "0.2.*",
     "edvinaskrucas/notification": "5.0.*"
   },
   "require-dev": {

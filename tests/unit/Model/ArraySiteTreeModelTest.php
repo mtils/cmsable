@@ -27,6 +27,7 @@ class ArraySiteTreeModelTest extends BaseTest
         $srcArray = $this->getCompleteSourceArray();
 
         $model->setSourceArray($srcArray);
+        $this->assertTrue(is_array($srcArray));
 
     }
 

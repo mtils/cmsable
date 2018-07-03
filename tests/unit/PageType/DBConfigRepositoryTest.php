@@ -2,9 +2,10 @@
 
 use Mockery as m;
 use Cmsable\PageType\DBConfigRepository;
+use PHPUnit\Framework\TestCase;
 
 
-class DBConfigRepositoryTest extends PHPUnit_Framework_TestCase{
+class DBConfigRepositoryTest extends TestCase{
 
     public function testImplementsInterface(){
 

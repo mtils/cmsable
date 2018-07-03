@@ -96,6 +96,13 @@ class DBConfigRepositoryFunctionalTest extends BaseTest{
 
         foreach($configType as $key=>$type){
 
+            $configValue = $config->get($key);
+            $defaultValue = $type->getDefaultValue();
+
+            if ($configValue instanceof \DateTime) {
+                $this->assertEquals($defaultValue->getTimestamp(), $configValue->getTimestamp());
+                continue;
+            }
             $this->assertEquals($config->get($key),$type->getDefaultValue());
 
         }

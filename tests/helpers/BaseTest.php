@@ -4,11 +4,12 @@ use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\SQLiteConnection;
 use Illuminate\Database\ConnectionResolver;
 use Illuminate\Database\Eloquent\Model;
+use PHPUnit\Framework\TestCase;
 
 include_once __DIR__.'/Migration.php';
 
 
-class BaseTest extends PHPUnit_Framework_TestCase {
+class BaseTest extends TestCase {
 
     /**
      * @brief Wenn das hier auf TRUE gesetzt ist, wird ein mal
@@ -49,7 +50,7 @@ class BaseTest extends PHPUnit_Framework_TestCase {
         $pdo = new PDO('sqlite::memory:');
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $connection = new SQLiteConnection($pdo, $name, '', $config);
-        $connection->setFetchMode(PDO::FETCH_CLASS);
+//         $connection->setFetchMode(PDO::FETCH_CLASS);
 
         return $connection;
     }

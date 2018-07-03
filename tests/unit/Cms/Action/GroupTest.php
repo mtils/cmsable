@@ -3,8 +3,9 @@
 use Mockery as m;
 use Cmsable\Cms\Action\Group;
 use Cmsable\Cms\Action\Action;
+use PHPUnit\Framework\TestCase;
 
-class GroupTest extends PHPUnit_Framework_TestCase{
+class GroupTest extends TestCase{
 
     public function testFilterDefaultReturnsCopyOfGroup(){
 
