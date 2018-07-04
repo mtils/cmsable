@@ -20,7 +20,7 @@
     "ems/beetree":"0.2.*",
     "ems/formobject": "0.3.*",
     "ems/versatile": "0.2.*",
-    "edvinaskrucas/notification": "5.0.*"
+    "edvinaskrucas/notification": "5.0.*|5.1.*|5.2.*"
   },
   "require-dev": {
     "mockery/mockery": "~0.9"
