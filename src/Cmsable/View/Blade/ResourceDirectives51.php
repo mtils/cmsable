@@ -21,6 +21,14 @@ class ResourceDirectives51
     {
 
         $blade->directive($name, function($expression){
+            if ($expression && $expression[0] != '(') {
+                $expression = "($expression)";
+            }
+
+            // Otherwise the array$expression will fail
+            if(!$expression) {
+                $expression = '()';
+            }
 
             $code = <<<'EOD'
                     <?php
@@ -53,6 +61,14 @@ EOD;
     {
 
         $blade->directive($name, function($expression){
+            if ($expression && $expression[0] != '(') {
+                $expression = "($expression)";
+            }
+
+            // Otherwise the array$expression will fail
+            if(!$expression) {
+                $expression = '()';
+            }
 
             $code = <<<'EOD'
                     <?php

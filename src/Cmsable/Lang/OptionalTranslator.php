@@ -1,6 +1,6 @@
 <?php namespace Cmsable\Lang;
 
-use Symfony\Component\Translation\TranslatorInterface;
+use Illuminate\Translation\Translator;
 
 class OptionalTranslator
 {
@@ -31,7 +31,7 @@ class OptionalTranslator
         return static::$translator;
     }
 
-    public static function setTranslator(TranslatorInterface $translator)
+    public static function setTranslator(Translator $translator)
     {
         static::$translator = $translator;
     }

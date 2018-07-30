@@ -6,7 +6,7 @@ use RuntimeException;
 use Illuminate\Mail\Mailer as IlluminateMailer;
 use Illuminate\Mail\Message;
 use Illuminate\Contracts\Config\Repository as Config;
-use Cmsable\View\TextParserInterface as TextParser;
+use Ems\Contracts\Core\TextParser;
 
 /**
  * This mailer class is handy to inject into your controllers. If you have
@@ -31,7 +31,7 @@ class Mailer implements MailerInterface
     protected $config;
 
     /**
-     * @var \Cmsable\View\TextParserInterface
+     * @var TextParser
      **/
     protected $textParser;
 
@@ -62,7 +62,7 @@ class Mailer implements MailerInterface
 
     /**
      * @param \Illuminate\Mail\Mailer $laravelMailer
-     * @param \Cmsable\View\TextParserInterface $textParser
+     * @param TextParser $textParser
      * @param \Illuminate\Contracts\Config\Repository $config
      **/
     public function __construct(IlluminateMailer $laravelMailer,
@@ -72,8 +72,6 @@ class Mailer implements MailerInterface
         $this->laravelMailer = $laravelMailer;
         $this->textParser = $textParser;
         $this->config = $config;
-
-        $this->textParser->parsers();$this->textParser->parsers();$this->textParser->parsers();
 
     }
 

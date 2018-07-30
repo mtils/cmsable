@@ -1,6 +1,6 @@
 <?php namespace Cmsable\Html\Breadcrumbs;
 
-use Symfony\Component\HttpFoundation\Session\SessionInterface as Session;
+use Illuminate\Contracts\Session\Session;
 use Cmsable\Model\SiteTreeNodeInterface as Node;
 use Cmsable\Html\Breadcrumbs\NodeCreatorInterface as NodeCreator;
 
@@ -10,7 +10,7 @@ class SessionStore implements StoreInterface
     public $sessionKey = 'cmsable_breadcrumbstore';
 
     /**
-     * @var \Symfony\Component\HttpFoundation\Session\SessionInterface
+     * @var Session
      **/
     protected $session;
 
@@ -47,7 +47,7 @@ class SessionStore implements StoreInterface
         $this->purgeSessionCrumbs($crumbs);
 
         if($storable = $this->getStorableCrumbsByDepth($crumbs, $routeName)) {
-            $this->session->set($this->sessionKey, $storable);
+            $this->session->put($this->sessionKey, $storable);
         }
 
     }
@@ -87,11 +87,11 @@ class SessionStore implements StoreInterface
         $purgedArray = $this->removeIndexesFrom($storedArray, $depth);
 
         if (!$purgedArray) {
-            $this->session->remove($this->sessionKey);
+            $this->session->forget($this->sessionKey);
             return;
         }
 
-        $this->session->set($this->sessionKey, $purgedArray);
+        $this->session->put($this->sessionKey, $purgedArray);
     }
 
     protected function getDepth($crumbs)

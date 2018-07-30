@@ -3,14 +3,13 @@
 use Closure;
 
 use Illuminate\Foundation\Application;
-use Illuminate\Contracts\Routing\Middleware;
 use Illuminate\Support\Facades\Facade;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 use Cmsable\Cms\Application as CmsApplication;
 
-class CmsRequestInjector implements Middleware
+class CmsRequestInjector
 {
 
     public $requestEventName = 'cmsable::request-replaced';

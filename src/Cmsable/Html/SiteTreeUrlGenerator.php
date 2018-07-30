@@ -267,8 +267,8 @@ class SiteTreeUrlGenerator extends UrlGenerator{
         $generator->setPageTypes($this->pageTypes);
         $generator->setRouter($this->router);
 
-        if($this->forceSchema){
-            $generator->forceSchema($this->forceSchema);
+        if($this->forceScheme){
+            $generator->forceScheme($this->forceScheme);
         }
 
         return $generator;

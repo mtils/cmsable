@@ -12,6 +12,7 @@ use Cmsable\Http\CmsRequestConverter;
 use Cmsable\Http\CurrentCmsPathProviderInterface;
 use Cmsable\Support\EventSenderTrait;
 use Cmsable\Routing\CurrentScopeProviderInterface;
+use Illuminate\Routing\Events\RouteMatched;
 
 class Application implements CurrentCmsPathProviderInterface, CurrentScopeProviderInterface
 {
@@ -41,8 +42,8 @@ class Application implements CurrentCmsPathProviderInterface, CurrentScopeProvid
             $this->setCmsRequest($request);
         });
 
-        $this->eventDispatcher->listen('router.matched', function($route, $request){
-            $this->registerScopeFilters($route, $request);
+        $this->eventDispatcher->listen(RouteMatched::class, function(RouteMatched $event){
+            $this->registerScopeFilters($event->route, $event->request);
         });
 
     }
@@ -54,8 +55,8 @@ class Application implements CurrentCmsPathProviderInterface, CurrentScopeProvid
 
     protected function registerScopeFilters($route, $request){
 
-        if(count($this->scopeFilters)){
-            $route->before('cmsable.scope-filter');
+        if (count($this->scopeFilters)) {
+            $this->onRouterBefore($route, $request);
         }
 
     }

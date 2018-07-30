@@ -1,6 +1,6 @@
 <?php namespace Cmsable\ServiceProviders;
 
-use Signal\Support\Laravel\IlluminateBus;
+use function func_get_args;
 use Cmsable\Lang\OptionalTranslator;
 use Versatile\Attributes\BitMaskAttribute;
 use Versatile\Attributes\Dispatcher as AttributeDispatcher;
@@ -39,6 +39,7 @@ use Cmsable\Resource\Distributor;
 use Cmsable\Support\ReceivesContainerWhenResolved;
 use Cmsable\Http\Resource\CleanedRequest;
 use Log;
+use Illuminate\Routing\Events\RouteMatched;
 
 class CmsServiceProvider extends ServiceProvider{
 
@@ -140,11 +141,11 @@ class CmsServiceProvider extends ServiceProvider{
 
 
         $compiler->directive('toJsTree', function($expression){
-            return '<?php $f = new \BeeTree\Support\HtmlPrinter(); echo $f->toJsTree' . $expression . ' ?>';
+            return '<?php $f = new \BeeTree\Support\HtmlPrinter(); echo $f->toJsTree(' . $expression . ') ?>';
         });
 
         $compiler->directive('guessTrans', function($expression){
-            return '<?php echo \Cmsable\Lang\OptionalTranslator::guess' . $expression  . '?>';
+            return '<?php echo \Cmsable\Lang\OptionalTranslator::guess(' . $expression  . ') ?>';
         });
 
 
@@ -156,7 +157,7 @@ class CmsServiceProvider extends ServiceProvider{
 
     protected function registerContainerHook()
     {
-        $this->app->afterResolving(function(ReceivesContainerWhenResolved $resolved)
+        $this->app->afterResolving(ReceivesContainerWhenResolved::class, function($resolved)
         {
             $resolved->setContainer($this->app);
         });
@@ -175,7 +176,7 @@ class CmsServiceProvider extends ServiceProvider{
 
         $this->app->bind('Cmsable\Model\SiteTreeModelInterface', function($app) use ($pageClass){
 
-            return $app->make('Cmsable\Model\AdjacencyListSiteTreeModel',[$pageClass]);
+            return $app->make('Cmsable\Model\AdjacencyListSiteTreeModel',['pageClassName' => $pageClass]);
 
         });
 
@@ -205,10 +206,15 @@ class CmsServiceProvider extends ServiceProvider{
 
             $adminModel = $app->make(
                 'Cmsable\Model\ArraySiteTreeModel',[
-                    'Cmsable\Model\GenericPage',
-                    $adminScope->getModelRootId()
+                    'pageClassName' => 'Cmsable\Model\GenericPage',
+                    'rootId'        => $adminScope->getModelRootId()
             ]);
-            $adminModel->setEventBus(new IlluminateBus($app['events']));
+
+            $events = $app['events'];
+
+            $adminModel->onAfter('setSourceArray', function (&$sourceArray) use ($events) {
+                $events->fire('sitetree.filled', [&$sourceArray]);
+            });
 
             $adminModel->setPathPrefix($adminScope->getPathPrefix());
 
@@ -277,15 +283,17 @@ class CmsServiceProvider extends ServiceProvider{
         // The controller dispatcher has to be instantiated to listen to
         // router.matched
 
-        $dispatcher = new ControllerDispatcher($this->app['router'], $this->app);
+        $dispatcher = new ControllerDispatcher($this->app);
 
         $this->app->instance('illuminate.route.dispatcher', $dispatcher);
+
+        $this->app->instance(\Illuminate\Routing\Contracts\ControllerDispatcher::class, $dispatcher);
 
         // Caution: If the priority of this listener is lower than
         // PageTypeRouter, the controllerDispatcher wont geht useful
         // information if no page was found
-        $this->app['events']->listen('router.matched', function($route, $request) use ($dispatcher) {
-            $dispatcher->configure($route, $request);
+        $this->app['events']->listen(RouteMatched::class, function(RouteMatched $event) use ($dispatcher) {
+            $dispatcher->configure($event->route, $event->request);
         }, 10);
 
     }
@@ -373,7 +381,12 @@ class CmsServiceProvider extends ServiceProvider{
 
             });
 
-            $morpher->setEventBus(new IlluminateBus($this->app['events']));
+            /** @var \Illuminate\Contracts\Events\Dispatcher $events */
+            $events = $this->app['events'];
+
+            $morpher->onAfter('handle', function ($contentType, $response, $morpher) use ($events) {
+                return $events->until("cmsable::responding.$contentType", [$response, $morpher]);
+            });
 
         });
 
@@ -390,9 +403,9 @@ class CmsServiceProvider extends ServiceProvider{
             $this->app['events']
         );
 
-        $this->app['router']->filter('cmsable.scope-filter', function($route, $request) use ($cmsApp){
-            return $cmsApp->onRouterBefore($route, $request);
-        });
+        //$this->app['router']->filter('cmsable.scope-filter', function($route, $request) use ($cmsApp){
+        //    return $cmsApp->onRouterBefore($route, $request);
+        //});
 
        $this->app->instance('cmsable.cms', $cmsApp);
        $this->app->instance('Cmsable\Cms\Application', $cmsApp);
@@ -416,7 +429,7 @@ class CmsServiceProvider extends ServiceProvider{
 
         // Setup inverse pagetype routing
         $this->app['events']->listen(
-            'router.matched',
+            RouteMatched::Class,
             'Cmsable\Routing\PageTypeRouter@setPageType',
             20
         );
@@ -428,7 +441,7 @@ class CmsServiceProvider extends ServiceProvider{
 
         $this->app->instance('url.original', $this->app['url']);
 
-        $this->app['url'] = $this->app->share(function($app)
+        $this->app->singleton('url', function($app)
         {
 
             // The URL generator needs the route collection that exists on the router.
@@ -473,8 +486,8 @@ class CmsServiceProvider extends ServiceProvider{
             $class = 'Cmsable\Cms\Action\Registry';
 
             $registry = $app->make($class,[
-                new NamedGroupCreator,
-                new ClassResourceTypeIdentifier
+                'groupCreator' => new NamedGroupCreator,
+                'identifier'   => new ClassResourceTypeIdentifier
             ]);
 
             $registry->providerCurrentActionName(function(){
@@ -589,8 +602,6 @@ class CmsServiceProvider extends ServiceProvider{
         $this->registerMenu();
 
         $this->setAdminAuthSettings();
-
-        $this->registerTextParser();
 
         $this->registerMailer();
 
@@ -821,7 +832,7 @@ class CmsServiceProvider extends ServiceProvider{
 
         $oldFinder = $this->app['view.finder'];
 
-        $this->app->bindShared('view.finder', function($app) use ($oldFinder)
+        $this->app->singleton('view.finder', function($app) use ($oldFinder)
         {
             return FallbackFileViewFinder::fromOther($oldFinder);
 
@@ -851,9 +862,9 @@ class CmsServiceProvider extends ServiceProvider{
         $this->registerModelFinder();
         $this->registerInputCaster();
 
-        $this->app['events']->listen('router.matched', function()
+        $this->app['events']->listen(RouteMatched::class, function()
         {
-            $this->app->resolving(function(CleanedRequest $request, $app)
+            $this->app->resolving(CleanedRequest::class, function(CleanedRequest $request, $app)
             {
                 $request->setRedirector($app['Illuminate\Routing\Redirector']);
             });
@@ -904,20 +915,29 @@ class CmsServiceProvider extends ServiceProvider{
         $this->app->alias('cmsable.resource-distributor', 'Cmsable\Resource\Contracts\Distributor');
 
         $this->app->singleton('cmsable.resource-distributor', function($app){
-            return $app->make('Cmsable\Resource\Distributor');
+            return $this->listenToDistributor($app->make('Cmsable\Resource\Distributor'));
         });
+    }
+
+    protected function listenToDistributor(Distributor $distributor)
+    {
+        /** @var \Illuminate\Contracts\Events\Dispatcher $events */
+        $events = $this->app->make('events');
+
+        //$distributor->on('resource::');
+        return $distributor;
     }
 
     protected function registerResourceDistributorHook()
     {
-        $this->app->resolving(function(ReceivesDistributorWhenResolved $mapperUser, $app){
+        $this->app->resolving(ReceivesDistributorWhenResolved::class, function($mapperUser, $app){
             $mapperUser->setResourceDistributor($app->make('cmsable.resource-distributor'));
         });
     }
 
     protected function registerRequestDecoratorHook()
     {
-        $this->app->resolving(function(DecoratesRequest $decorator, $app){
+        $this->app->resolving(DecoratesRequest::class, function( $decorator, $app){
             $decorator->decorate($app['request']);
         });
     }
@@ -936,26 +956,6 @@ class CmsServiceProvider extends ServiceProvider{
             return $app->make('XType\Casting\InputCaster')->setChain(
                 ['no_leading_underscore', 'no_actions', 'no_confirmations', 'dotted', 'nested']
             );
-        });
-    }
-
-    protected function registerTextParser()
-    {
-
-        $this->app->bind('Cmsable\View\TextParserInterface', function($app){
-            $queue = $app->make('Cmsable\View\TextParserQueue');
-            $queue->setEventBus(new IlluminateBus($app['events']));
-            return $queue;
-        });
-
-        $this->registerAssignedDataParser();
-
-    }
-
-    protected function registerAssignedDataParser()
-    {
-        $this->app['events']->listen('cmsable.text-parser-load', function($queue){
-            $queue->add($this->app->make('Cmsable\View\AssignedDataParser'));
         });
     }
 

@@ -114,7 +114,7 @@ class CmsValidator extends Validator{
         $uris = array();
 
         foreach($this->router->getRoutes() as $route){
-            $uri = $route->getUri();
+            $uri = $route->uri();
             $paramPos = mb_strpos($uri,'{');
             if($paramPos !== FALSE){
                 $uri = trim(mb_substr($uri,0,$paramPos),'/');

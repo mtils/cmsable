@@ -1,9 +1,17 @@
 <?php namespace Cmsable\Resource;
 
-use Signal\Support\Laravel\IlluminateBus;
 use App;
+use Ems\Events\Bus as EmsBus;
+use function func_get_args;
 
-class Bus extends IlluminateBus
+
+/**
+ * Class Bus
+ *
+ * @package Cmsable\Resource
+ * @deprecated
+ */
+class Bus extends EmsBus
 {
 
     private static $singleInstance;
@@ -30,6 +38,29 @@ class Bus extends IlluminateBus
         return parent::fire($event, $payload, $halt);
     }
 
+    /**
+     *
+     * @param  string|array  $events
+     * @param  mixed  $listener
+     * @param  int  $priority
+     * @return void
+     */
+    public function listen($events, $listener, $priority = 0)
+    {
+        if ($priority === 0) {
+            $this->on($events, $listener);
+            return;
+        }
+
+        if ($priority > 5) {
+            $this->onBefore($events, $listener);
+            return;
+        }
+
+        $this->onAfter($events, $listener);
+
+    }
+
     protected function getResource($event)
     {
         if (strpos($event, '.') === false) {
@@ -47,6 +78,7 @@ class Bus extends IlluminateBus
 
     protected function bootResource($resource)
     {
+        // Nowhere used
         parent::fire("$resource.boot");
         $this->bootedResources[$resource] = true;
     }
@@ -54,7 +86,19 @@ class Bus extends IlluminateBus
     public static function instance()
     {
         if (!self::$singleInstance) {
-            self::$singleInstance = new static(App::make('events'));
+
+            self::$singleInstance = new static();
+
+            $illuminateEvents = App::make('events');
+
+            // Forward all events to the illuminate bus
+            self::$singleInstance->on('*', function () use ($illuminateEvents) {
+                $args = func_get_args();
+                $event = array_shift($args);
+                $illuminateEvents->fire($event, $args);
+            });
+
+            // Used in Ems\App\Providers\PackageServiceProvider
             self::$singleInstance->fire('resource::bus.started', [self::$singleInstance]);
         }
         return self::$singleInstance;

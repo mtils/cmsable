@@ -1,11 +1,13 @@
 <?php namespace Cmsable\Controller\SiteTree;
 
+use Ems\Core\Patterns\Extendable;
 use Notification;
 use Illuminate\Events\Dispatcher;
 use FormObject\Field\HiddenField;
 use FormObject\Support\Laravel\Validator\ValidationException;
 use Cmsable\Model\SiteTreeNodeInterface;
 use Cmsable\Model\SiteTreeModelInterface;
+use OutOfBoundsException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use View;
 use Input;
@@ -19,7 +21,6 @@ use Response;
 use Config;
 use Illuminate\Routing\Controller;
 use BadMethodCallException;
-use Signal\Support\Extendable;
 
 class SiteTreeController extends Controller {
 
@@ -294,7 +295,11 @@ class SiteTreeController extends Controller {
             'window.cmsMessages'  => Lang::get('cmsable::messages')
         ];
 
-        $this->callExtend('jsConfig', [&$config]);
+        try {
+            $this->callExtension('jsConfig', [&$config]);
+        } catch (OutOfBoundsException $e) {
+            // ignore
+        }
 
         $content = $this->formatJsConfig($config);
 

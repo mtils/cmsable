@@ -1,6 +1,5 @@
 <?php namespace Cmsable\Resource;
 
-use Signal\Support\FindsClasses;
 use Cmsable\Resource\Contracts\FormClassFinder as ClassFinderContract;
 use Cmsable\Support\FindsResourceClasses;
 

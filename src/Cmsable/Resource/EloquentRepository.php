@@ -1,9 +1,7 @@
 <?php namespace Cmsable\Resource;
 
 use Cmsable\Resource\Contracts\Repository;
-use Signal\NamedEvent\BusHolderTrait;
 use Illuminate\Database\Eloquent\Model;
-use FormObject\Form;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 abstract class EloquentRepository implements Repository

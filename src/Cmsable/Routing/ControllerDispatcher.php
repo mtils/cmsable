@@ -15,6 +15,38 @@ class ControllerDispatcher extends IlluminateDispatcher
 
     protected $page;
 
+    /**
+     * Dispatch a request to a given controller and method.
+     *
+     * @param  \Illuminate\Routing\Route  $route
+     * @param  mixed  $controller
+     * @param  string  $method
+     * @return mixed
+     */
+    public function dispatch(Route $route, $controller, $method)
+    {
+
+        // This is not very nice but with the current structure we have to throw
+        // the previously created controller away.
+        // For further implementations more cleanup has to be done
+        $instance = $this->makeController(is_object($controller) ? get_class($controller) : $controller);
+
+        $parameters = $this->resolveClassMethodDependencies(
+            $route->parametersWithoutNulls(), $instance, $method
+        );
+
+        if ($this->creator && method_exists($this->creator, 'modifyMethodParameters')) {
+            $this->creator->modifyMethodParameters($instance, $method, $parameters);
+        }
+
+        if (method_exists($instance, 'callAction')) {
+            return $instance->callAction($method, $parameters);
+        }
+
+        return $instance->{$method}(...array_values($parameters));
+
+    }
+
     public function configure(Route $route, CmsRequestInterface $request)
     {
 
@@ -51,10 +83,9 @@ class ControllerDispatcher extends IlluminateDispatcher
     {
 
         if (!$this->creator) {
-            return parent::makeController($controller);
+            return $this->container->make($controller);
         }
 
-        Controller::setRouter($this->router);
         return $this->creator->createController($controller, $this->getPage());
 
     }

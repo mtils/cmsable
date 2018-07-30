@@ -3,6 +3,7 @@
 use Cmsable\Http\CmsRequestInterface;
 use Illuminate\Routing\Route;
 use Cmsable\PageType\RepositoryInterface;
+use Illuminate\Routing\Events\RouteMatched;
 
 class PageTypeRouter
 {
@@ -17,8 +18,10 @@ class PageTypeRouter
         $this->pageTypes = $pageTypes;
     }
 
-    public function setPageType(Route $route, CmsRequestInterface $request)
+    public function setPageType(RouteMatched $event)
     {
+        $route = $event->route;
+        $request = $event->request;
 
         if (!$cmsPath = $request->getCmsPath()) {
             return;

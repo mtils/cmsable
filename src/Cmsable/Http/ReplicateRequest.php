@@ -15,12 +15,15 @@ trait ReplicateRequest
         $files = is_array($files) ? array_filter($files) : $files;
 
         $this->initialize(
-            $current->query->all(), $current->request->all(), $current->attributes->all(),
-            $current->cookies->all(), $files, $current->server->all(), $current->getContent()
+            $current->query->all(), $current->request->all(),
+            $current->attributes->all(),
+            $current->cookies->all(), $files, $current->server->all(),
+            $current->getContent()
         );
 
-        if ($session = $current->getSession())
-            $this->setSession($session);
+        if ($session = $current->getSession()) {
+            $this->setLaravelSession($session);
+        }
 
         $this->setUserResolver($current->getUserResolver());
 

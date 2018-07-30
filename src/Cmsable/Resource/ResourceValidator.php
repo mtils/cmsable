@@ -67,7 +67,7 @@ abstract class ResourceValidator implements Validator, ReceivesContainerWhenReso
             return true;
         }
 
-        throw new ValidationException($validator);
+        throw new \Illuminate\Validation\ValidationException($validator);
 
     }
 

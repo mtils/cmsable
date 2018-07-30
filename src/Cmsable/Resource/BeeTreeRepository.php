@@ -1,14 +1,12 @@
 <?php namespace Cmsable\Resource;
 
 use Cmsable\Resource\Contracts\TreeRepository;
-use Signal\NamedEvent\BusHolderTrait;
+use Ems\Core\Patterns\HookableTrait;
 use Illuminate\Database\Eloquent\Model;
-use FormObject\Form;
 
 abstract class BeeTreeRepository implements TreeRepository
 {
-
-    use ResourceBus;
+    use HookableTrait;
 
     protected $model;
 
@@ -30,13 +28,13 @@ abstract class BeeTreeRepository implements TreeRepository
     {
 
         $query = $this->getModel()->newQuery();
-        $this->fire($this->event('find'), [$query]);
+        $this->callBeforeListeners('find', [$query]);
 
         if (!$model = $query->find($id)) {
             return;
         }
 
-        $this->fire($this->event('found'), [$model]);
+        $this->callAfterListeners('find', [$model]);
         return $model;
     }
 
@@ -49,7 +47,7 @@ abstract class BeeTreeRepository implements TreeRepository
     public function make(array $attributes=[])
     {
         $model = $this->model()->make($attributes);
-        $this->fire($this->event('make'), [$model]);
+        $this->callAfterListeners('make', [$model]);
         return $model;
     }
 
@@ -63,7 +61,7 @@ abstract class BeeTreeRepository implements TreeRepository
     public function makeChild(array $attributes=[], $parent)
     {
         $child = $this->model()->makeChild($attributes, $parent);
-        $this->fire($this->event('make'), [$child]);
+        $this->callAfterListeners('make', [$child]);
         return $child;
     }
 
@@ -80,11 +78,11 @@ abstract class BeeTreeRepository implements TreeRepository
 
         $filtered = $this->toModelAttributes($this->make([]), $attributes);
 
-        $this->fire($this->event('storing'), [$attributes]);
+        $this->callBeforeListeners('store', [&$attributes]);
 
         $model = $this->model()->createRoot($filtered);
 
-        $this->fire($this->event('stored'), [$model]);
+        $this->callAfterListeners('store', [$model]);
 
         return $model;
 
@@ -105,11 +103,11 @@ abstract class BeeTreeRepository implements TreeRepository
 
         $this->fillModel($model, $newAttributes);
 
-        $this->fire($this->event('updating'), [$model]);
+        $this->callBeforeListeners('update', [$model]);
 
         $this->model()->savePayload($model);
 
-        $this->fire($this->event('updated'), [$model]);
+        $this->callAfterListeners('update', [$model]);
 
         return $model;
     }
@@ -122,9 +120,9 @@ abstract class BeeTreeRepository implements TreeRepository
      **/
     public function delete($model)
     {
-        $this->fire($this->event('destroying'), [$model]);
+        $this->callBeforeListeners('destroy', [$model]);
         $this->model()->remove($model);
-        $this->fire($this->event('destroyed'), [$model]);
+        $this->callAfterListeners('destroy', [$model]);
         return $model;
     }
 
@@ -143,7 +141,7 @@ abstract class BeeTreeRepository implements TreeRepository
 
         $filtered = $this->toModelAttributes($this->make([]), $attributes);
 
-        $this->fire($this->event('storing'), [$attributes, $parentModel]);
+        $this->callBeforeListeners('store', [&$attributes, $parentModel]);
 
         if (!$position) {
             $model = $this->model()->createChildOf($filtered, $parentModel);
@@ -151,7 +149,7 @@ abstract class BeeTreeRepository implements TreeRepository
             $model = $this->model()->createAt($filtered, $parentModel, $position);
         }
 
-        $this->fire($this->event('stored'), [$model]);
+        $this->callAfterListeners('store', [$model]);
 
         return $model;
     }
@@ -167,7 +165,7 @@ abstract class BeeTreeRepository implements TreeRepository
     public function moveToParent($movedNode, $newParent, $position=null)
     {
 
-        $this->fire($this->event('moving'), [$movedNode, $newParent, $position]);
+        $this->callBeforeListeners('move', [$movedNode, $newParent, $position]);
 
         $this->model()->placeAt($movedNode, $newParent, $position);
 
@@ -177,7 +175,7 @@ abstract class BeeTreeRepository implements TreeRepository
             $this->model()->placeAt($movedNode, $newParent, $position);
         }
 
-        $this->fire($this->event('moved'), [$movedNode, $newParent, $position]);
+        $this->callAfterListeners('move', [$movedNode, $newParent, $position]);
 
         return $this;
     }
@@ -215,11 +213,6 @@ abstract class BeeTreeRepository implements TreeRepository
     {
         $filtered = $this->toModelAttributes($model, $attributes);
         $model->fill($filtered);
-    }
-
-    protected function event($name)
-    {
-        return $this->eventName($this->resourceName() . ".$name");
     }
 
     protected final function model()

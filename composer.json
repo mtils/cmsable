@@ -14,8 +14,8 @@
   "require": {
     "php": ">=5.4.0",
     "laravel/framework": "5.0.*|5.1.*|5.2.*|5.3.*|5.4.*|5.5.*",
+    "ems/framework": "0.3.*",
     "ems/collection": "0.2.*",
-    "ems/signal": "0.2.*",
     "ems/xtype": "0.2.*",
     "ems/beetree":"0.2.*",
     "ems/formobject": "0.3.*",

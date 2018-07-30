@@ -1,19 +1,19 @@
 <?php namespace Cmsable\Resource;
 
-use RuntimeException;
-use Illuminate\Contracts\Container\Container;
-use FormObject\Form;
-use Cmsable\Resource\Contracts\Detector;
 use Cmsable\Resource\Contracts\ClassFinder;
-use Cmsable\Resource\Contracts\Mapper as MapperContract;
-use Cmsable\Resource\Contracts\ResourceForm;
+use Cmsable\Resource\Contracts\Detector;
 use Cmsable\Resource\Contracts\Distributor as DistributorContract;
-use Cmsable\Resource\GenericResourceValidator;
+use Cmsable\Resource\Contracts\Mapper as MapperContract;
+use Ems\Core\Patterns\SubscribableTrait;
+use FormObject\Form;
+use Illuminate\Contracts\Container\Container;
+use RuntimeException;
 
 class Distributor implements DistributorContract
 {
-
-    use ResourceBus;
+    
+    //use ResourceBus;
+    use SubscribableTrait;
 
     protected $bus;
 
@@ -360,7 +360,8 @@ class Distributor implements DistributorContract
     protected function publish($resource, $event, array $params=[])
     {
         $eventName = $this->eventName("$resource.$event");
-        $this->fire($eventName, $params);
+
+        $this->callOnListeners($eventName, $params);
     }
 
     protected function formRules(Form $form)
@@ -373,6 +374,11 @@ class Distributor implements DistributorContract
             return $form->validationRules();
         }
 
+    }
+
+    protected function eventName($name)
+    {
+        return "resource::$name";
     }
 
 }

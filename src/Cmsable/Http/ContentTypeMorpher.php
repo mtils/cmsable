@@ -4,10 +4,8 @@
 namespace Cmsable\Http;
 
 
-use Illuminate\Contracts\Routing\Middleware;
 use Closure;
-use ArrayAccess;
-use Signal\NamedEvent\BusHolderTrait;
+use Ems\Core\Patterns\HookableTrait;
 
 /**
  * The ContentTypeMorpher allows to render different content types like pdfs,
@@ -34,14 +32,12 @@ use Signal\NamedEvent\BusHolderTrait;
  * }
  *
  **/
-class ContentTypeMorpher implements Middleware
+class ContentTypeMorpher
 {
 
-    use BusHolderTrait;
+    use HookableTrait;
 
     public $defaultContentType = 'text/html';
-
-    public $eventNamespace = 'cmsable';
 
     /**
      * @var callable
@@ -119,17 +115,6 @@ class ContentTypeMorpher implements Middleware
     }
 
     /**
-     * Builds the event name
-     *
-     * @param string $contentType
-     * @return string
-     **/
-    protected function eventName($contentType)
-    {
-        return $this->eventNamespace . "::responding.$contentType";
-    }
-
-    /**
      * Fires the event and returns the result if there were some
      *
      * @param string $contentType
@@ -138,8 +123,19 @@ class ContentTypeMorpher implements Middleware
      **/
     protected function getFromListeners($contentType, $response)
     {
-        $eventName = $this->eventName($contentType);
-        return $this->fire($eventName, [$response, $this], true);
+
+        foreach (['before', 'after'] as $position) {
+            foreach ($this->getAfterOrBeforeListeners('handle',
+                $position) as $listener) {
+                if($result = $listener($contentType, $response, $this)) {
+                    return $result;
+                }
+
+
+            }
+        }
+
+        return null;
     }
 
 }

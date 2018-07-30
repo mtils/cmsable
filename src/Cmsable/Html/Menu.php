@@ -161,17 +161,28 @@ class Menu {
         return array();
     }
 
-    public function isCurrent($page){
-        return $this->current()->id == $page->id;
+    public function isCurrent($page)
+    {
+        return $this->isSamePage($this->current(), $page);
     }
 
-    public function isSection($page){
+    public function isSection($page)
+    {
         foreach($this->crumbFactory->get() as $crumb){
-            if($crumb->id == $page->id){
-                return TRUE;
+            if($this->isSamePage($crumb, $page)){
+                return true;
             }
         }
-        return FALSE;
+        return false;
+    }
+
+    protected function isSamePage($pageA, $pageB)
+    {
+        // If both have no value it should not count as the same
+        if (!$pageA->id || !$pageB->id) {
+            return false;
+        }
+        return $pageA->id == $pageB->id;
     }
 
 }

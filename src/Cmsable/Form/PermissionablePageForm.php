@@ -27,7 +27,7 @@ class PermissionablePageForm extends BasePageForm{
         $securityFields = new FieldList('security',trans('cmsable::forms.page-form.security'));
         $securityFields->setSwitchable(TRUE);
 
-        $permFinder = App::make(__NAMESPACE__.'\PermissionFinder', array($this));
+        $permFinder = App::make(PermissionFinder::class, ['form' => $this]);
 
         $viewPermissions = $permFinder->buildFormValues($permFinder->getViewPermissions());
 

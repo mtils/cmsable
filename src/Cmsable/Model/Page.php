@@ -70,8 +70,8 @@ class Page extends BeeTreeNode implements SiteTreeNodeInterface
     public function getContentAttribute(){
         if(!isset($this->attributes['content']) && $this->exists){
             $this->attributes['content'] = static::where(
-                $this->getKeyName(),$this->__get($this->getKeyName())
-                )->pluck('content');
+                $this->getKeyName(), $this->getKey()
+                )->pluck('content')->first();
         }
         return parent::getAttributeFromArray('content');
     }

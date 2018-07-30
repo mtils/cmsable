@@ -1,13 +1,13 @@
 <?php namespace Cmsable\Model;
 
-use Signal\NamedEvent\BusHolderTrait;
-use BeeTree\Eloquent\OrderedAdjacencyListModel;
 use BadMethodCallException;
 use Cmsable\Html\Breadcrumbs\NodeCreatorInterface;
+use Ems\Core\Patterns\HookableTrait;
 
-class ArraySiteTreeModel implements SiteTreeModelInterface, NodeCreatorInterface{
+class ArraySiteTreeModel implements SiteTreeModelInterface, NodeCreatorInterface
+{
 
-    use BusHolderTrait;
+    use HookableTrait;
 
     protected $_pathPrefix = '';
 
@@ -57,9 +57,16 @@ class ArraySiteTreeModel implements SiteTreeModelInterface, NodeCreatorInterface
 
     public function setSourceArray(array $array)
     {
+        foreach ($this->getListeners('setSourceArray', 'before') as $listener) {
+            $listener($this->sourceArray);
+        }
 
         $this->sourceArray = $array;
-        $this->fire('sitetree.filled',[&$this->sourceArray]);
+
+        foreach ($this->getListeners('setSourceArray', 'after') as $listener) {
+            $listener($this->sourceArray);
+        }
+
         return $this;
     }
 

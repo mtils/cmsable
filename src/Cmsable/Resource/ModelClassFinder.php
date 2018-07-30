@@ -1,7 +1,8 @@
 <?php namespace Cmsable\Resource;
 
 use Cmsable\Resource\Contracts\ModelClassFinder as ClassFinderContract;
-use Signal\Support\FindsClasses;
+
+use Cmsable\Support\FindsClasses;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
 class ModelClassFinder implements ClassFinderContract
