@@ -1,6 +1,7 @@
 <?php namespace Cmsable\Model;
 
 use Eloquent;
+use function substr;
 use Versatile\Attributes\UsesVirtualAttributes;
 use Cmsable\Html\FilteredChildIterator;
 use BeeTree\Eloquent\BeeTreeNode;
@@ -114,9 +115,37 @@ class Page extends BeeTreeNode implements SiteTreeNodeInterface
      * @see self::getRedirectType()
      ** @return string
      **/
-    public function getRedirectTarget(){
-        return $this->redirect_target;
+    public function getRedirectTarget()
+    {
+        $target = $this->redirect_target;
+
+        $pos = mb_strpos($target, '#');
+
+        if ($pos === false) {
+            return $target;
+        }
+
+        return mb_substr($target, 0, $pos);
+
     }
+
+    /**
+     * @return mixed
+     */
+    public function getRedirectAnchor()
+    {
+        if ($this->redirect_target == self::NONE) {
+            return '';
+        }
+
+        $pos = mb_strpos($this->redirect_target, '#');
+
+        if ($pos === false) {
+            return '';
+        }
+        return mb_substr($this->redirect_target, $pos);
+    }
+
 
     public function getMenuTitle(){
         return $this->menu_title;

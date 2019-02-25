@@ -20,7 +20,6 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
 
         $this->setRootId($rootId);
         $this->setNodeClassName($pageClassName);
-
     }
 
     public function getRootId(){

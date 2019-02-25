@@ -73,6 +73,13 @@ interface SiteTreeNodeInterface extends NodeInterface{
      **/
     public function getRedirectTarget();
 
+    /**
+     * Return an anchor of that redirect if someone added an anchor.
+     *
+     * @return string
+     */
+    public function getRedirectAnchor();
+
     public function getMenuTitle();
 
     public function setMenuTitle($menuTitle);

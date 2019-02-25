@@ -31,6 +31,7 @@ class RedirectorPlugin extends Plugin{
             Lang::get('cmsable::models.page.fields.redirect_type')
         )->setSrc($linkTypes);
 
+
         $selectGroup->push($this->getSiteTreeSelect($page));
 
         $selectGroup->push(
@@ -41,6 +42,8 @@ class RedirectorPlugin extends Plugin{
         );
 
         $fields('main')->push($selectGroup);
+
+        $fields('main')->push(TextField::create('redirect__redirect_target_a', 'Anker'));
 
     }
 
@@ -55,9 +58,15 @@ class RedirectorPlugin extends Plugin{
                 $form('redirect__redirect_target_e')->setValue($model->redirect_target);
                 break;
         }
+
+        if ($anchor = $model->getRedirectAnchor()) {
+            $form('redirect__redirect_target_a')->setValue(ltrim($anchor, ' #'));
+        }
+
     }
 
-    public function prepareSave(Form $form, SiteTreeNodeInterface $model){
+    public function prepareSave(Form $form, SiteTreeNodeInterface $model)
+    {
         switch($form['redirect_type']){
             case 'internal':
                 $model->redirect_target = $form['redirect__redirect_target_i'];
@@ -66,6 +75,11 @@ class RedirectorPlugin extends Plugin{
                 $model->redirect_target = $form['redirect__redirect_target_e'];
                 break;
         }
+
+        if ($anchor = $form['redirect__redirect_target_a']) {
+            $model->redirect_target = $model->redirect_target . '#' . ltrim($anchor, ' #');
+        }
+
     }
 
     public function modifyFormValidator(ValidatorInterface $validator, SiteTreeNodeInterface $page){

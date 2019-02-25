@@ -102,6 +102,15 @@ class GenericPage implements SiteTreeNodeInterface
     }
 
     /**
+     * @return mixed
+     */
+    public function getRedirectAnchor()
+    {
+        $this->__get('redirect_anchor');
+    }
+
+
+    /**
     * @brief Returns if node is a root node
     * 
     * @return void
