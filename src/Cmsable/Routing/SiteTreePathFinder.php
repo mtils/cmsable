@@ -49,10 +49,11 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
         $page = ($pageOrId instanceof SiteTreeNodeInterface) ? $pageOrId : $this->siteTreeModel->pageById($pageOrId);
 
-        if($page->getRedirectType() != SiteTreeNodeInterface::NONE){
+        $redirectType = $page->getRedirectType();
+
+        if($redirectType && $redirectType != SiteTreeNodeInterface::NONE){
             return $this->recalculatePagePath($page);
         }
-
 
         if($path = $page->getPath()){
             return $this->cleanHomePath($page->getPath());
@@ -307,12 +308,12 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
                     if($targetPage->getRedirectType() == SiteTreeNodeInterface::NONE){
                         return $this->cleanHomePath($targetPage->getPath());
                     }
-                    return '_error_';
+                    return '_error_1';
                 }
                 elseif($targetPage = $this->siteTreeModel->newNode()->find((int)$target)){
 
                     if(!$treeModel = $this->modelForPage($targetPage)){
-                        return '_error_';
+                        return '_error_2';
                     }
 
                     if(!$assignedPage = $treeModel->pageById((int)$target)){
@@ -328,14 +329,14 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
                         return $child->getPath();
                     }
 
-                    return '_error_';
+                    return '_error_3';
 
                 }
 
             }
         }
 
-        return '_error_';
+        return '_error_4';
 
     }
 
