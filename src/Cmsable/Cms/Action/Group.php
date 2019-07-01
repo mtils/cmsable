@@ -58,9 +58,9 @@ class Group implements Countable, IteratorAggregate, ArrayAccess{
             throw new OutOfRangeException("Index $index not found");
         }
 
-        for($i=0; $i<$count; $i++){
+        for ($i=0; $i<$count; $i++) {
             if($i == $index){
-                $newArray[$index] = $value;
+                $newArray[$index] = $action;
                 $newArray[$i+1] = $this->actions[$i];
                 $pastInsertPosition = TRUE;
             }

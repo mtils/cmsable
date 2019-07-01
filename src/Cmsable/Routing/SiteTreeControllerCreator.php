@@ -1,12 +1,10 @@
 <?php namespace Cmsable\Routing;
 
-use App;
-
-use Cmsable\Model\SiteTreeNodeInterface;
-use Cmsable\Controller\SiteTree\SiteTreeController;
-use Cmsable\Model\AdjacencyListSiteTreeModel;
 use Cmsable\Controller\SiteTree\Plugin\Dispatcher;
+use Cmsable\Controller\SiteTree\SiteTreeController;
+use Cmsable\Model\SiteTreeNodeInterface;
 use Cmsable\Routing\TreeScope\TreeScope;
+use Illuminate\Container\Container;
 
 class SiteTreeControllerCreator implements ControllerCreatorInterface{
 
@@ -24,7 +22,14 @@ class SiteTreeControllerCreator implements ControllerCreatorInterface{
      **/
     public function createController($name, SiteTreeNodeInterface $page=NULL){
 
-        $controller = App::make($name, [App::make('Cmsable\Form\PermissionablePageForm'),$this->getTreeModel(), App::make('events')]);
+        $app = Container::getInstance();
+
+        /** @var SiteTreeController $controller */
+        $controller = $app->make($name, [
+            'form' => $app->make('Cmsable\Form\PermissionablePageForm'),
+            'model' => $this->getTreeModel(),
+            'events' => $app->make('events')
+        ]);
 
         $controller->setRouteScope($this->isAdminPageType() ? 'admin' : 'default');
 
@@ -36,7 +41,7 @@ class SiteTreeControllerCreator implements ControllerCreatorInterface{
 
     protected function bootPluginDispatcher(){
 
-        $app = App::getFacadeRoot();
+        $app = Container::getInstance();
 
         return new Dispatcher($app['Cmsable\PageType\RepositoryInterface'],
                               $app['events'],
@@ -71,7 +76,7 @@ class SiteTreeControllerCreator implements ControllerCreatorInterface{
     protected function pageTypes(){
 
         if(!$this->pageTypes){
-            $this->pageTypes = App::make('cmsable.pageTypes');
+            $this->pageTypes = Container::getInstance()->make('cmsable.pageTypes');
         }
 
         return $this->pageTypes;
@@ -92,11 +97,11 @@ class SiteTreeControllerCreator implements ControllerCreatorInterface{
     }
 
     protected function getTreeModelManager(){
-        return App::make('Cmsable\Model\TreeModelManagerInterface');
+        return Container::getInstance()->make('Cmsable\Model\TreeModelManagerInterface');
     }
 
     protected function getScopeRepository(){
-        return App::make('Cmsable\Routing\TreeScope\RepositoryInterface');
+        return Container::getInstance()->make('Cmsable\Routing\TreeScope\RepositoryInterface');
     }
 
 }

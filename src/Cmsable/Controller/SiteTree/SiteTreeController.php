@@ -1,26 +1,25 @@
 <?php namespace Cmsable\Controller\SiteTree;
 
-use Ems\Core\Patterns\Extendable;
-use Notification;
-use Illuminate\Events\Dispatcher;
-use FormObject\Field\HiddenField;
-use FormObject\Support\Laravel\Validator\ValidationException;
-use Cmsable\Model\SiteTreeNodeInterface;
-use Cmsable\Model\SiteTreeModelInterface;
-use OutOfBoundsException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use View;
-use Input;
-use URL;
-use Redirect;
-use RuntimeException;
+use BadMethodCallException;
 use CMS;
 use Cmsable\Form\PermissionablePageForm as PageForm;
-use Lang;
-use Response;
+use Cmsable\Model\SiteTreeModelInterface;
+use Cmsable\Model\SiteTreeNodeInterface;
 use Config;
+use Ems\Core\Patterns\Extendable;
+use FormObject\Support\Laravel\Validator\ValidationException;
+use Illuminate\Events\Dispatcher;
 use Illuminate\Routing\Controller;
-use BadMethodCallException;
+use Input;
+use Lang;
+use Notification;
+use OutOfBoundsException;
+use Redirect;
+use Response;
+use RuntimeException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use URL;
+use View;
 
 class SiteTreeController extends Controller {
 
@@ -62,8 +61,10 @@ class SiteTreeController extends Controller {
 
         $viewData = array(
             'editedId' => 0,
-            'form' => ''
+            'form' => '',
+            'editedTree' => $this->getModel()
         );
+
 
         return View::make($this->getMainTemplate(), $viewData);
     }
@@ -110,7 +111,8 @@ class SiteTreeController extends Controller {
             'editedPage' => $page,
             'editedId' => 'new',
             'form' => $this->form,
-            'message' => ''
+            'message' => '',
+            'editedTree' => $this->getModel()
         );
         return View::make($this->getMainTemplate(), $viewData);
     }
@@ -177,7 +179,8 @@ class SiteTreeController extends Controller {
             'editedPage' => $page,
             'editedId' => $pageId,
             'form' => $this->form,
-            'message' => ''
+            'message' => '',
+            'editedTree' => $this->getModel()
         );
 
         return View::make($this->getMainTemplate(), $viewData);
@@ -359,7 +362,7 @@ class SiteTreeController extends Controller {
 
     /**
     * @brief Gibt den Lader für SiteTree zurück
-    * 
+    *
     * @return Cmsable\Model\SiteTreeModelInterface
     */
     protected function getModel(){
