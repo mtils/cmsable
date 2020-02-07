@@ -13,6 +13,7 @@ use Illuminate\Routing\UrlGenerator;
 use Log;
 use App;
 
+
 class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
     protected $currentPathProvider;
@@ -33,10 +34,12 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
     protected $pageTypeToUriCache = [];
 
+    protected $parameterUriCache = [];
+
     public function __construct(SiteTreeModelInterface $siteTreeModel,
-                                CurrentCmsPathProviderInterface $provider,
-                                Router $router,
-                                UrlGenerator $urlGenerator){
+        CurrentCmsPathProviderInterface $provider,
+        Router $router,
+        UrlGenerator $urlGenerator){
 
         $this->currentPathProvider = $provider;
         $this->siteTreeModel = $siteTreeModel;
@@ -64,7 +67,7 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
     }
 
     public function toRoutePath($path, array $params=[], $searchMethod=self::NEAREST){
-    
+
     }
 
     public function toRouteName($name, array $params=[], $searchMethod=self::NEAREST){
@@ -114,14 +117,16 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
         $scope = $this->scopeRepository()->get($this->routeScope);
 
         if ($pageType = $this->pageTypeOfUri($targetUri)) {
-
             if($pageTypeUri = $this->toPageType($pageType)) {
                 return $pageTypeUri;
             }
         }
 
-        return ltrim($scope->getPathPrefix() . '/' . trim($target, '/'),'/');
+        if ($pagePath = $this->findForParameterRoute($targetUri, $target)) {
+            return $pagePath;
+        }
 
+        return ltrim($scope->getPathPrefix() . '/' . trim($target, '/'),'/');
 
     }
 
@@ -210,7 +215,7 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
     }
 
     public function toCmsAction(Action $action, array $params=[], $searchMethod= self::NEAREST){
-    
+
     }
 
     protected function findParentControllerPath($route, $cmsPath){
@@ -481,11 +486,16 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
     protected function pageTypeOfUri($uri)
     {
-        if (!isset($this->pageTypeToUriCache[$uri])) {
-            $this->pageTypeToUriCache[$uri] = $this->findPageTypeOfUri($uri);
+        if (isset($this->pageTypeToUriCache[$uri])) {
+            return $this->pageTypeToUriCache[$uri];
         }
 
-        return $this->pageTypeToUriCache[$uri];
+        if ($pageTypeId = $this->findPageTypeOfUri($uri)) {
+            $this->pageTypeToUriCache[$uri] = $pageTypeId;
+            return $pageTypeId;
+        }
+
+        return '';
 
     }
 
@@ -507,4 +517,74 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
         return $this->pageTypes;
     }
 
+    /**
+     * If we have a to call to /controller-endpoint/{id} we would search for
+     * a page with controller-endpoint as path.
+     *
+     * @param $uri
+     * @param $target
+     * @return string|string[]|null
+     */
+    protected function findForParameterRoute($uri, $target)
+    {
+        if (isset($this->parameterUriCache[$uri])) {
+            $prefix = $this->parameterUriCache[$uri]['parameterLess'];
+            $pagePath = $this->parameterUriCache[$uri]['pagePath'];
+            return $prefix ? $this->replacePathHead($prefix, $pagePath, $target) : '';
+        }
+
+        $this->parameterUriCache[$uri] = [
+            'parameterLess' => '',
+            'pagePath'      => ''
+        ];
+
+        // If the route has no parameters we cannot continue
+        if (!$parameterLess = $this->uriUntilParametersIfFound($uri)) {
+            return '';
+        }
+
+        // If no page type was found with the parameterless start we give up
+        if (!$pageType = $this->pageTypeOfUri($parameterLess)) {
+            return '';
+        }
+
+        // If no page with PageType was found we also give up
+        if(!$pagePath = $this->toPageType($pageType)) {
+            return '';
+        }
+
+        $this->parameterUriCache[$uri] = [
+            'parameterLess' => $parameterLess,
+            'pagePath'      => $pagePath
+        ];
+
+        return $this->replacePathHead($parameterLess, $pagePath, $target);
+    }
+
+    /**
+     * Return the uri until the first parameter was found. If no parameters were
+     * found it returns an empty string.
+     *
+     * @param string $uri
+     *
+     * @return string
+     */
+    protected function uriUntilParametersIfFound($uri)
+    {
+        $segmentsBeforeParameters = [];
+        $uriSegments = explode('/', $uri);
+        $parametersFound = '';
+
+        foreach ($uriSegments as $segment) {
+            $part = trim($segment);
+
+            if (substr($segment, 0, 1) === '{' && substr($part, -1) === '}') {
+                $parametersFound = true;
+                break;
+            }
+            $segmentsBeforeParameters[] = $part;
+        }
+
+        return $parametersFound ? implode('/', $segmentsBeforeParameters) : '';
+    }
 }
