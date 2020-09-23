@@ -8,6 +8,8 @@ class ManualRepository implements RepositoryInterface{
 
     public $loadEventName = 'cmsable.pageTypeLoadRequested';
 
+    public $filledEventName = 'cmsable.pageTypeFillCompleted';
+
     protected $pageTypes = [];
 
     protected $pageTypesByRouteName = [];
@@ -112,6 +114,10 @@ class ManualRepository implements RepositoryInterface{
             $this->add($pageType);
         }
 
+        if ($this->eventDispatcher) {
+            $this->eventDispatcher->fire($this->filledEventName, $this);
+        }
+
     }
 
     public function createFromArray(array $pageTypeData){
@@ -138,7 +144,7 @@ class ManualRepository implements RepositoryInterface{
 
         foreach(['singularName','pluralName','description','category',
                  'formPluginClass','routeScope','targetPath',
-                 'controllerCreatorClass'] as $key){
+                 'controllerCreatorClass','routeNames'] as $key){
 
             if(isset($pageTypeData[$key])){
                 $method = 'set'.ucfirst($key);
