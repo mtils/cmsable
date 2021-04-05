@@ -285,7 +285,8 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
     protected function recalculatePagePath(SiteTreeNodeInterface $page){
 
         if($page->getRedirectType() == SiteTreeNodeInterface::NONE){
-            return $this->siteTreeModel->pageById($page->id)->getPath();
+            $target = $this->siteTreeModel->pageById($page->id);
+            return $target ? $target->getPath() : $page->getPath();
         }
 
         $path = $this->calculateRedirectPath($page);
