@@ -5,6 +5,7 @@ use Cmsable\Controller\SiteTree\SiteTreeController;
 use Cmsable\Model\SiteTreeNodeInterface;
 use Cmsable\Routing\TreeScope\TreeScope;
 use Illuminate\Container\Container;
+use Illuminate\Routing\Controller;
 
 class SiteTreeControllerCreator implements ControllerCreatorInterface{
 
@@ -17,8 +18,8 @@ class SiteTreeControllerCreator implements ControllerCreatorInterface{
      *        a layout
      *
      * @param string $controllerName The classname of the routed controller
-     * @param \Cmsable\Model\SiteTreeNodeInterface $page (optional) Null if no match
-     * @return \Illuminate\Routing\Controller
+     * @param SiteTreeNodeInterface $page (optional) Null if no match
+     * @return Controller
      **/
     public function createController($name, SiteTreeNodeInterface $page=NULL){
 

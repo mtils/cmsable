@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\SQLiteConnection;
@@ -31,7 +31,8 @@ class BaseTest extends TestCase {
 
     private static $seeded = FALSE;
 
-    public static function setUpBeforeClass(){
+    public static function setUpBeforeClass(): void
+    {
 
         if(static::$requiresDatabase){
             self::$connection = static::createConnection('tests');
@@ -55,7 +56,8 @@ class BaseTest extends TestCase {
         return $connection;
     }
 
-    public function setUp(){
+    public function setUp(): void
+    {
 
         parent::setUp();
 
@@ -123,7 +125,8 @@ class BaseTest extends TestCase {
         return new TestModel;
     }
 
-    public function tearDown(){
+    public function tearDown(): void
+    {
         Mockery::close();
     }
 

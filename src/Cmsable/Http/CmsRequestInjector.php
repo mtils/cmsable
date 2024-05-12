@@ -24,6 +24,8 @@ class CmsRequestInjector
 
     protected $cmsPathCreator;
 
+    protected $requestConverter;
+
     public function __construct(Application $app,
                                 CmsRequestConverter $requestConverter,
                                 CmsPathCreatorInterface $pathCreator)

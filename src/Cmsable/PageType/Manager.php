@@ -23,6 +23,8 @@ class Manager implements CurrentPageTypeProviderInterface{
 
     protected $currentConfig = false;
 
+    protected $pathProvider;
+
     public function __construct(RepositoryInterface $repo,
                                 ConfigRepositoryInterface $configRepo,
                                 CurrentCmsPathProviderInterface $pathProvider,
@@ -53,7 +55,7 @@ class Manager implements CurrentPageTypeProviderInterface{
         $this->currentPageType = null;
 
         if(!$path = $this->pathProvider->getCurrentCmsPath()){
-            return;
+            return null;
         }
 
         $this->currentPageType = $path->getPageType();
@@ -66,7 +68,7 @@ class Manager implements CurrentPageTypeProviderInterface{
      * Returns the pagetype config of PageType $pageType
      * If no page is passed, the config of current page is returned
      *
-     * @return \Cmsable\PageType\ConfigInterface
+     * @return ConfigInterface
      **/
     public function currentConfig(){
 

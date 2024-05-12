@@ -13,6 +13,7 @@ use Cmsable\Http\CurrentCmsPathProviderInterface;
 use Cmsable\Support\EventSenderTrait;
 use Cmsable\Routing\CurrentScopeProviderInterface;
 use Illuminate\Routing\Events\RouteMatched;
+use Illuminate\Foundation\Application as LaravelApp;
 
 class Application implements CurrentCmsPathProviderInterface, CurrentScopeProviderInterface
 {
@@ -49,8 +50,7 @@ class Application implements CurrentCmsPathProviderInterface, CurrentScopeProvid
     }
 
     public function onRouterBefore($route, $request){
-        return $this->callScopeFilters($route, $request);
-
+        $this->callScopeFilters($route, $request);
     }
 
     protected function registerScopeFilters($route, $request){
@@ -164,7 +164,7 @@ class Application implements CurrentCmsPathProviderInterface, CurrentScopeProvid
     protected function createCmsRequest(Request $request=null)
     {
 
-        $request = ($request === NULL) ? App::make('request') : $request;
+        $request = ($request === NULL) ? LaravelApp::getInstance()->make('request') : $request;
         $cmsRequest = $this->requestConverter->toCmsRequest($request);
 
         $cmsRequest->provideCmsPath(function($cmsRequest){

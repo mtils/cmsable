@@ -71,9 +71,9 @@ class RootNodeRepository implements RepositoryInterface{
     /**
      * Returns the scope with name $name
      *
-     * @throws OutOfBoundsException If no scope with name $name was found
-     * @return \Cmsable\Routing\TreeScope\TreeScope
-     **/
+     * @return TreeScope
+     **@throws OutOfBoundsException If no scope with name $name was found
+     */
     public function get($name){
 
         $this->fillScopes();
@@ -89,9 +89,9 @@ class RootNodeRepository implements RepositoryInterface{
     /**
      * Returns the scope by $pathPrefix
      *
-     * @throws OutOfBoundsException If no scope with pathprefix $pathPrefix was found
-     * @return \Cmsable\Routing\TreeScope\TreeScope
-     **/
+     * @return TreeScope
+     **@throws OutOfBoundsException If no scope with pathprefix $pathPrefix was found
+     */
     public function getByPathPrefix($pathPrefix){
 
         $this->fillScopes();
@@ -107,9 +107,9 @@ class RootNodeRepository implements RepositoryInterface{
     /**
      * Returns the scope by modelRootId
      *
-     * @throws OutOfBoundsException If no scope with root-id $rootId was found
-     * @return \Cmsable\Routing\TreeScope\TreeScope
-     **/
+     * @return TreeScope
+     **@throws OutOfBoundsException If no scope with root-id $rootId was found
+     */
     public function getByModelRootId($rootId){
 
         $this->fillScopes();
@@ -125,7 +125,7 @@ class RootNodeRepository implements RepositoryInterface{
     /**
      * Add a manual scope. This has to be done prior fillScopes
      *
-     * @param \Cmsable\Routing\TreeScope\TreeScope $scope
+     * @param TreeScope $scope
      **/
     public function addManualScope(TreeScope $scope)
     {
@@ -161,9 +161,9 @@ class RootNodeRepository implements RepositoryInterface{
     /**
      * Adds the passed scope to the scope array
      *
-     * @param \Cmsable\Routing\TreeScope\TreeScope $treeScope
+     * @param TreeScope $scope
      * @return void
-     **/
+     */
     protected function addToScopes(TreeScope $scope)
     {
         $this->scopes[] = $scope;
@@ -175,8 +175,8 @@ class RootNodeRepository implements RepositoryInterface{
     /**
      * Convert a root node to a scope
      *
-     * @param \Cmsable\Model\SiteTreeNodeInterface $node
-     * @return \Cmsable\Routing\TreeScope\TreeScope
+     * @param SiteTreeNodeInterface $node
+     * @return TreeScope
      **/
     public function node2Scope(SiteTreeNodeInterface $node){
 

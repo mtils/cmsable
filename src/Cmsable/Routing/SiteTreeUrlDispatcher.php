@@ -1,5 +1,6 @@
 <?php namespace Cmsable\Routing;
 
+use Illuminate\Routing\Route;
 use Illuminate\Routing\UrlGenerator;
 
 use Cmsable\Html\SiteTreeUrlGenerator;
@@ -26,7 +27,7 @@ class SiteTreeUrlDispatcher extends UrlGenerator{
      * @param  string  $name
      * @param  mixed   $parameters
      * @param  bool  $absolute
-     * @param  \Illuminate\Routing\Route  $route
+     * @param  Route  $route
      * @return string
      *
      * @throws \InvalidArgumentException

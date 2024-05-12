@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 use Mockery as m;
 use Cmsable\Model\ArraySiteTreeModel;
@@ -42,7 +42,7 @@ class ArraySiteTreeModelTest extends BaseTest
         return new ArraySiteTreeModel($pageClass, $rootId);
     }
 
-    public function tearDown()
+    public function tearDown(): void
     {
         m::close();
     }

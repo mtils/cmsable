@@ -95,7 +95,7 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
         // page, which points to create and not to index.
         if ($currentPageType = $this->currentPageType()) {
             $currentTargetPath = $currentPageType->getTargetPath();
-            if (ends_with($currentTargetPath, '/create')) {
+            if (str_ends_with($currentTargetPath, '/create')) {
                 $isCreateAction = true;
             }
         }
@@ -225,7 +225,7 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
         for($i=count($uriParts)-1,$cutted=0; $i >= 0; $i--,$cutted++){
 
-            if(starts_with($uriParts[$i],'{')){
+            if(str_starts_with($uriParts[$i],'{')){
                 continue;
             }
 
@@ -246,13 +246,13 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
         $cleanedUri = trim($route->uri(),'/');
 
-        if(strpos($cleanedUri, '/') === FALSE || $cleanedUri == ''){
+        if(!str_contains($cleanedUri, '/') || $cleanedUri == ''){
             return TRUE;
         }
 
         $action = $this->getControllerAction($route);
 
-        if(strpos(strtolower($action),'index') !== FALSE){
+        if(str_contains(strtolower($action), 'index')){
             return TRUE;
         }
 

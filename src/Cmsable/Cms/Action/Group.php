@@ -1,5 +1,6 @@
 <?php namespace Cmsable\Cms\Action;
 
+use ReturnTypeWillChange;
 use Traversable;
 use OutOfRangeException;
 use OutOfBoundsException;
@@ -134,33 +135,33 @@ class Group implements Countable, IteratorAggregate, ArrayAccess{
 
     }
 
-    public function count(){
+    #[ReturnTypeWillChange] public function count(){
         return count($this->actions);
     }
 
-    public function getIterator(){
+    #[ReturnTypeWillChange] public function getIterator(){
         return new ArrayIterator($this->actions);
     }
 
-    public function offsetExists($offset){
+    #[ReturnTypeWillChange] public function offsetExists($offset){
         if(is_numeric($offset)){
             return isset($this->actions[$offset]);
         }
         return $this->contains($offset);
     }
 
-    public function offsetGet($offset){
+    #[ReturnTypeWillChange] public function offsetGet($offset){
         if(is_numeric($offset)){
             return $this->actions[$offset];
         }
         return $this->contains($offset);
     }
 
-    public function offsetSet($offset, $value){
+    #[ReturnTypeWillChange] public function offsetSet($offset, $value){
         $this->actions[$offset] = $value;
     }
 
-    public function offsetUnset($offset){
+    #[ReturnTypeWillChange] public function offsetUnset($offset){
         $this->pop($offset);
     }
 

@@ -64,7 +64,8 @@ class Crumbs extends OrderedList{
         return $this->last();
     }
 
-    public function append($value){
+    public function append($value): static
+    {
 
         if(!$value instanceof SiteTreeNodeInterface){
             throw new InvalidArgumentException('You can only append SiteTreeNodeInterface. Use add instead');

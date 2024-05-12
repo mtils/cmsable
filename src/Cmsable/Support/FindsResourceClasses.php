@@ -1,6 +1,7 @@
 <?php namespace Cmsable\Support;
 
 
+use Ems\Contracts\Core\Type;
 use Illuminate\Support\Pluralizer;
 
 trait FindsResourceClasses
@@ -14,7 +15,7 @@ trait FindsResourceClasses
 
     protected function resourceName($className)
     {
-        return snake_case(Pluralizer::plural(class_basename($className)), '-');
+        return Type::snake_case(Pluralizer::plural(class_basename($className)), '-');
     }
 
 }

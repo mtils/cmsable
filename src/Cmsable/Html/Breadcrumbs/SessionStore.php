@@ -197,7 +197,7 @@ class SessionStore implements StoreInterface
 
     protected function hasQueryParams(Node $crumb)
     {
-        return (strpos($crumb->getPath(), '?') !== false);
+        return (str_contains($crumb->getPath(), '?'));
     }
 
     protected function wasLoadedFromStore(Node $crumb)

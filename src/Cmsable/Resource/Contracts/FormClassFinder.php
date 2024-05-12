@@ -1,5 +1,7 @@
 <?php namespace Cmsable\Resource\Contracts;
 
+use FormObject\Form;
+
 /**
  * A FormFinder finds forms for resources
  * It allows that you can just call Resource::form() and get your form.
@@ -13,7 +15,7 @@ interface FormClassFinder
      *
      * @param string $resource
      * @param string $modelClass (optional)
-     * @return \FormObject\Form
+     * @return Form
      **/
     public function formClass($resource, $modelClass=null);
 
@@ -23,7 +25,7 @@ interface FormClassFinder
      *
      * @param string $resource
      * @param string $modelClass (optional)
-     * @return \FormObject\Form
+     * @return Form
      **/
     public function searchFormClass($resource, $modelClass=null);
 

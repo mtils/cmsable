@@ -1,6 +1,6 @@
 <?php namespace Cmsable\Translation;
 
-use Symfony\Component\Translation\TranslatorInterface as SymfonyInterface;
+use Symfony\Contracts\Translation\TranslatorInterface as SymfonyInterface;
 
 /**
  * This is a copy of the most used methods of laravels translator which extends

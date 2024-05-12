@@ -4,6 +4,7 @@ use Cmsable\Resource\Contracts\ClassFinder as ClassFinderContract;
 use Cmsable\Resource\Contracts\FormClassFinder;
 use Cmsable\Resource\Contracts\ModelClassFinder;
 use Cmsable\Resource\Contracts\ValidatorClassFinder;
+use FormObject\Form;
 
 class ClassFinder implements ClassFinderContract
 {
@@ -29,7 +30,7 @@ class ClassFinder implements ClassFinderContract
      *
      * @param string $resource
      * @param string $modelClass (optional)
-     * @return \FormObject\Form
+     * @return Form
      **/
     public function formClass($resource, $modelClass=null)
     {
@@ -42,7 +43,7 @@ class ClassFinder implements ClassFinderContract
      *
      * @param string $resource
      * @param string $modelClass (optional)
-     * @return \FormObject\Form
+     * @return Form
      **/
     public function searchFormClass($resource, $modelClass=null)
     {

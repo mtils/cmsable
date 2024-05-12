@@ -24,6 +24,8 @@ class ManualRepository implements RepositoryInterface{
 
     protected $app;
 
+    protected $currentPageConfig;
+
     public function __construct(Container $container, $eventDispatcher=NULL){
 
         $this->app = $container;
@@ -43,7 +45,7 @@ class ManualRepository implements RepositoryInterface{
         return $this;
     }
 
-    public function getEventDispatcher($dispatcher){
+    public function getEventDispatcher(){
         return $this->eventDispatcher;
     }
 
@@ -81,7 +83,7 @@ class ManualRepository implements RepositoryInterface{
     /**
      * {@inheritdoc}
      *
-     * @param string
+     * @param string $routeName
      * @return PageType|null
      **/
     public function getByRouteName($routeName)

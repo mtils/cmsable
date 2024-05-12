@@ -111,7 +111,7 @@ class ArraySiteTreeModel implements SiteTreeModelInterface, NodeCreatorInterface
     /**
      * @brief Return a page by its id. The id is normally
      *        the database primary key but dont have to.
-     * 
+     *
      * @param mixed $id The id of the page to return
      * @return SiteTreeNodeInterface
      **/
@@ -159,7 +159,7 @@ class ArraySiteTreeModel implements SiteTreeModelInterface, NodeCreatorInterface
 
     /**
      * @brief Retrieve a tree by its _ID_. Reimplemented to ensure only pages of this tree are loaded
-     * 
+     *
      * @param mixed $identifier The id of this node, which is the same as node->getIdentifier()
      * @param mixed $rootId The rootId of the tree, optional to speed up the initial query
      * @return NodeInterface
@@ -179,7 +179,7 @@ class ArraySiteTreeModel implements SiteTreeModelInterface, NodeCreatorInterface
             $rootId = $this->getRootId();
         }
         else{
-            throw new BadMethodCallException('This SiteTreeModel can only retrieve nodes of '.$this->rootCol().'='.$this->rootId());
+            throw new BadMethodCallException('This SiteTreeModel can only retrieve nodes of '.$this->rootCol().'='.$rootId);
         }
 
         $this->ensureLookups();

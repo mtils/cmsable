@@ -14,7 +14,7 @@ class TreeModelManager implements TreeModelManagerInterface{
     /**
      * A prototype of SiteTreeModelInterface to clone
      *
-     * @var \Cmsable\Model\SiteTreeModelInterface
+     * @var SiteTreeModelInterface
      **/
     protected $treeModelPrototype;
 
@@ -26,8 +26,8 @@ class TreeModelManager implements TreeModelManagerInterface{
     /**
      * Returns a SiteTreeModel for scope $scope
      *
-     * @param \Cmsable\Routing\TreeScope\TreeScope $scope
-     * @return \Cmsable\Model\SiteTreeModelInterface
+     * @param TreeScope $scope
+     * @return SiteTreeModelInterface
      **/
     public function get(TreeScope $scope){
 
@@ -44,8 +44,8 @@ class TreeModelManager implements TreeModelManagerInterface{
     /**
      * Set a SiteTreeModel for scope $scope
      *
-     * @param \Cmsable\Routing\TreeScope\TreeScope $scope
-     * @param \Cmsable\Model\SiteTreeModelInterface $model
+     * @param TreeScope $scope
+     * @param SiteTreeModelInterface $model
      * @return self
      **/
     public function set(TreeScope $scope, SiteTreeModelInterface $model){
@@ -61,7 +61,7 @@ class TreeModelManager implements TreeModelManagerInterface{
      * Return a unique id for a scope. Mostly used as a cache-id in its local
      * models array
      *
-     * @param \Cmsable\Routing\TreeScope\TreeScope $scope
+     * @param TreeScope $scope
      * @return string
      **/
     protected function getScopeId(TreeScope $scope){
@@ -71,8 +71,8 @@ class TreeModelManager implements TreeModelManagerInterface{
     /**
      * Make a sitetree model
      *
-     * @param \Cmsable\Routing\TreeScope\TreeScope $scope
-     * @return \Cmsable\Model\SiteTreeModelInterface
+     * @param TreeScope $scope
+     * @return SiteTreeModelInterface
      **/
     protected function makeModel(TreeScope $scope){
 

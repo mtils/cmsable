@@ -23,10 +23,10 @@ class EloquentModelFinder implements ModelFinder
 
     public function find($id)
     {
-        return $this->model()->find($id);
+        return $this->model($this->modelClass, $id)->find($id);
     }
 
-    public function model()
+    public function model($modelClass, $id)
     {
         if (!$this->model) {
             $class = $this->modelClass();

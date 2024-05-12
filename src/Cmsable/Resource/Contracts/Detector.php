@@ -9,7 +9,7 @@ interface Detector
      * Return the resource name which is currently handled by $request
      * It defaults to the first segment of your route name
      *
-     * @param Illuminate\Http\Request
+     * @param Request $request
      * @return string
      **/
     public function resourceByRequest(Request $request);

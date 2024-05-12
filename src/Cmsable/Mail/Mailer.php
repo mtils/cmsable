@@ -21,12 +21,12 @@ class Mailer implements MailerInterface
 {
 
     /**
-     * @var \Illuminate\Mail\Mailer
+     * @var IlluminateMailer
      **/
     protected $laravelMailer;
 
     /**
-     * @var \Illuminate\Contracts\Config\Repository
+     * @var Config
      **/
     protected $config;
 
@@ -61,9 +61,9 @@ class Mailer implements MailerInterface
     protected $parseKeys = ['subject', 'body', 'content'];
 
     /**
-     * @param \Illuminate\Mail\Mailer $laravelMailer
+     * @param IlluminateMailer $laravelMailer
      * @param TextParser $textParser
-     * @param \Illuminate\Contracts\Config\Repository $config
+     * @param Config $config
      **/
     public function __construct(IlluminateMailer $laravelMailer,
                                 TextParser $textParser,
@@ -77,7 +77,7 @@ class Mailer implements MailerInterface
 
     /**
      * {@inheritdoc}
-     * 
+     *
      * @example Mailer::to('foo@somewhere.com')->send('template',$data)
      * @param mixed $recipient string|array for more than one
      * @return self
@@ -338,7 +338,7 @@ class Mailer implements MailerInterface
      * @param array $recipients
      * @param array $data
      * @param callable|null $callback
-     * @return \Cmsable\Mail\MessageBuilder
+     * @return MessageBuilder
      **/
     protected function createBuilder(array $recipients, $data, $callback)
     {

@@ -227,7 +227,7 @@ class SiteTreeModelPathCreator implements CmsPathCreatorInterface{
     }
 
     public function cleanHomeSegment($path){
-        if(ends_with($path,CmsPath::$homeSegment)){
+        if(str_ends_with($path,CmsPath::$homeSegment)){
             return rtrim(substr($path, 0, strlen($path)-strlen(CmsPath::$homeSegment)),'/');
         }
         return $path;
@@ -240,7 +240,7 @@ class SiteTreeModelPathCreator implements CmsPathCreatorInterface{
             return $routeUri;
         }
 
-        if (ends_with($routeUri, '/create')) {
+        if (str_ends_with($routeUri, '/create')) {
             return substr($routeUri, 0, -7);
         }
 

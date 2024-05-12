@@ -18,7 +18,7 @@ class ControllerDispatcher extends IlluminateDispatcher
     /**
      * Dispatch a request to a given controller and method.
      *
-     * @param  \Illuminate\Routing\Route  $route
+     * @param Route $route
      * @param  mixed  $controller
      * @param  string  $method
      * @return mixed
@@ -93,8 +93,8 @@ class ControllerDispatcher extends IlluminateDispatcher
     /**
      * Call the given controller instance method.
      *
-     * @param  \Illuminate\Routing\Controller  $instance
-     * @param  \Illuminate\Routing\Route  $route
+     * @param Controller $instance
+     * @param Route $route
      * @param  string  $method
      * @return mixed
      */

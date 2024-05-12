@@ -27,7 +27,7 @@ class SiteTreeController extends Controller {
 
     /**
     * @brief Gibt den Loader für die Page Objekte zurück
-    * @var Cmsable\Model\SiteTreeModelInterface
+    * @var SiteTreeModelInterface
     */
     protected $model;
 
@@ -363,7 +363,7 @@ class SiteTreeController extends Controller {
     /**
     * @brief Gibt den Lader für SiteTree zurück
     *
-    * @return Cmsable\Model\SiteTreeModelInterface
+    * @return SiteTreeModelInterface
     */
     protected function getModel(){
         return $this->model;

@@ -12,7 +12,7 @@ class CmsRequest extends Request implements CmsRequestInterface
 {
 
     /**
-     * @var \Cmsable\Http\CmsPath
+     * @var CmsPath
      **/
     protected $cmsPath;
 
@@ -54,7 +54,7 @@ class CmsRequest extends Request implements CmsRequestInterface
     /**
      * Get the CmsPath object
      *
-     * @return \Cmsable\Http\CmsPath
+     * @return CmsPath
      **/
     public function getCmsPath()
     {
@@ -67,7 +67,7 @@ class CmsRequest extends Request implements CmsRequestInterface
     /**
      * Get the CmsPath object
      *
-     * @return \Cmsable\Http\CmsPath
+     * @return static
      **/
     public function setCmsPath(CmsPath $path)
     {

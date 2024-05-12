@@ -1,5 +1,7 @@
 <?php namespace Cmsable\Controller;
 
+use Illuminate\Contracts\Routing\Registrar;
+use Illuminate\Foundation\Application;
 use Route;
 
 trait ControllerRouteTrait{
@@ -104,8 +106,8 @@ trait ControllerRouteTrait{
 
     protected static function assignRoutes($path, $class, $name, array $routeData){
 
-        $router = Route::getFacadeRoot();
-
+        /** @var Registrar $router */
+        $router = Application::getInstance()->make(Registrar::class);
         foreach($routeData as $method=>$data){
 
             $router->{$data['verb']}($path.$data['path'],[

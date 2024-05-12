@@ -6,7 +6,7 @@ class Translator implements TranslatorInterface
 {
 
     /**
-     * @var \Illuminate\Translation\Translator
+     * @var IlluminateTranslator
      **/
     protected $lang;
 

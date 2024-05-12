@@ -1,6 +1,7 @@
 <?php namespace Cmsable\Routing;
 
 use Cmsable\Model\SiteTreeNodeInterface;
+use Cmsable\PageType\ConfigInterface;
 use Cmsable\Support\HoldsContainer;
 use Cmsable\Support\ReceivesContainerWhenResolved;
 use Cmsable\PageType\ConfigRepositoryInterface;
@@ -15,12 +16,12 @@ class ControllerCreator implements ControllerCreatorInterface, ReceivesContainer
     use HoldsContainer;
 
     /**
-     * @var Cmsable\Model\SiteTreeNodeInterface
+     * @var SiteTreeNodeInterface
      **/
     protected $page;
 
     /**
-     * @var \Cmsable\PageType\ConfigRepositoryInterface
+     * @var ConfigRepositoryInterface
      **/
     protected $configRepository;
 
@@ -36,8 +37,8 @@ class ControllerCreator implements ControllerCreatorInterface, ReceivesContainer
      * a layout
      *
      * @param string $controllerName The classname of the routed controller
-     * @param \Cmsable\Model\SiteTreeNodeInterface $page (optional) Null if no match
-     * @return \Illuminate\Routing\Controller
+     * @param SiteTreeNodeInterface $page (optional) Null if no match
+     * @return Controller
      **/
     public function createController($name, SiteTreeNodeInterface $page=null)
     {
@@ -57,7 +58,7 @@ class ControllerCreator implements ControllerCreatorInterface, ReceivesContainer
      * this method
      *
      * @param string $controllerName The classname of the routed controller
-     * @param \Cmsable\Model\SiteTreeNodeInterface $page (optional) Null if no match
+     * @param SiteTreeNodeInterface $page (optional) Null if no match
      * @return null
      **/
     public function modifyController(Controller $controller, SiteTreeNodeInterface $page=null) {}
@@ -68,7 +69,7 @@ class ControllerCreator implements ControllerCreatorInterface, ReceivesContainer
      * This method checks for a method on$method of this class. So for example
      * if a method named onIndex exists, it will be called with $controller and $parameters
      *
-     * @param \Illuminate\Routing\Controller $controller
+     * @param Controller $controller
      * @param string $method
      * @param array $parameters
      * @return null
@@ -83,7 +84,7 @@ class ControllerCreator implements ControllerCreatorInterface, ReceivesContainer
 
     /**
      * @param string $controllerName The classname of the routed controller
-     * @return \Illuminate\Routing\Controller
+     * @return Controller
      **/
     protected function makeController($name)
     {
@@ -94,7 +95,7 @@ class ControllerCreator implements ControllerCreatorInterface, ReceivesContainer
     }
 
     /**
-     * @return \Cmsable\Model\SiteTreeNodeInterface
+     * @return SiteTreeNodeInterface
      **/
     public function getPage()
     {
@@ -102,7 +103,7 @@ class ControllerCreator implements ControllerCreatorInterface, ReceivesContainer
     }
 
     /**
-     * @param \Cmsable\Model\SiteTreeNodeInterface $page
+     * @param SiteTreeNodeInterface $page
      * @return self
      **/
     public function setPage(SiteTreeNodeInterface $page)
@@ -112,8 +113,8 @@ class ControllerCreator implements ControllerCreatorInterface, ReceivesContainer
     }
 
     /**
-     * @param \Cmsable\Model\SiteTreeNodeInterface $page
-     * @return \Cmsable\PageType\ConfigInterface
+     * @param SiteTreeNodeInterface $page
+     * @return ConfigInterface
      **/
     public function config(SiteTreeNodeInterface $page=null)
     {
@@ -137,7 +138,7 @@ class ControllerCreator implements ControllerCreatorInterface, ReceivesContainer
     }
 
     /**
-     * @return \Cmsable\PageType\ConfigRepositoryInterface
+     * @return ConfigRepositoryInterface
      **/
     public function getConfigRepository()
     {
@@ -152,7 +153,7 @@ class ControllerCreator implements ControllerCreatorInterface, ReceivesContainer
     }
 
     /**
-     * @param Cmsable\PageType\ConfigRepositoryInterface $configRepo
+     * @param ConfigRepositoryInterface $configRepo
      * @return self
      **/
     public function setConfigRepository(ConfigRepositoryInterface $configRepo)

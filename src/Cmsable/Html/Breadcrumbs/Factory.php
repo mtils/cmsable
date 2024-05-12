@@ -27,6 +27,8 @@ class Factory{
 
     protected $fallbackProvider;
 
+    protected $store;
+
 
     public function __construct(CrumbsCreatorInterface $creator,
                                 Router $router,

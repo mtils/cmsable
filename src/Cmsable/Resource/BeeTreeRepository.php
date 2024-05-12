@@ -53,12 +53,12 @@ abstract class BeeTreeRepository implements TreeRepository
 
     /**
      * Construct a node (new $NodeClass()) (Doesn't save the node)
-     * 
+     *
      * @param array $attributes (optional)
      * @param mixed \Beetree\Contracts\Node
      * @return mixed the created child
      **/
-    public function makeChild(array $attributes=[], $parent)
+    public function makeChild(array $attributes=[], $parent=null)
     {
         $child = $this->model()->makeChild($attributes, $parent);
         $this->callAfterListeners('make', [$child]);

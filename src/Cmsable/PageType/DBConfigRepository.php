@@ -1,6 +1,7 @@
 <?php namespace Cmsable\PageType;
 
 use DateTime;
+use Illuminate\Database\Connection;
 use OutOfBoundsException;
 
 use Illuminate\Database\DatabaseManager;
@@ -372,7 +373,7 @@ class DBConfigRepository implements ConfigRepositoryInterface{
     /**
      * Get the database connection for the model.
      *
-     * @return \Illuminate\Database\Connection
+     * @return Connection
      */
     public function getConnection()
     {
@@ -383,7 +384,7 @@ class DBConfigRepository implements ConfigRepositoryInterface{
      * Resolve a connection instance.
      *
      * @param  string  $connection
-     * @return \Illuminate\Database\Connection
+     * @return Connection
      */
     public static function resolveConnection($connection = null)
     {
@@ -393,7 +394,7 @@ class DBConfigRepository implements ConfigRepositoryInterface{
         /**
      * Get the connection resolver instance.
      *
-     * @return \Illuminate\Database\ConnectionResolverInterface
+     * @return Resolver
      */
     public static function getConnectionResolver()
     {
@@ -403,7 +404,7 @@ class DBConfigRepository implements ConfigRepositoryInterface{
     /**
      * Set the connection resolver instance.
      *
-     * @param  \Illuminate\Database\ConnectionResolverInterface  $resolver
+     * @param Resolver $resolver
      * @return void
      */
     public static function setConnectionResolver(Resolver $resolver)

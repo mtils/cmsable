@@ -2,7 +2,7 @@
 
 use Cmsable\Resource\Contracts\ModelFinder;
 
-/** 
+/**
  * A Resource Repository a repository specialized to edit RESTful
  * resources.
  **/
@@ -11,12 +11,12 @@ interface TreeRepository extends Repository
 
     /**
      * Construct a node (new $NodeClass()) (Doesn't save the node)
-     * 
+     *
      * @param array $attributes (optional)
      * @param mixed $parent
      * @return mixed the created child
      **/
-    public function makeChild(array $attributes=[], $parent);
+    public function makeChild(array $attributes=[], $parent=null);
 
     /**
      * Create a new model as a child of $parentModel

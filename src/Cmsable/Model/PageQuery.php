@@ -5,7 +5,7 @@ use Cmsable\PageType\DBConfigRepository;
 use Cmsable\PageType\PageType;
 use Cmsable\Html\MenuFilterRegistry;
 
-class PageQuery 
+class PageQuery
 {
 
     public $wheres = [];
@@ -113,7 +113,7 @@ class PageQuery
     /**
      * {@inheritdoc}
      *
-     * @param Cmsable\PageType\PageType|string pagetype or its id
+     * @param PageType|string pagetype or its id
      * @return self
      **/
     public function pageType($typeOrId)
@@ -153,7 +153,7 @@ class PageQuery
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      **/
     public function query()
     {
@@ -178,7 +178,7 @@ class PageQuery
             return false;
         }
 
-        if (starts_with($key,'config.')) {
+        if (str_starts_with($key,'config.')) {
             return true;
         }
 
@@ -217,7 +217,7 @@ class PageQuery
 
     protected function configQueryKey($key)
     {
-        if (starts_with($key, 'config.')) {
+        if (str_starts_with($key, 'config.')) {
             return $key;
         }
 

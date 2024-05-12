@@ -8,27 +8,31 @@
     {
       "name": "Michael Tils",
       "email": "mtils@web-utils.de",
-      "homepage": "http://web-utils.de"
+      "homepage": "https://web-utils.de"
     }
   ],
   "require": {
-    "php": ">=5.4.0",
-    "laravel/framework": "5.0.*|5.1.*|5.2.*|5.3.*|5.4.*|5.5.*",
-    "ems/framework": "0.3.*",
-    "ems/collection": "0.2.*",
-    "ems/xtype": "0.2.*",
-    "ems/beetree":"0.2.*",
-    "ems/formobject": "0.3.*",
-    "ems/versatile": "0.2.*",
-    "edvinaskrucas/notification": "5.0.*|5.1.*|5.2.*"
+    "php": ">=8.2.0",
+    "laravel/framework": "11.*",
+    "ems/framework": ">=0.5.1",
+    "ems/collection": "0.3.*",
+    "ems/xtype": "0.3.*",
+    "ems/beetree":"0.3.*",
+    "ems/formobject": "0.4.*",
+    "ems/versatile": "0.3.*"
   },
   "require-dev": {
-    "mockery/mockery": "~0.9"
+    "phpunit/phpunit": "11.1.2",
+    "mockery/mockery": "~1.6"
   },
   "autoload": {
-    "psr-0": {
-      "Cmsable": "src/"
+    "psr-4": {
+      "Cmsable\\": "src/Cmsable"
     }
   },
-  "minimum-stability": "dev"
+  "autoload-dev": {
+    "psr-4": {
+      "Cmsable\\Test\\": "tests/unit"
+    }
+  }
 }

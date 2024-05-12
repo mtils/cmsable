@@ -4,15 +4,15 @@ interface RepositoryInterface{
 
     /**
     * @brief Return PageType by id
-    * 
+    *
     * @param string $id
-    * @return \Cmsable\PageType\PageType
+    * @return PageType
     */
     public function get($id);
 
     /**
     * @brief Check if PageType with id $id exists
-    * 
+    *
     * @param string $id
     * @return bool
     */
@@ -30,7 +30,7 @@ interface RepositoryInterface{
 
     /**
     * @brief Returns all PageType Instances within routeScope $routeScope
-    * 
+    *
     * @param string $routeScope (optional)
     * @return \Traversable
     */
@@ -39,7 +39,7 @@ interface RepositoryInterface{
     /**
     * @brief Returns all PageType Instances within routeScope $routeScope
     *        subKeyed by its category
-    * 
+    *
     * @param string $routeScope (optional)
     * @return array
     */
@@ -47,7 +47,7 @@ interface RepositoryInterface{
 
     /**
     * @brief Return PageType-Category by name
-    * 
+    *
     * @param string $name
     * @return \Cmsable\PageType\Category
     */
@@ -55,7 +55,7 @@ interface RepositoryInterface{
 
     /**
     * @brief Returns all PageType Categories within routeScope $routeScope
-    * 
+    *
     * @param string $routeScope (optional)
     * @return Traversable
     */

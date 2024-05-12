@@ -13,7 +13,7 @@ interface StoreInterface
      * Synces the created $crumbs with the store. If new crumbs where created,
      * all stored with an depth >= have to be deleted.
      *
-     * @param Cmsable\Html\Breadcrumbs\Crumbs $crumbs
+     * @param Crumbs $crumbs
      * @param string $routeName The current route name
      * @return void
      **/

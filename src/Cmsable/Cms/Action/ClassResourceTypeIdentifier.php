@@ -8,7 +8,7 @@ class ClassResourceTypeIdentifier implements ResourceTypeIdentifierInterface{
     /**
      * @brief Returns an id for an resourcetype to identify it
      *
-     * @param mixed $resourceType 
+     * @param mixed $resource
      * @return string
      **/
     public function identifyItem($resource){

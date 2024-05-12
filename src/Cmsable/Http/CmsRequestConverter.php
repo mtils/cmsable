@@ -11,8 +11,8 @@ class CmsRequestConverter
     /**
      * Creates a CmsRequest out of an Illuminate Request
      *
-     * @param \Illuminate\Http\Request $request
-     * @return \Cmsable\Http\CmsRequest
+     * @param Request $request
+     * @return CmsRequest
      **/
     public function toCmsRequest(Request $request)
     {

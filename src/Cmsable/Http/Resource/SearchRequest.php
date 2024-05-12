@@ -1,5 +1,7 @@
 <?php namespace Cmsable\Http\Resource;
 
+use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Validator;
 use RuntimeException;
 use Illuminate\Http\Request;
 use Cmsable\Http\Contracts\DecoratesRequest;
@@ -8,8 +10,7 @@ use Cmsable\Support\ReceivesContainerWhenResolved;
 use Cmsable\Resource\Contracts\ReceivesDistributorWhenResolved;
 use Cmsable\Support\HoldsContainer;
 use Cmsable\Http\ReplicateRequest;
-use Illuminate\Contracts\Validation\ValidationException;
-use Illuminate\Http\Exception\HttpResponseException;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Routing\Redirector;
 use Cmsable\Resource\UsesCurrentResource as UsesResource;
 
@@ -143,12 +144,12 @@ class SearchRequest extends Request implements DecoratesRequest,
     /**
      * Format the errors from the given Validator instance.
      *
-     * @param  \Illuminate\Validation\Validator  $validator
+     * @param  ValidationException  $exception
      * @return array
      */
     protected function formatErrors(ValidationException $exception)
     {
-        return $exception->errors()->getMessages();
+        return $exception->errors();
     }
 
     protected function &performCasting(array $parameters)

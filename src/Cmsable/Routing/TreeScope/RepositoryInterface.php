@@ -12,25 +12,25 @@ interface RepositoryInterface{
     /**
      * Returns the scope with name $name
      *
-     * @throws OutOfBoundsException If no scope with name $name was found
-     * @return \Cmsable\Routing\TreeScope\TreeScope
-     **/
+     * @return TreeScope
+     **@throws OutOfBoundsException If no scope with name $name was found
+     */
     public function get($name);
 
     /**
      * Returns the scope by $pathPrefix
      *
-     * @throws OutOfBoundsException If no scope with pathprefix $pathPrefix was found
-     * @return \Cmsable\Routing\TreeScope\TreeScope
-     **/
+     * @return TreeScope
+     **@throws OutOfBoundsException If no scope with pathprefix $pathPrefix was found
+     */
     public function getByPathPrefix($pathPrefix);
 
     /**
      * Returns the scope by modelRootId
      *
-     * @throws OutOfBoundsException If no scope with root-id $rootId was found
-     * @return \Cmsable\Routing\TreeScope\TreeScope
-     **/
+     * @return TreeScope
+     **@throws OutOfBoundsException If no scope with root-id $rootId was found
+     */
     public function getByModelRootId($rootId);
 
 }

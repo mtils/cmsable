@@ -1,5 +1,6 @@
 <?php namespace Cmsable\Http\Resource;
 
+
 use Illuminate\Http\Request;
 use Cmsable\Http\Contracts\DecoratesRequest;
 use Illuminate\Http\JsonResponse;
@@ -7,10 +8,12 @@ use Cmsable\Support\ReceivesContainerWhenResolved;
 use Cmsable\Resource\Contracts\ReceivesDistributorWhenResolved;
 use Cmsable\Support\HoldsContainer;
 use Cmsable\Http\ReplicateRequest;
-use Illuminate\Contracts\Validation\ValidationException;
-use Illuminate\Http\Exception\HttpResponseException;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Routing\Redirector;
 use Cmsable\Resource\UsesCurrentResource as UsesResource;
+use Illuminate\Support\Arr;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response;
 
 class CleanedRequest extends Request implements DecoratesRequest,
                                                 ReceivesContainerWhenResolved,
@@ -30,7 +33,7 @@ class CleanedRequest extends Request implements DecoratesRequest,
     /**
      * The redirector instance.
      *
-     * @var \Illuminate\Routing\Redirector
+     * @var Redirector
      */
     protected $redirector;
 
@@ -69,6 +72,8 @@ class CleanedRequest extends Request implements DecoratesRequest,
      */
     protected $dontFlash = ['password', 'password_confirmation'];
 
+    protected $casted;
+
     public function cleaned($key=null, $default=null)
     {
 
@@ -83,7 +88,7 @@ class CleanedRequest extends Request implements DecoratesRequest,
         }
 
         if ($key != null) {
-            return array_get($this->casted, $key, $default);
+            return Arr::get($this->casted, $key, $default);
         }
 
         return $this->casted;
@@ -116,7 +121,7 @@ class CleanedRequest extends Request implements DecoratesRequest,
     /**
      * Handle a failed validation attempt.
      *
-     * @param  \Illuminate\Validation\Validator  $validator
+     * @param ValidationException $exception
      * @return mixed
      */
     protected function failedValidation(ValidationException $exception)
@@ -130,7 +135,7 @@ class CleanedRequest extends Request implements DecoratesRequest,
      * Get the proper failed validation response for the request.
      *
      * @param  array  $errors
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @return Response
      */
     public function response(array $errors)
     {
@@ -177,12 +182,12 @@ class CleanedRequest extends Request implements DecoratesRequest,
     /**
      * Format the errors from the given Validator instance.
      *
-     * @param  \Illuminate\Validation\Validator  $validator
+     * @param ValidationException $exception
      * @return array
      */
     protected function formatErrors(ValidationException $exception)
     {
-        return $exception->errors()->getMessages();
+        return $exception->errors();
     }
 
     protected function &performCasting(array $parameters)
@@ -203,7 +208,7 @@ class CleanedRequest extends Request implements DecoratesRequest,
     /**
      * Set the Redirector instance.
      *
-     * @param  \Illuminate\Routing\Redirector  $redirector
+     * @param Redirector $redirector
      * @return self
      */
     public function setRedirector(Redirector $redirector)

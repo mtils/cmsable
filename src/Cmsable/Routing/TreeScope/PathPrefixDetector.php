@@ -9,7 +9,7 @@ class PathPrefixDetector implements DetectorInterface{
     /**
      * The scope repository
      *
-     * @var \Cmsable\Routing\TreeScope\RepositoryInterface
+     * @var RepositoryInterface
      **/
     protected $repository;
 
@@ -20,8 +20,8 @@ class PathPrefixDetector implements DetectorInterface{
     /**
      * Return the scope of a tree model for request $request
      *
-     * @param \Illuminate\Http\Request $request
-     * @return \Cmsable\Routing\TreeScope\TreeScope
+     * @param Request $request
+     * @return TreeScope
      **/
     public function detectScope(Request $request){
 

@@ -5,7 +5,7 @@ interface ResourceTypeIdentifierInterface{
     /**
      * @brief Returns an id for an resourcetype to identify it
      *
-     * @param mixed $resourceType 
+     * @param mixed $resourceType
      * @return string
      **/
     public function identifyItem($resource);
@@ -13,7 +13,7 @@ interface ResourceTypeIdentifierInterface{
     /**
      * @brief Returns an id for a collection
      *
-     * @param Traversable $resource
+     * @param iterable $resource
      * @return string
      **/
     public function identifyCollection($resource);

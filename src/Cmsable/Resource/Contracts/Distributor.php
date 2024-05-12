@@ -1,5 +1,7 @@
 <?php namespace Cmsable\Resource\Contracts;
 
+use FormObject\Form;
+
 interface Distributor
 {
 
@@ -9,7 +11,7 @@ interface Distributor
      *
      * @param mixed $model (optional)
      * @param string $resource (optional)
-     * @return \FormObject\Form
+     * @return Form
      **/
     public function form($model=null, $resource=null);
 
@@ -25,7 +27,7 @@ interface Distributor
      * Return a form to search $resource.
      *
      * @param string $resource (optional)
-     * @return \FormObject\Form
+     * @return Form
      **/
     public function searchForm($resource=null);
 
@@ -42,7 +44,7 @@ interface Distributor
      * $resource
      *
      * @param string $resource (optional)
-     * @return \Cmsable\Resource\Contracts\Validator
+     * @return Validator
      **/
     public function validator($resource=null);
 

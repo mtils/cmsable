@@ -4,6 +4,7 @@ use Cmsable\Resource\Contracts\ClassFinder;
 use Cmsable\Resource\Contracts\Detector;
 use Cmsable\Resource\Contracts\Distributor as DistributorContract;
 use Cmsable\Resource\Contracts\Mapper as MapperContract;
+use Cmsable\Resource\Contracts\Validator;
 use Ems\Core\Patterns\SubscribableTrait;
 use FormObject\Form;
 use Illuminate\Contracts\Container\Container;
@@ -11,7 +12,7 @@ use RuntimeException;
 
 class Distributor implements DistributorContract
 {
-    
+
     //use ResourceBus;
     use SubscribableTrait;
 
@@ -43,7 +44,7 @@ class Distributor implements DistributorContract
      *
      * @param mixed $model (optional)
      * @param string $resource (optional)
-     * @return \FormObject\Form
+     * @return Form
      **/
     public function form($model=null, $resource=null)
     {
@@ -73,7 +74,7 @@ class Distributor implements DistributorContract
      * {@inheritdoc}
      *
      * @param string $resource (optional)
-     * @return \FormObject\Form
+     * @return Form
      **/
     public function searchForm($resource=null)
     {
@@ -103,7 +104,7 @@ class Distributor implements DistributorContract
      * {@inheritdoc}
      *
      * @param string $resource (optional)
-     * @return \Cmsable\Resource\Contracts\Validator
+     * @return Validator
      **/
     public function validator($resource=null)
     {
@@ -284,7 +285,7 @@ class Distributor implements DistributorContract
      * @param string $resource
      * @param string $class
      * @param mixed $model
-     * @return \FormObject\Form
+     * @return Form
      **/
     protected function makeForm($resource, $class, $model)
     {
@@ -308,7 +309,7 @@ class Distributor implements DistributorContract
      *
      * @param string $resource
      * @param string $class
-     * @return \FormObject\Form
+     * @return Form
      **/
     protected function makeSearchForm($resource, $class)
     {
@@ -323,7 +324,7 @@ class Distributor implements DistributorContract
      *
      * @param string $resource
      * @param string $class
-     * @return \Cmsable\Resource\Contracts\Validator
+     * @return Validator
      **/
     protected function makeValidator($resource, $class)
     {

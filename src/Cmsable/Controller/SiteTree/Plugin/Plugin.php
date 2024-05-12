@@ -50,7 +50,7 @@ abstract class Plugin{
     }
 
     /**
-     * @brief This method is called after the form created its fields. 
+     * @brief This method is called after the form created its fields.
      *        The sequence is:
      *        1. Form::createFields()
      *        2. Form sends Event form.fields-setted.$formname
@@ -132,7 +132,7 @@ abstract class Plugin{
     {
         $name = strtolower(preg_replace('/(?<=[a-z])([A-Z])/', '-$1', class_basename(get_called_class())));
 
-        if (!ends_with($name, '-plugin')){
+        if (!str_ends_with($name, '-plugin')){
             return $name;
         }
 

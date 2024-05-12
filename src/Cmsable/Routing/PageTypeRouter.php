@@ -9,7 +9,7 @@ class PageTypeRouter
 {
 
     /**
-     * @var \Cmsable\PageType\RepositoryInterface
+     * @var RepositoryInterface
      **/
     protected $pageTypes;
 

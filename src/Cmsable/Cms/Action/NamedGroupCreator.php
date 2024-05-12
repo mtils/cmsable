@@ -6,7 +6,7 @@ class NamedGroupCreator implements GroupCreatorInterface{
      * @brief Creates a group, which will by filled bei actions
      *
      * @param $name The name of that group
-     * @return Cmsable\Action\Group
+     * @return Group
      **/
     public function createGroup($name='default'){
 
@@ -22,7 +22,7 @@ class NamedGroupCreator implements GroupCreatorInterface{
      * @param mixed $user Your user object or null
      * @param mixed $resource Some resource which is accessed/manipulated
      * @param string $context (default: 'default') In which context is it used
-     * @return array
+     * @return Group[]
      **/
     public function getGroups($user, $resource, $context='default'){
         return [$this->createGroup()];

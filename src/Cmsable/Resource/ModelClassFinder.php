@@ -3,6 +3,7 @@
 use Cmsable\Resource\Contracts\ModelClassFinder as ClassFinderContract;
 
 use Cmsable\Support\FindsClasses;
+use Ems\Contracts\Core\Type;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
 class ModelClassFinder implements ClassFinderContract
@@ -30,7 +31,7 @@ class ModelClassFinder implements ClassFinderContract
             return $this->nestedResourceToClass($resource);
         }
 
-        $class = ucfirst(camel_case($resource));
+        $class = ucfirst(Type::camelCase($resource));
         return substr($class, 0, strlen($class)-1);
     }
 

@@ -12,7 +12,7 @@ class ManualConfigTypeRepository implements ConfigTypeRepositoryInterface{
      * Get the config TYPE of page-type $pageType
      *
      * @param mixed $pageType PageType or pageTypeId
-     * @return \XType\NamedFieldType
+     * @return NamedFieldType
      **/
     public function getConfigType($pageType){
 

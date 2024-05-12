@@ -4,6 +4,7 @@ use ArrayAccess;
 use ArrayIterator;
 use IteratorAggregate;
 use Countable;
+use ReturnTypeWillChange;
 
 class Config implements ConfigInterface, ArrayAccess, Countable, IteratorAggregate{
 
@@ -74,19 +75,19 @@ class Config implements ConfigInterface, ArrayAccess, Countable, IteratorAggrega
         return isset($this->original[$name]);
     }
 
-    public function offsetGet($offset){
+    #[ReturnTypeWillChange] public function offsetGet($offset){
         return $this->get($offset);
     }
 
-    public function offsetSet($offset, $value){
+    #[ReturnTypeWillChange] public function offsetSet($offset, $value){
         $this->set($offset, $value);
     }
 
-    public function offsetExists($offset){
+    #[ReturnTypeWillChange] public function offsetExists($offset){
         return $this->__isset($offset);
     }
 
-    public function offsetUnset($offset){
+    #[ReturnTypeWillChange] public function offsetUnset($offset){
 
         if(isset($this->original[$offset])){
             unset($this->original[$offset]);
@@ -102,7 +103,7 @@ class Config implements ConfigInterface, ArrayAccess, Countable, IteratorAggrega
         return new $class();
     }
 
-    public function getIterator(){
+    #[ReturnTypeWillChange] public function getIterator(){
 
         $data = [];
 
@@ -114,7 +115,7 @@ class Config implements ConfigInterface, ArrayAccess, Countable, IteratorAggrega
 
     }
 
-    public function count(){
+    #[ReturnTypeWillChange] public function count(){
         return count($this->original);
     }
 

@@ -51,7 +51,7 @@ class MessageBuilder
     /**
      * This method will be called by the returned closure
      *
-     * @param \Illuminate\Mail\Message $message
+     * @param Message $message
      * @return void
      **/
     public function setupMessage(Message $message){
@@ -99,7 +99,7 @@ class MessageBuilder
     /**
      * Adds the recipients to the message
      *
-     * @param \Illuminate\Mail\Message $message
+     * @param Message $message
      * @return void
      **/
     protected function addRecipients(Message $message){
@@ -129,7 +129,7 @@ class MessageBuilder
     /**
      * Sets tzhe subject of the message
      *
-     * @param \Illuminate\Mail\Message $message
+     * @param Message $message
      * @return void
      **/
     protected function setSubject(Message $message){
