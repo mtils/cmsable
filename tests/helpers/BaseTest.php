@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 include_once __DIR__.'/Migration.php';
 
 
-class BaseTest extends TestCase {
+abstract class BaseTest extends TestCase {
 
     /**
      * @brief Wenn das hier auf TRUE gesetzt ist, wird ein mal

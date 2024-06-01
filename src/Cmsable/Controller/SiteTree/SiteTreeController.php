@@ -5,14 +5,16 @@ use CMS;
 use Cmsable\Form\PermissionablePageForm as PageForm;
 use Cmsable\Model\SiteTreeModelInterface;
 use Cmsable\Model\SiteTreeNodeInterface;
+use Cmsable\View\Contracts\Notifier;
 use Config;
 use Ems\Core\Patterns\Extendable;
 use FormObject\Support\Laravel\Validator\ValidationException;
+use Illuminate\Container\Container;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Routing\Controller;
 use Input;
 use Lang;
-use Notification;
 use OutOfBoundsException;
 use Redirect;
 use Response;
@@ -44,6 +46,11 @@ class SiteTreeController extends Controller {
     protected $mainTemplate = '';
 
     protected $newPageTemplate = '';
+
+    /**
+     * @var Notifier|null
+     */
+    protected $notifier;
 
     public function __construct(PageForm $form,
                                 SiteTreeModelInterface $model,
@@ -138,7 +145,7 @@ class SiteTreeController extends Controller {
 
             $this->events->fire("sitetree.$pageTypeId.created", [$this->form, $page]);
 
-            Notification::info($this->getActionMessage('page-created', $page));
+            $this->getNotifier()->info($this->getActionMessage('page-created', $page));
 
             return Redirect::action('edit', [$page->id]);
 
@@ -220,7 +227,7 @@ class SiteTreeController extends Controller {
                 $this->events->fire("sitetree.page-type-leaving", [$page, $oldPageTypeId]);
             }
 
-            Notification::success($this->getActionMessage('page-saved',$page));
+            $this->getNotifier()->success($this->getActionMessage('page-saved',$page));
 
             $this->events->fire("sitetree.$pageTypeId.updating", [$this->form, $page]);
 
@@ -249,7 +256,7 @@ class SiteTreeController extends Controller {
 
         $this->events->fire("sitetree.$pageTypeId.destroyed", [$page]);
 
-        Notification::success($this->getActionMessage('page-deleted', $page));
+        $this->getNotifier()->success($this->getActionMessage('page-deleted', $page));
 
         return Redirect::to(URL::currentPage());
     }
@@ -273,22 +280,21 @@ class SiteTreeController extends Controller {
 
         $this->events->fire("sitetree.move", [$movedNode, $parentNode]);
 
-        if(!$newAnchestor = $this->findChildByPosition($parentNode, (int)$position)){
-            // If there is no anchestor, simply add it as the first child
-            if((int)$position == 1){
-                $this->model->makeChildOf($movedNode, $parentNode);
-                Notification::success($this->getActionMessage('page-moved', $movedNode));
-            }
-            else{
-                throw new NotFoundHttpException();
-            }
-        }
-        else{
-            $this->model->insertBefore($movedNode, $newAnchestor);
-            Notification::success($this->getActionMessage('page-moved', $movedNode));
+        if($newAncestor = $this->findChildByPosition($parentNode, (int)$position)) {
+            $this->model->insertBefore($movedNode, $newAncestor);
+            $this->getNotifier()->success($this->getActionMessage('page-moved', $movedNode));
+            return Redirect::to(URL::currentPage());
         }
 
-        return Redirect::to(URL::currentPage());
+        // If there is no anchestor, simply add it as the first child
+        if((int)$position == 1){
+            $this->model->makeChildOf($movedNode, $parentNode);
+            $this->getNotifier()->success($this->getActionMessage('page-moved', $movedNode));
+            return Redirect::to(URL::currentPage());
+        }
+
+        throw new NotFoundHttpException();
+
     }
 
     public function getJsConfig(){
@@ -410,7 +416,30 @@ class SiteTreeController extends Controller {
         return $this;
     }
 
-    protected function getParent(){
+    /**
+     * @return Notifier|null
+     * @throws BindingResolutionException
+     */
+    public function getNotifier() : ?Notifier
+    {
+        if (!$this->notifier) {
+            $this->notifier = Container::getInstance()->make(Notifier::class);
+        }
+        return $this->notifier;
+    }
+
+    /**
+     * @param Notifier|null $notifier
+     * @return $this
+     */
+    public function setNotifier(?Notifier $notifier) : SiteTreeController
+    {
+        $this->notifier = $notifier;
+        return $this;
+    }
+
+    protected function getParent()
+    {
         if(!$parent_id = Input::get('parent_id') ? Input::get('parent_id') : Input::old('parent_id')){
             throw new BadMethodCallException('Missing parent_id');
         }
@@ -419,4 +448,5 @@ class SiteTreeController extends Controller {
         }
         return $parent;
     }
+
 }

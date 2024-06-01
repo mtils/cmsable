@@ -1,5 +1,6 @@
 <?php namespace Cmsable\ServiceProviders;
 
+use Cmsable\View\LaravelSessionNotifier;
 use function func_get_args;
 use Cmsable\Lang\OptionalTranslator;
 use Versatile\Attributes\BitMaskAttribute;
@@ -63,12 +64,12 @@ class CmsServiceProvider extends ServiceProvider{
 
     protected $adminViewPath;
 
-    protected $notifier = 'Cmsable\View\NotificationNotifier';
+    protected $notifier = LaravelSessionNotifier::class;
 
     public function register(){
 
         $this->registerPackageConfig();
-        
+
         $this->registerContainerHook();
 
 //         $serviceProvider = $this;
