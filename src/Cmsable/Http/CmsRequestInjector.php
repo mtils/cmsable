@@ -56,7 +56,7 @@ class CmsRequestInjector
 
         $this->injectRequest($request);
 
-        $this->app['events']->fire($this->requestEventName,[$request, $this]);
+        $this->app['events']->dispatch($this->requestEventName,[$request, $this]);
 
         return $next($request);
 
@@ -69,10 +69,10 @@ class CmsRequestInjector
         $request->setCmsPath($cmsPath);
 
         if($request->originalPath() != $request->path()){
-            $this->app['events']->fire($this->pathSettedEventName,[$cmsPath]);
+            $this->app['events']->dispatch($this->pathSettedEventName,[$cmsPath]);
         }
 
-        $this->app['events']->fire($this->scopeChangedEventName, [$cmsPath->getTreeScope()]);
+        $this->app['events']->dispatch($this->scopeChangedEventName, [$cmsPath->getTreeScope()]);
 
     }
 

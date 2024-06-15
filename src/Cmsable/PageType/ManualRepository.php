@@ -4,6 +4,8 @@ use DomainException;
 use OutOfBoundsException;
 use Illuminate\Container\Container;
 
+use function call_user_func;
+
 class ManualRepository implements RepositoryInterface{
 
     public $loadEventName = 'cmsable.pageTypeLoadRequested';
@@ -16,6 +18,9 @@ class ManualRepository implements RepositoryInterface{
 
     protected $pageTypesLoaded = FALSE;
 
+    /**
+     * @var ?callable
+     */
     protected $eventDispatcher;
 
     protected $eventFired = FALSE;
@@ -26,12 +31,12 @@ class ManualRepository implements RepositoryInterface{
 
     protected $currentPageConfig;
 
-    public function __construct(Container $container, $eventDispatcher=NULL){
+    public function __construct(Container $container, callable $eventDispatcher=NULL){
 
         $this->app = $container;
         $this->prototype = new PageType;
 
-        if($eventDispatcher){
+        if ($eventDispatcher){
             $this->setEventDispatcher($eventDispatcher);
         }
     }
@@ -45,15 +50,13 @@ class ManualRepository implements RepositoryInterface{
         return $this;
     }
 
-    public function getEventDispatcher(){
+    public function getEventDispatcher()
+    {
         return $this->eventDispatcher;
     }
 
-    public function setEventDispatcher($dispatcher){
-
-        if(!method_exists($dispatcher,'fire')){
-            throw new DomainException('EventDispatcher has to have a fire method');
-        }
+    public function setEventDispatcher(callable $dispatcher)
+    {
 
         $this->eventDispatcher = $dispatcher;
 
@@ -117,7 +120,7 @@ class ManualRepository implements RepositoryInterface{
         }
 
         if ($this->eventDispatcher) {
-            $this->eventDispatcher->fire($this->filledEventName, $this);
+            call_user_func($this->eventDispatcher, $this->filledEventName, $this);
         }
 
     }
@@ -199,8 +202,8 @@ class ManualRepository implements RepositoryInterface{
     protected function fireLoadEvent(){
 
         if($this->eventDispatcher && !$this->eventFired){
-            $this->eventDispatcher->fire($this->loadEventName, $this);
-            $this->eventFired = TRUE;
+            call_user_func($this->eventDispatcher, $this->loadEventName, $this);
+            $this->eventFired = true;
         }
 
     }

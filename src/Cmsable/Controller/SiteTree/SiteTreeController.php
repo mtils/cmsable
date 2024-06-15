@@ -97,11 +97,11 @@ class SiteTreeController extends Controller {
         $page->parent_id = $parent->id;
         $page->setPageTypeId($pageTypeId);
 
-        $this->events->fire("sitetree.create", [$page]);
+        $this->events->dispatch("sitetree.create", [$page]);
 
         $pageTypeId = $page->getPageTypeId();
 
-        $this->events->fire("sitetree.$pageTypeId.form-created", [$this->form, $page]);
+        $this->events->dispatch("sitetree.$pageTypeId.form-created", [$this->form, $page]);
 
         $pathPrefix = $this->model->pathById($parent->id);
 
@@ -110,7 +110,7 @@ class SiteTreeController extends Controller {
         $this->form->setModel($page);
         $this->form->fillByArray($page->toArray());
 
-        $this->events->fire("sitetree.$pageTypeId.form-filled", [$this->form, $page]);
+        $this->events->dispatch("sitetree.$pageTypeId.form-filled", [$this->form, $page]);
 
         $this->form->actions->offsetUnset('action_delete');
 
@@ -137,13 +137,13 @@ class SiteTreeController extends Controller {
 
             $page->fill($this->form->getData());
 
-            $this->events->fire("sitetree.store", [$page]);
+            $this->events->dispatch("sitetree.store", [$page]);
 
-            $this->events->fire("sitetree.$pageTypeId.creating", [$this->form, $page]);
+            $this->events->dispatch("sitetree.$pageTypeId.creating", [$this->form, $page]);
 
             $this->model->makeChildOf($page, $parent);
 
-            $this->events->fire("sitetree.$pageTypeId.created", [$this->form, $page]);
+            $this->events->dispatch("sitetree.$pageTypeId.created", [$this->form, $page]);
 
             $this->getNotifier()->info($this->getActionMessage('page-created', $page));
 
@@ -166,11 +166,11 @@ class SiteTreeController extends Controller {
             throw new BadMethodCallException('Wrong id param');
         }
 
-        $this->events->fire("sitetree.edit", [$page]);
+        $this->events->dispatch("sitetree.edit", [$page]);
 
         $pageTypeId = $page->getPageTypeId();
 
-        $this->events->fire("sitetree.$pageTypeId.form-created", [$this->form, $page]);
+        $this->events->dispatch("sitetree.$pageTypeId.form-created", [$this->form, $page]);
 
         $pathPrefix = (bool)$parentId ? $this->model->pathById($parentId) . '/' : '/';
         $this->form->get('url_segment')->pathPrefix = '/'. ltrim($pathPrefix,'/');
@@ -180,7 +180,7 @@ class SiteTreeController extends Controller {
         $this->form->fillByArray($page->toArray());
 
 
-        $this->events->fire("sitetree.$pageTypeId.form-filled", [$this->form, $page]);
+        $this->events->dispatch("sitetree.$pageTypeId.form-filled", [$this->form, $page]);
 
         $viewData = array(
             'editedPage' => $page,
@@ -203,9 +203,9 @@ class SiteTreeController extends Controller {
 
         $pageTypeId = $page->getPageTypeId();
 
-        $this->events->fire("sitetree.update", [$page]);
+        $this->events->dispatch("sitetree.update", [$page]);
 
-        $this->events->fire("sitetree.$pageTypeId.form-created", [$this->form, $page]);
+        $this->events->dispatch("sitetree.$pageTypeId.form-created", [$this->form, $page]);
 
         $action = $this->form->getSelectedAction()->value;
 
@@ -224,16 +224,16 @@ class SiteTreeController extends Controller {
             $page->fill($this->form->getData(FALSE));
 
             if($page->getPageTypeId() != $oldPageTypeId){
-                $this->events->fire("sitetree.page-type-leaving", [$page, $oldPageTypeId]);
+                $this->events->dispatch("sitetree.page-type-leaving", [$page, $oldPageTypeId]);
             }
 
             $this->getNotifier()->success($this->getActionMessage('page-saved',$page));
 
-            $this->events->fire("sitetree.$pageTypeId.updating", [$this->form, $page]);
+            $this->events->dispatch("sitetree.$pageTypeId.updating", [$this->form, $page]);
 
             $this->model->saveNode($page);
 
-            $this->events->fire("sitetree.$pageTypeId.updated", [$this->form, $page]);
+            $this->events->dispatch("sitetree.$pageTypeId.updated", [$this->form, $page]);
 
             return Redirect::action('edit', [$page->id]);
         }
@@ -248,13 +248,13 @@ class SiteTreeController extends Controller {
 
         $pageTypeId = $page->getPageTypeId();
 
-        $this->events->fire("sitetree.destroy", [$page]);
+        $this->events->dispatch("sitetree.destroy", [$page]);
 
-        $this->events->fire("sitetree.$pageTypeId.destroying", [$page]);
+        $this->events->dispatch("sitetree.$pageTypeId.destroying", [$page]);
 
         $this->model->delete($page);
 
-        $this->events->fire("sitetree.$pageTypeId.destroyed", [$page]);
+        $this->events->dispatch("sitetree.$pageTypeId.destroyed", [$page]);
 
         $this->getNotifier()->success($this->getActionMessage('page-deleted', $page));
 
@@ -278,7 +278,7 @@ class SiteTreeController extends Controller {
             throw new NotFoundHttpException();
         }
 
-        $this->events->fire("sitetree.move", [$movedNode, $parentNode]);
+        $this->events->dispatch("sitetree.move", [$movedNode, $parentNode]);
 
         if($newAncestor = $this->findChildByPosition($parentNode, (int)$position)) {
             $this->model->insertBefore($movedNode, $newAncestor);

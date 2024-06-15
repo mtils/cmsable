@@ -3,8 +3,13 @@
 use InvalidArgumentException;
 use OutOfBoundsException;
 
+use function call_user_func;
+
 trait EventSenderTrait{
 
+    /**
+     * @var ?callable
+     */
     protected $eventDispatcher;
 
     protected $optionalFire = TRUE;
@@ -15,11 +20,7 @@ trait EventSenderTrait{
         return $this->eventDispatcher;
     }
 
-    public function setEventDispatcher($dispatcher){
-
-        if(!is_object($dispatcher) || !method_exists($dispatcher,'fire')){
-            throw new InvalidArgumentException('$dispatcher has to have a fire method');
-        }
+    public function setEventDispatcher(callable $dispatcher){
 
         $this->eventDispatcher = $dispatcher;
 
@@ -30,10 +31,10 @@ trait EventSenderTrait{
         if($this->eventDispatcher){
 
             if($fireOnce && isset($this->firedEvents[$eventName])){
-                return;
+                return null;
             }
 
-            $result = $this->eventDispatcher->fire($eventName, $params);
+            $result = call_user_func($this->eventDispatcher, $eventName, $params);
 
             $this->firedEvents[$eventName] = TRUE;
 

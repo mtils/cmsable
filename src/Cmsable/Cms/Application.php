@@ -1,5 +1,6 @@
 <?php namespace Cmsable\Cms;
 
+use Illuminate\Contracts\Events\Dispatcher;
 use InvalidArgumentException;
 
 use App;
@@ -32,21 +33,24 @@ class Application implements CurrentCmsPathProviderInterface, CurrentScopeProvid
 
     public function __construct(CmsPathCreatorInterface $pathCreator,
                                 CmsRequestConverter $requestConverter,
-                                $eventDispatcher){
+                                Dispatcher $eventDispatcher){
 
 
         $this->pathCreator = $pathCreator;
         $this->requestConverter = $requestConverter;
-        $this->setEventDispatcher($eventDispatcher);
 
-        $this->eventDispatcher->listen('cmsable::request-replaced', function($request){
+
+        $eventDispatcher->listen('cmsable::request-replaced', function($request){
             $this->setCmsRequest($request);
         });
 
-        $this->eventDispatcher->listen(RouteMatched::class, function(RouteMatched $event){
+        $eventDispatcher->listen(RouteMatched::class, function(RouteMatched $event){
             $this->registerScopeFilters($event->route, $event->request);
         });
 
+        $this->setEventDispatcher(function(...$args) use ($eventDispatcher) {
+            return $eventDispatcher->dispatch(...$args);
+        });
     }
 
     public function onRouterBefore($route, $request){

@@ -95,7 +95,7 @@ class Bus extends EmsBus
             self::$singleInstance->on('*', function () use ($illuminateEvents) {
                 $args = func_get_args();
                 $event = array_shift($args);
-                $illuminateEvents->fire($event, $args);
+                $illuminateEvents->dispatch($event, $args);
             });
 
             // Used in Ems\App\Providers\PackageServiceProvider

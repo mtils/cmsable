@@ -214,7 +214,7 @@ class CmsServiceProvider extends ServiceProvider{
             $events = $app['events'];
 
             $adminModel->onAfter('setSourceArray', function (&$sourceArray) use ($events) {
-                $events->fire('sitetree.filled', [&$sourceArray]);
+                $events->dispatch('sitetree.filled', [&$sourceArray]);
             });
 
             $adminModel->setPathPrefix($adminScope->getPathPrefix());
@@ -309,13 +309,15 @@ class CmsServiceProvider extends ServiceProvider{
 
         $serviceProvider = $this;
 
-        $this->app->singleton('Cmsable\PageType\RepositoryInterface', function($app){
-            return new ManualRepository($app, $app['events']);
+        $this->app->singleton('Cmsable\PageType\RepositoryInterface', function($app) {
+            return new ManualRepository($app, function(...$args) {
+                return $this->app['events']->dispatch(...$args);
+            });
         });
 
         PageType::setViewBootstrap(function(){
             $repo = $this->app->make('Cmsable\PageType\RepositoryInterface');
-            $this->app['events']->fire('cmsable.pagetype-views-requested', [$repo]);
+            $this->app['events']->dispatch('cmsable.pagetype-views-requested', [$repo]);
         });
 
         $this->app['events']->listen('cmsable.pageTypeLoadRequested', function($pageTypes) use ($serviceProvider){
@@ -703,7 +705,9 @@ class CmsServiceProvider extends ServiceProvider{
                 $app->make('Cmsable\Html\Breadcrumbs\StoreInterface')
             );
 
-            $factory->setEventDispatcher($app['events']);
+            $factory->setEventDispatcher(function (...$args) {
+                return $this->app['events']->dispatch(...$args);
+            });
 
             return $factory;
 
