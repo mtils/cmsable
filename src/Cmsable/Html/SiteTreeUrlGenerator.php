@@ -50,7 +50,7 @@ class SiteTreeUrlGenerator extends UrlGenerator{
 
         // Page object passed
         if(is_object($path) && $path instanceof SiteTreeNodeInterface){
-            if(starts_with($path->getPath(),'http:')){
+            if(str_starts_with($path->getPath(),'http:')){
                 $path = $path->getPath();
             }
             else{

@@ -478,7 +478,7 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
     protected function cleanHomePath($path){
 
-        if(ends_with($path, CmsPath::$homeSegment)){
+        if(str_ends_with($path, CmsPath::$homeSegment)){
             return substr($path, 0, strlen($path)-strlen(CmsPath::$homeSegment));
         }
         return $path;

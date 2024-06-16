@@ -11,7 +11,7 @@ use Illuminate\View\FileViewFinder;
  *
  * 1. $firstViewPath/users/index.blade.php
  * 2. $firstViewPath/resource/index.blade.php
- * 
+ *
  * 3. $secondViewPath/users/index.blade.php
  * 4. $secondViewPath/resource/index.blade.php
  * ... and so on
@@ -130,7 +130,7 @@ class FallbackFileViewFinder extends FileViewFinder{
         }
 
         // If a ! is prepended ignore fallbacks
-        if(ends_with($name,'!')){
+        if(str_ends_with($name,'!')){
             return [substr($name,0,-1)];
         }
 
