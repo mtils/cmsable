@@ -6,6 +6,8 @@ use Illuminate\Routing\Router;
 
 use Cmsable\Support\EventSenderTrait;
 
+use function array_values;
+
 
 class Factory{
 
@@ -59,7 +61,8 @@ class Factory{
         $params = [];
 
         if($name === NULL){
-            list($name, $params) = $this->currentRoute();
+            list($name, $namedParams) = $this->currentRoute();
+            $params = array_values($namedParams);
         }
 
         $indexName = ($name == NULL) ? '#default#' : $name;
