@@ -15,6 +15,8 @@ use Cmsable\Model\AdjacencyListSiteTreeModel;
 use Lang;
 use Menu;
 
+use function get_class;
+
 class RedirectorPlugin extends Plugin{
 
     public function modifyFormFields(FieldList $fields, SiteTreeNodeInterface $page){

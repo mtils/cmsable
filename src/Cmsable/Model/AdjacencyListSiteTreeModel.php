@@ -12,6 +12,8 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
 
     protected $id2Path;
 
+    protected $pagesByTypeId = [];
+
     protected $pageTypeToPages = [];
 
     protected $rootId;
@@ -72,7 +74,7 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
     /**
      * @brief Return a page by its id. The id is normally
      *        the database primary key but dont have to.
-     * 
+     *
      * @param mixed $id The id of the page to return
      * @return SiteTreeNodeInterface
      **/
@@ -120,7 +122,7 @@ class AdjacencyListSiteTreeModel extends OrderedAdjacencyListModel implements Si
 
     /**
      * @brief Retrieve a tree by its _ID_. Reimplemented to ensure only pages of this tree are loaded
-     * 
+     *
      * @param mixed $identifier The id of this node, which is the same as node->getIdentifier()
      * @param mixed $rootId The rootId of the tree, optional to speed up the initial query
      * @return NodeInterface
