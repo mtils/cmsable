@@ -1,17 +1,16 @@
 <?php namespace Cmsable\Routing;
 
-use Illuminate\Routing\Router;
-
+use App;
 use Cmsable\Cms\Action\Action;
+use Cmsable\Http\CmsPath;
 use Cmsable\Http\CurrentCmsPathProviderInterface;
 use Cmsable\Model\SiteTreeModelInterface;
 use Cmsable\Model\SiteTreeNodeInterface;
 use Cmsable\PageType\PageType;
-use Cmsable\Http\CmsPath;
+use Illuminate\Routing\Router;
 use Illuminate\Routing\UrlGenerator;
 
-use Log;
-use App;
+use function array_key_exists;
 
 
 class SiteTreePathFinder implements SiteTreePathFinderInterface{
@@ -88,6 +87,22 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
         $currentUri = $currentRoute->uri();
         $targetUri = $targetRoute->uri();
         $isCreateAction = false;
+
+        // Small patch to allow indexed parameters in newer laravel versions
+        // (that only support named parameters)
+        if (count($params) && array_key_exists(0, $params)) {
+            if ($names = $targetRoute->parameterNames()) {
+                $namedParameters = [];
+                foreach ($names as $i=>$paramName) {
+                    if (array_key_exists($i, $params)) {
+                        $namedParameters[$paramName] = $params[$i];
+                    }
+                }
+                if (count($namedParameters)) {
+                    $params = $namedParameters;
+                }
+            }
+        }
 
         // Special handling for pagetypes to create routes
         // if store is performed, the current uri is the same as the index route
