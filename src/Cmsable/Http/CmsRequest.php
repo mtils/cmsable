@@ -21,6 +21,14 @@ class CmsRequest extends Request implements CmsRequestInterface
      **/
     protected $cmsPathProvider;
 
+    public function getPathInfo(): string
+    {
+        if ($this->cmsPath) {
+            return '/'.$this->cmsPath->getRewrittenPath();
+        }
+        return parent::getPathInfo();
+    }
+
     /**
      * Get the current path info for the request.
      *
@@ -48,6 +56,9 @@ class CmsRequest extends Request implements CmsRequestInterface
      */
     public function originalPath()
     {
+        if ($this->cmsPath) {
+            return $this->cmsPath->getOriginalPath();
+        }
         return parent::path();
     }
 
