@@ -1,16 +1,15 @@
 <?php namespace Cmsable\Html;
 
-use Illuminate\Routing\UrlGenerator;
-use Illuminate\Routing\Router;
-
-use Cmsable\PageType\RepositoryInterface as PageTypes;
-use Cmsable\Model\TreeModelManagerInterface;
-use Cmsable\Routing\SiteTreePathFinderInterface;
-use Cmsable\Routing\SiteTreePathFinder;
+use Cmsable\Http\CurrentCmsPathProviderInterface;
 use Cmsable\Model\SiteTreeNodeInterface;
+use Cmsable\Model\TreeModelManagerInterface;
+use Cmsable\PageType\RepositoryInterface as PageTypes;
+use Cmsable\Routing\SiteTreePathFinder;
+use Cmsable\Routing\SiteTreePathFinderInterface;
 use Cmsable\Routing\TreeScope\RepositoryInterface as TreeScopeRepository;
 use Cmsable\Routing\TreeScope\TreeScope;
-use Cmsable\Http\CurrentCmsPathProviderInterface;
+use Illuminate\Routing\Router;
+use Illuminate\Routing\UrlGenerator;
 
 class SiteTreeUrlGenerator extends UrlGenerator{
 
@@ -24,6 +23,9 @@ class SiteTreeUrlGenerator extends UrlGenerator{
 
     protected $originalUrlGenerator;
 
+    /**
+     * @var CurrentCmsPathProviderInterface
+     */
     protected $currentCmsPathProvider;
 
     protected $router;
@@ -153,6 +155,23 @@ class SiteTreeUrlGenerator extends UrlGenerator{
         return $this->to($this->currentCmsPathProvider->getCmsPath()->getMatchedNode(), $extra, $secure);
 
     }
+
+    public function current()
+    {
+        if (!$this->currentCmsPathProvider) {
+            return parent::current();
+        }
+        if (!$cmsPath = $this->currentCmsPathProvider->getCmsPath()) {
+            return parent::current();
+        }
+
+        if ($cmsPath->isCmsPath()) {
+            return parent::to($cmsPath->getOriginalPath());
+        }
+        return parent::current();
+
+    }
+
 
     public function getPathFinder(){
         if(!$this->pathFinder){
