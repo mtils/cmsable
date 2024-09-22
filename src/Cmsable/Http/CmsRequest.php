@@ -7,6 +7,8 @@ namespace Cmsable\Http;
 use RuntimeException;
 use Illuminate\Http\Request;
 
+use function ltrim;
+
 
 class CmsRequest extends Request implements CmsRequestInterface
 {
@@ -27,6 +29,18 @@ class CmsRequest extends Request implements CmsRequestInterface
             return '/'.$this->cmsPath->getRewrittenPath();
         }
         return parent::getPathInfo();
+    }
+
+    public function fullUrl()
+    {
+        if (!$this->cmsPath) {
+            return parent::fullUrl();
+        }
+        $query = $this->getQueryString();
+        $host = $this->getSchemeAndHttpHost();
+        $baseUrl = $this->originalPath();
+        $baseUrl = $host. '/' . ltrim($baseUrl, '/');
+        return $query ? $baseUrl.'?'.$query : $baseUrl;
     }
 
     /**
