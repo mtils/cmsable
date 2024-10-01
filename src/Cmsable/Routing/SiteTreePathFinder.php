@@ -103,6 +103,19 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
                 }
             }
         }
+        $hasValues = false;
+        foreach ($params as $key=>$value) {
+            if ($value) {
+                $hasValues = true;
+                break;
+            }
+        }
+        // Emulate old behaviour of returning broken urls like in old laravel versions
+        if (!$hasValues) {
+            foreach ($params as $key=>$value) {
+                $params[$key] = 'legacy';
+            }
+        }
 
         // Special handling for pagetypes to create routes
         // if store is performed, the current uri is the same as the index route
