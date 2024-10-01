@@ -15,6 +15,8 @@ class ArraySiteTreeModel implements SiteTreeModelInterface, NodeCreatorInterface
 
     protected $id2Path;
 
+    protected $pagesByTypeId = [];
+
     protected $pageTypeToPages = [];
 
     protected $rootNode;
