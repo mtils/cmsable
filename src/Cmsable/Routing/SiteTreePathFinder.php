@@ -11,6 +11,7 @@ use Illuminate\Routing\Router;
 use Illuminate\Routing\UrlGenerator;
 
 use function array_key_exists;
+use function preg_match_all;
 
 
 class SiteTreePathFinder implements SiteTreePathFinderInterface{
@@ -112,8 +113,11 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
         }
         // Emulate old behaviour of returning broken urls like in old laravel versions
         if (!$hasValues) {
+            $optionalParameters = static::getOptionalParameterNames($targetUri);
             foreach ($params as $key=>$value) {
-                $params[$key] = 'legacy';
+                if (!in_array($key, $optionalParameters)) {
+                    $params[$key] = 'legacy';
+                }
             }
         }
 
@@ -244,6 +248,17 @@ class SiteTreePathFinder implements SiteTreePathFinderInterface{
 
     public function toCmsAction(Action $action, array $params=[], $searchMethod= self::NEAREST){
 
+    }
+
+    /**
+     * @param string $routeUri
+     * @return string[]
+     */
+    public static function getOptionalParameterNames(string $routeUri) : array
+    {
+        $matches = [];
+        preg_match_all('/\{(\w+?)\?\}/', $routeUri, $matches);
+        return $matches[1] ?? [];
     }
 
     protected function findParentControllerPath($route, $cmsPath){
